@@ -35,3 +35,383 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  iOS 26 Liquid Glass · Responsive Floating Pill Tab Bar
+//  Global scope — bypasses Angular view encapsulation & Ionic shadow DOM
+//  Breakpoints:  Mobile (default)  |  Tablet ≥600px  |  Desktop ≥960px
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 1. Hide the original Ionic tab bar from page layout so our fixed
+//        pill doesn't double-occupy space at the bottom
+ion-tab-bar {
+  // Strip every Ionic default
+  --background:          transparent;
+  --border:              none;
+  --color:               transparent;
+
+  // ── Floating pill geometry — MOBILE FIRST ──────────────────────────────
+  position:      fixed !important;
+  bottom:        calc(12px + env(safe-area-inset-bottom)) !important;
+  left:          50% !important;
+  transform:     translateX(-50%) !important;
+
+  // Nearly full-width on mobile (real iOS 26 style)
+  width:         calc(100% - 24px) !important;
+  max-width:     420px !important;
+  min-width:     280px !important;
+
+  height:        58px !important;
+  border-radius: 38px !important;
+  z-index:       99999 !important;
+  overflow:      visible !important;
+  padding:       0 4px !important;
+
+  // Liquid Glass — light mode
+  background:               rgba(242, 242, 247, 0.75) !important;
+  backdrop-filter:          blur(32px) saturate(200%) brightness(1.04) !important;
+  -webkit-backdrop-filter:  blur(32px) saturate(200%) brightness(1.04) !important;
+  border:        1.5px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow:
+    0  2px  4px  rgba(0,0,0, 0.06),
+    0  8px  20px rgba(0,0,0, 0.12),
+    0 20px  44px rgba(0,0,0, 0.08),
+    inset 0  1.5px 0 rgba(255,255,255, 0.75),
+    inset 0 -1.5px 0 rgba(0,0,0, 0.04) !important;
+
+  // Entrance animation
+  animation: lgTabBarIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+  animation-delay: 0.04s !important;
+
+  // Smooth hover transition
+  transition:
+    box-shadow      0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    background      0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform       0.32s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+
+  // Specular sheen (top highlight)
+  &::before {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    border-radius:  inherit;
+    background:     linear-gradient(
+      175deg,
+      rgba(255,255,255, 0.34) 0%,
+      rgba(255,255,255, 0.06) 42%,
+      transparent   65%
+    );
+    pointer-events: none;
+    z-index:        1;
+    border-radius:  36px;
+  }
+}
+
+// Hover lift — only on pointer devices (not touch)
+@media (hover: hover) and (pointer: fine) {
+  ion-tab-bar:hover {
+    transform:     translateX(-50%) translateY(-3px) !important;
+    background:    rgba(248, 248, 253, 0.88) !important;
+    box-shadow:
+      0  2px  6px  rgba(0,0,0, 0.08),
+      0 14px  32px rgba(0,0,0, 0.18),
+      0 28px  60px rgba(0,0,0, 0.10),
+      inset 0  1.5px 0 rgba(255,255,255, 0.85),
+      inset 0 -1.5px 0 rgba(0,0,0, 0.04) !important;
+  }
+}
+
+// Dark mode pill
+@media (prefers-color-scheme: dark) {
+  ion-tab-bar {
+    background:              rgba(26, 26, 32, 0.82) !important;
+    border-color:            rgba(255, 255, 255, 0.10) !important;
+    box-shadow:
+      0  2px  4px  rgba(0,0,0, 0.28),
+      0  8px  20px rgba(0,0,0, 0.48),
+      0 20px  44px rgba(0,0,0, 0.28),
+      inset 0  1.5px 0 rgba(255,255,255, 0.08),
+      inset 0 -1.5px 0 rgba(0,0,0, 0.30) !important;
+
+    &::before {
+      background: linear-gradient(
+        175deg,
+        rgba(255,255,255, 0.08) 0%,
+        rgba(255,255,255, 0.02) 42%,
+        transparent 65%
+      );
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    ion-tab-bar:hover {
+      background: rgba(38, 38, 46, 0.92) !important;
+      box-shadow:
+        0  2px  6px  rgba(0,0,0, 0.32),
+        0 14px  32px rgba(0,0,0, 0.58),
+        0 28px  60px rgba(0,0,0, 0.32),
+        inset 0  1.5px 0 rgba(255,255,255, 0.10),
+        inset 0 -1.5px 0 rgba(0,0,0, 0.30) !important;
+    }
+  }
+}
+
+// ─── 2. Tab Buttons ───────────────────────────────────────────────────────────
+
+ion-tab-button {
+  --background:          transparent;
+  --background-focused:  transparent;
+  --color:               rgba(60, 60, 67, 0.55);
+  --color-selected:      #007AFF;
+  --ripple-color:        transparent;
+
+  position:    relative;
+  z-index:     2;
+
+  // flex: 1 lets buttons fill available pill width evenly
+  flex:        1 1 0 !important;
+  min-width:   0 !important;
+  max-width:   none !important;
+
+  height:        calc(58px - 8px) !important;
+  border-radius: 32px !important;
+  margin:        4px 2px !important;
+  padding:       0 !important;
+  cursor:        pointer;
+
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+
+  // Active capsule highlight
+  &::before {
+    content:        '';
+    position:       absolute;
+    inset:          2px;
+    border-radius:  28px;
+    background:     rgba(0, 122, 255, 0.11);
+    transform:      scale(0.50);
+    opacity:        0;
+    transition:
+      transform 0.40s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity   0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none;
+    z-index:        0;
+  }
+
+  // Hover tint (mouse only)
+  &::after {
+    content:        '';
+    position:       absolute;
+    inset:          2px;
+    border-radius:  28px;
+    background:     rgba(100, 100, 110, 0.08);
+    opacity:        0;
+    transition:     opacity 0.22s ease;
+    pointer-events: none;
+    z-index:        0;
+  }
+
+  // Mouse hover — individual button
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: scale(1.10) !important;
+      &::after { opacity: 1; }
+    }
+  }
+
+  // Press / tap feedback
+  &:active {
+    transform:  scale(0.88) !important;
+    transition: transform 0.10s ease !important;
+  }
+
+  // Selected state
+  &.tab-selected {
+    --color: #007AFF;
+
+    &::before {
+      transform: scale(1);
+      opacity:   1;
+    }
+
+    ion-icon {
+      transform: scale(1.18) translateY(-1.5px) !important;
+      filter:    drop-shadow(0 0 6px rgba(0, 122, 255, 0.38)) !important;
+    }
+
+    ion-label {
+      opacity:     1 !important;
+      transform:   translateY(0) !important;
+      font-weight: 700 !important;
+      color:       #007AFF !important;
+    }
+  }
+}
+
+// Dark mode buttons
+@media (prefers-color-scheme: dark) {
+  ion-tab-button {
+    --color:          rgba(235, 235, 245, 0.55);
+    --color-selected: #0A84FF;
+
+    &::before { background: rgba(10, 132, 255, 0.18); }
+    &::after  { background: rgba(255, 255, 255, 0.06); }
+
+    &.tab-selected {
+      --color: #0A84FF;
+
+      ion-icon {
+        filter: drop-shadow(0 0 7px rgba(10, 132, 255, 0.50)) !important;
+      }
+      ion-label { color: #0A84FF !important; }
+    }
+  }
+}
+
+// ─── 3. Icons ─────────────────────────────────────────────────────────────────
+
+ion-tab-button ion-icon {
+  font-size:     22px !important;
+  margin-bottom: 2px !important;
+  transition:
+    transform 0.40s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter    0.28s ease,
+    color     0.22s ease !important;
+  will-change: transform, filter;
+  position:    relative;
+  z-index:     1;
+}
+
+// ─── 4. Labels ────────────────────────────────────────────────────────────────
+
+ion-tab-button ion-label {
+  font-size:      10px !important;
+  font-weight:    600 !important;
+  letter-spacing: 0.01em !important;
+  line-height:    1 !important;
+  opacity:        0.58 !important;
+  transform:      translateY(2px) !important;
+  transition:
+    opacity     0.25s ease,
+    transform   0.30s cubic-bezier(0.34, 1.56, 0.64, 1),
+    font-weight 0.22s ease,
+    color       0.22s ease !important;
+  position:    relative;
+  z-index:     1;
+}
+
+@media (prefers-color-scheme: dark) {
+  ion-tab-button ion-label { opacity: 0.48 !important; }
+}
+
+// ─── 5. Page content — push above the floating bar ────────────────────────────
+
+ion-tabs {
+  ion-router-outlet {
+    margin-bottom: calc(58px + 12px + env(safe-area-inset-bottom) + 8px) !important;
+  }
+}
+
+// ─── 6. TABLET ≥ 600px ────────────────────────────────────────────────────────
+
+@media (min-width: 600px) {
+  ion-tab-bar {
+    bottom:        calc(18px + env(safe-area-inset-bottom)) !important;
+    height:        62px !important;
+    border-radius: 42px !important;
+    width:         calc(100% - 48px) !important;
+    max-width:     460px !important;
+    padding:       0 6px !important;
+  }
+
+  ion-tab-button {
+    height: calc(62px - 8px) !important;
+    border-radius: 36px !important;
+  }
+
+  ion-tab-button ion-icon    { font-size: 23px !important; }
+  ion-tab-button ion-label   { font-size: 10.5px !important; }
+
+  ion-tabs ion-router-outlet {
+    margin-bottom: calc(62px + 18px + env(safe-area-inset-bottom) + 8px) !important;
+  }
+}
+
+// ─── 7. DESKTOP ≥ 960px ───────────────────────────────────────────────────────
+
+@media (min-width: 960px) {
+  ion-tab-bar {
+    bottom:        28px !important;
+    height:        64px !important;
+    border-radius: 44px !important;
+    width:         auto !important;
+    min-width:     420px !important;
+    max-width:     520px !important;
+    padding:       0 10px !important;
+  }
+
+  ion-tab-button {
+    flex:          0 0 100px !important;
+    height:        calc(64px - 8px) !important;
+    border-radius: 38px !important;
+    margin:        4px 4px !important;
+  }
+
+  ion-tab-button ion-icon {
+    font-size:     24px !important;
+    margin-bottom: 3px !important;
+  }
+
+  ion-tab-button ion-label {
+    font-size:  11px !important;
+    opacity:    0.65 !important;
+  }
+
+  ion-tabs ion-router-outlet {
+    margin-bottom: calc(64px + 28px + 12px) !important;
+  }
+}
+
+// ─── 8. LANDSCAPE (phone horizontal) ─────────────────────────────────────────
+
+@media (max-height: 500px) and (orientation: landscape) {
+  ion-tab-bar {
+    bottom:        calc(8px + env(safe-area-inset-bottom)) !important;
+    height:        50px !important;
+    border-radius: 32px !important;
+    max-width:     340px !important;
+    padding:       0 4px !important;
+  }
+
+  ion-tab-button {
+    height: calc(50px - 6px) !important;
+    border-radius: 28px !important;
+    margin: 3px 2px !important;
+  }
+
+  ion-tab-button ion-icon    { font-size: 20px !important; }
+  ion-tab-button ion-label   { font-size: 9px !important; }
+
+  ion-tabs ion-router-outlet {
+    margin-bottom: calc(50px + 8px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+// ─── 9. Entrance animation ────────────────────────────────────────────────────
+
+@keyframes lgTabBarIn {
+  0% {
+    opacity:   0;
+    transform: translateX(-50%) translateY(40px) scale(0.84);
+    filter:    blur(6px);
+  }
+  55% {
+    opacity: 1;
+    filter:  blur(0);
+  }
+  100% {
+    opacity:   1;
+    transform: translateX(-50%) translateY(0) scale(1);
+    filter:    blur(0);
+  }
+}
+

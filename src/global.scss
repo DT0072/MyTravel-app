@@ -492,19 +492,14 @@ ion-header {
     z-index: 10;
   }
 
-  // Simple fade-in only — NO translate/scale so the pill never jumps
-  // when switching tabs (each tab mounts a fresh ion-header which re-triggers
-  // the animation; a translate-based entrance would visibly bounce the pill).
   animation: lgHeaderFade 0.12s ease both !important;
   animation-delay: 0s !important;
 
-  // Smooth width glide when pill grows/shrinks between shorter/longer titles
   transition:
     width      0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     background 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 
-  // Hide the condensed/collapsible secondary header (only style the primary)
   &[collapse='condense'] {
     display: none !important;
   }

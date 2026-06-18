@@ -711,3 +711,8 @@ ion-content {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+// App-wide background color
+ion-content {
+  --background: linear-gradient(180deg, #FBFDFF 0%, #F4F9FF 62%, #ECF4FF 100%);
+}

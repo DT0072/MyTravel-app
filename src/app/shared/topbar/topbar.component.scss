@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+.mt-language span.selected,
+.mt-language strong.selected {
+  color: var(--mt-blue);
+}
+
+.mt-language span:not(.selected),
+.mt-language strong:not(.selected) {
+  color: inherit;
+}
+
+.mt-icon-button {
+  position: relative;
+}
+
+.topbar-notice-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mt-red);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.92);
+}
+
+.home-topbar {
+  position: absolute;
+  top: var(--mt-topbar-offset);
+  left: var(--mt-topbar-inset);
+  right: var(--mt-topbar-inset);
+}
+
+.home-topbar .mt-language,
+.home-topbar .mt-icon-button {
+  color: #fff;
+  background: rgba(4, 20, 48, 0.44);
+  border-color: rgba(255, 255, 255, 0.46);
+}
+
+.home-topbar .mt-language strong {
+  color: var(--mt-blue);
+  background: rgba(255, 255, 255, 0.94);
+  padding: 8px 7px;
+  margin: -1px -8px -1px 0;
+  border-radius: 14px;
+}
+
+.home-topbar .mt-language span.selected {
+  color: #fff;
+}

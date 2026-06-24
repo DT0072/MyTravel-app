@@ -1,0 +1,14 @@
+<header [class]="classes.join(' ')">
+  <img class="mt-brand" src="assets/mytravel/tourism-malaysia-logo.png" alt="Tourism Malaysia">
+  <h1 class="mt-wordmark"></h1>
+  <div class="mt-top-actions">
+    <button *ngIf="showLanguageToggle" class="mt-language" type="button" (click)="toggleLanguage()">
+      <span [class.selected]="language === 'BM'">BM</span>
+      <strong [class.selected]="language === 'EN'">EN</strong>
+    </button>
+    <button *ngIf="showNotification" class="mt-icon-button" type="button" aria-label="Notifications" (click)="openNotifications()">
+      <ion-icon name="notifications-outline"></ion-icon>
+      <i *ngIf="notificationBadge" class="topbar-notice-dot"></i>
+    </button>
+  </div>
+</header>

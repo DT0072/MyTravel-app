@@ -1,294 +1,313 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
-
-/* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
-
-/* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
-
-/* Optional CSS utils that can be commented out */
 @import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+:root {
+  --mt-navy: #061957;
+  --mt-ink: #081338;
+  --mt-blue: #0754cc;
+  --mt-red: #f40719;
+  --mt-green: #078b50;
+  --mt-muted: #536687;
+  --mt-line: #d4dfef;
+  --mt-canvas: #edf5ff;
+  --mt-card: rgba(255, 255, 255, 0.95);
+  --mt-shadow: 0 8px 22px rgba(5, 24, 65, 0.1);
+  --mt-topbar-inset: 24px;
+  --mt-topbar-offset: max(24px, calc(env(safe-area-inset-top) + 18px));
+  --ion-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+}
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+* { box-sizing: border-box; }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//  iOS 26 Liquid Glass · Responsive Floating Pill Tab Bar
-//  Global scope — bypasses Angular view encapsulation & Ionic shadow DOM
-//  Breakpoints:  Mobile (default)  |  Tablet ≥600px  |  Desktop ≥960px
-// ═══════════════════════════════════════════════════════════════════════════════
+html, body, ion-app { background: #eaf2fc; }
 
-// ─── 1. Hide the original Ionic tab bar from page layout so our fixed
-//        pill doesn't double-occupy space at the bottom
+button, input, select, textarea { font: inherit; }
+
+button { -webkit-tap-highlight-color: transparent; }
+
+ion-content {
+  --background: linear-gradient(180deg, #fcfeff 0%, #f1f7ff 52%, #dfedff 100%);
+  --padding-bottom: 92px;
+}
+
+.mt-screen {
+  width: min(100%, 430px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: var(--mt-topbar-offset) var(--mt-topbar-inset) 104px;
+  color: var(--mt-ink);
+}
+
+.mt-topbar {
+  min-height: 45px;
+  display: grid;
+  grid-template-columns: 88px 1fr 88px;
+  align-items: start;
+  gap: 6px;
+  position: relative;
+  z-index: 8;
+}
+
+.mt-topbar.light { color: #fff; }
+
+.mt-brand {
+  width: 72px;
+  height: 34px;
+  object-fit: contain;
+  object-position: left top;
+}
+
+.mt-wordmark {
+  margin: 3px 0 0;
+  text-align: center;
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.mt-top-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+}
+
+.mt-language,
+.mt-icon-button {
+  min-height: 30px;
+  border: 1px solid rgba(209, 221, 238, 0.8);
+  background: rgba(255, 255, 255, 0.54);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  color: var(--mt-muted);
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(7, 25, 61, 0.08), inset 0 1px rgba(255,255,255,.74);
+}
+
+.mt-language {
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.mt-language strong { color: var(--mt-blue); }
+
+.mt-icon-button {
+  width: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.mt-page-heading { padding: 8px 10px 6px; }
+.mt-page-heading h1 { margin: 0; font-size: 20px; line-height: 1.15; letter-spacing: -0.01em; }
+.mt-page-heading p { margin: 6px 0 0; font-size: 10px; line-height: 1.35; color: var(--mt-muted); }
+
+.mt-card {
+  border: 1px solid rgba(201, 217, 240, 0.65);
+  border-radius: 22px;
+  background: var(--mt-card);
+  box-shadow: var(--mt-shadow);
+}
+
+.mt-primary,
+.mt-secondary,
+.mt-chip {
+  border: 0;
+  cursor: pointer;
+  transition: transform .18s cubic-bezier(.2,.8,.2,1), filter .18s ease;
+}
+
+.mt-primary:active,
+.mt-secondary:active,
+.mt-chip:active { transform: scale(.97); }
+
+.mt-primary {
+  width: 100%;
+  min-height: 34px;
+  border-radius: 18px;
+  color: #fff;
+  background: var(--mt-red);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(244, 7, 25, .18);
+}
+
+.mt-secondary {
+  min-height: 34px;
+  border: 1px solid var(--mt-navy);
+  background: white;
+  color: var(--mt-navy);
+  border-radius: 18px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mt-back {
+  border: 0;
+  background: transparent;
+  color: var(--mt-navy);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 22px;
+}
+
+.mt-progress {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #d6dfed;
+}
+.mt-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--mt-green); }
+
+.mt-toast {
+  position: fixed;
+  z-index: 100010;
+  top: calc(18px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(340px, calc(100% - 32px));
+  padding: 12px 16px;
+  border-radius: 18px;
+  color: #fff;
+  background: rgba(6, 25, 87, .92);
+  box-shadow: 0 14px 30px rgba(4, 16, 50, .28);
+  backdrop-filter: blur(18px);
+  font-size: 12px;
+  animation: mtDrop .35s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes mtDrop { from { opacity: 0; transform: translate(-50%, -18px); } }
+@keyframes mtReveal { from { opacity: 0; transform: translateY(15px); } }
+
+.mt-reveal { animation: mtReveal .48s cubic-bezier(.2,.8,.2,1) both; }
+.mt-reveal:nth-child(2) { animation-delay: .05s; }
+.mt-reveal:nth-child(3) { animation-delay: .1s; }
+.mt-reveal:nth-child(4) { animation-delay: .15s; }
+
+@media (min-width: 700px) {
+  .mt-screen {
+    margin-top: 0;
+    margin-bottom: 30px;
+    padding-top: 24px;
+    border-radius: 32px;
+    box-shadow: 0 18px 44px rgba(4, 18, 55, .15);
+    background: linear-gradient(180deg, #fcfeff 0%, #f1f7ff 52%, #dfedff 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* Original iOS 26 Liquid Glass navigation — restored from repository baseline. */
 ion-tab-bar {
-  // Strip every Ionic default
   --background: transparent;
   --border: none;
   --color: transparent;
-
-  // ── Floating pill geometry — MOBILE FIRST ──────────────────────────────
   position: fixed !important;
   bottom: calc(12px + env(safe-area-inset-bottom)) !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-
-  // Nearly full-width on mobile (real iOS 26 style)
   width: calc(100% - 24px) !important;
   max-width: 420px !important;
   min-width: 280px !important;
-
   height: 58px !important;
   border-radius: 38px !important;
   z-index: 99999 !important;
   overflow: visible !important;
   padding: 0 4px !important;
-
-  // Liquid Glass — light mode
   background: rgba(242, 242, 247, 0.75) !important;
   backdrop-filter: blur(32px) saturate(200%) brightness(1.04) !important;
   -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.04) !important;
   border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.06),
-    0 8px 20px rgba(0, 0, 0, 0.12),
-    0 20px 44px rgba(0, 0, 0, 0.08),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.75),
-    inset 0 -1.5px 0 rgba(0, 0, 0, 0.04) !important;
-
-  // Entrance animation
-  animation: lgTabBarIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
-  animation-delay: 0.04s !important;
-
-  // Smooth hover transition
-  transition:
-    box-shadow 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    background 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-
-  // Specular sheen (top highlight)
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(175deg,
-        rgba(255, 255, 255, 0.34) 0%,
-        rgba(255, 255, 255, 0.06) 42%,
-        transparent 65%);
-    pointer-events: none;
-    z-index: 1;
-    border-radius: 36px;
-  }
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.12), 0 20px 44px rgba(0, 0, 0, 0.08), inset 0 1.5px 0 rgba(255, 255, 255, 0.75), inset 0 -1.5px 0 rgba(0, 0, 0, 0.04) !important;
+  animation: lgTabBarIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.04s both !important;
+  transition: box-shadow 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
-// Hover lift — only on pointer devices (not touch)
-@media (hover: hover) and (pointer: fine) {
-  ion-tab-bar:hover {
-    transform: translateX(-50%) translateY(-3px) !important;
-    background: rgba(248, 248, 253, 0.88) !important;
-    box-shadow:
-      0 2px 6px rgba(0, 0, 0, 0.08),
-      0 14px 32px rgba(0, 0, 0, 0.18),
-      0 28px 60px rgba(0, 0, 0, 0.10),
-      inset 0 1.5px 0 rgba(255, 255, 255, 0.85),
-      inset 0 -1.5px 0 rgba(0, 0, 0, 0.04) !important;
-  }
+ion-tab-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 36px;
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.06) 42%, transparent 65%);
+  pointer-events: none;
+  z-index: 1;
 }
-
-// Dark mode pill
-@media (prefers-color-scheme: dark) {
-  ion-tab-bar {
-    background: rgba(26, 26, 32, 0.82) !important;
-    border-color: rgba(255, 255, 255, 0.10) !important;
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.28),
-      0 8px 20px rgba(0, 0, 0, 0.48),
-      0 20px 44px rgba(0, 0, 0, 0.28),
-      inset 0 1.5px 0 rgba(255, 255, 255, 0.08),
-      inset 0 -1.5px 0 rgba(0, 0, 0, 0.30) !important;
-
-    &::before {
-      background: linear-gradient(175deg,
-          rgba(255, 255, 255, 0.08) 0%,
-          rgba(255, 255, 255, 0.02) 42%,
-          transparent 65%);
-    }
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    ion-tab-bar:hover {
-      background: rgba(38, 38, 46, 0.92) !important;
-      box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.32),
-        0 14px 32px rgba(0, 0, 0, 0.58),
-        0 28px 60px rgba(0, 0, 0, 0.32),
-        inset 0 1.5px 0 rgba(255, 255, 255, 0.10),
-        inset 0 -1.5px 0 rgba(0, 0, 0, 0.30) !important;
-    }
-  }
-}
-
-// ─── 2. Tab Buttons ───────────────────────────────────────────────────────────
 
 ion-tab-button {
   --background: transparent;
   --background-focused: transparent;
   --color: rgba(60, 60, 67, 0.55);
-  --color-selected: #007AFF;
+  --color-selected: #007aff;
   --ripple-color: transparent;
-
   position: relative;
   z-index: 2;
-
-  // flex: 1 lets buttons fill available pill width evenly
   flex: 1 1 0 !important;
   min-width: 0 !important;
   max-width: none !important;
-
-  height: calc(58px - 8px) !important;
+  height: 50px !important;
   border-radius: 32px !important;
   margin: 4px 2px !important;
   padding: 0 !important;
   cursor: pointer;
-
+  overflow: visible;
   transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-
-  // Active capsule highlight
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 2px;
-    border-radius: 28px;
-    background: rgba(0, 122, 255, 0.11);
-    transform: scale(0.50);
-    opacity: 0;
-    transition:
-      transform 0.40s cubic-bezier(0.34, 1.56, 0.64, 1),
-      opacity 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  // Hover tint (mouse only)
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 2px;
-    border-radius: 28px;
-    background: rgba(100, 100, 110, 0.08);
-    opacity: 0;
-    transition: opacity 0.22s ease;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  // Mouse hover — individual button
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      transform: scale(1.10) !important;
-
-      &::after {
-        opacity: 1;
-      }
-    }
-  }
-
-  // Press / tap feedback
-  &:active {
-    transform: scale(0.88) !important;
-    transition: transform 0.10s ease !important;
-  }
-
-  // Selected state
-  &.tab-selected {
-    --color: #007AFF;
-
-    &::before {
-      transform: scale(1);
-      opacity: 1;
-    }
-
-    ion-icon {
-      transform: scale(1.18) translateY(-1.5px) !important;
-      filter: drop-shadow(0 0 6px rgba(0, 122, 255, 0.38)) !important;
-    }
-
-    ion-label {
-      opacity: 1 !important;
-      transform: translateY(0) !important;
-      font-weight: 700 !important;
-      color: #007AFF !important;
-    }
-  }
 }
 
-// Dark mode buttons
-@media (prefers-color-scheme: dark) {
-  ion-tab-button {
-    --color: rgba(235, 235, 245, 0.55);
-    --color-selected: #0A84FF;
-
-    &::before {
-      background: rgba(10, 132, 255, 0.18);
-    }
-
-    &::after {
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    &.tab-selected {
-      --color: #0A84FF;
-
-      ion-icon {
-        filter: drop-shadow(0 0 7px rgba(10, 132, 255, 0.50)) !important;
-      }
-
-      ion-label {
-        color: #0A84FF !important;
-      }
-    }
-  }
+ion-tab-button::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  width: auto;
+  height: auto;
+  bottom: 2px;
+  border-radius: 28px;
+  background: rgba(0, 122, 255, 0.11);
+  transform: scale(0.5);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+  z-index: 0;
 }
 
-// ─── 3. Icons ─────────────────────────────────────────────────────────────────
+ion-tab-button::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  width: auto;
+  height: auto;
+  bottom: 2px;
+  border-radius: 28px;
+  background: rgba(100, 100, 110, 0.08);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+ion-tab-button.tab-selected { --color: #007aff; background: transparent; box-shadow: none; }
+ion-tab-button.tab-selected::before { transform: scale(1); opacity: 1; }
+ion-tab-button.tab-selected ion-icon { transform: scale(1.18) translateY(-1.5px) !important; filter: drop-shadow(0 0 6px rgba(0, 122, 255, 0.38)) !important; color: #007aff !important; }
+ion-tab-button.tab-selected ion-label { opacity: 1 !important; transform: translateY(0) !important; font-weight: 700 !important; color: #007aff !important; }
 
 ion-tab-button ion-icon {
   font-size: 22px !important;
   margin-bottom: 2px !important;
-  transition:
-    transform 0.40s cubic-bezier(0.34, 1.56, 0.64, 1),
-    filter 0.28s ease,
-    color 0.22s ease !important;
-  will-change: transform, filter;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease, color 0.22s ease !important;
   position: relative;
   z-index: 1;
 }
-
-// ─── 4. Labels ────────────────────────────────────────────────────────────────
 
 ion-tab-button ion-label {
   font-size: 10px !important;
@@ -297,422 +316,128 @@ ion-tab-button ion-label {
   line-height: 1 !important;
   opacity: 0.58 !important;
   transform: translateY(2px) !important;
-  transition:
-    opacity 0.25s ease,
-    transform 0.30s cubic-bezier(0.34, 1.56, 0.64, 1),
-    font-weight 0.22s ease,
-    color 0.22s ease !important;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), font-weight 0.22s ease, color 0.22s ease !important;
   position: relative;
   z-index: 1;
 }
 
-@media (prefers-color-scheme: dark) {
-  ion-tab-button ion-label {
-    opacity: 0.48 !important;
-  }
+@media (hover: hover) and (pointer: fine) {
+  ion-tab-bar:hover { transform: translateX(-50%) translateY(-3px) !important; background: rgba(248, 248, 253, 0.88) !important; }
+  ion-tab-button:hover { transform: scale(1.1) !important; }
+  ion-tab-button:hover::before { transform: scale(0.92); opacity: 0.72; }
+  ion-tab-button:hover::after { opacity: 0; }
 }
-
-// ─── 5. Page content — push above the floating bar ────────────────────────────
-
-ion-tabs {
-  ion-router-outlet {
-    margin-bottom: calc(58px + 12px + env(safe-area-inset-bottom) + 8px) !important;
-  }
-}
-
-// ─── 6. TABLET ≥ 600px ────────────────────────────────────────────────────────
 
 @media (min-width: 600px) {
-  ion-tab-bar {
-    bottom: calc(18px + env(safe-area-inset-bottom)) !important;
-    height: 62px !important;
-    border-radius: 42px !important;
-    width: calc(100% - 48px) !important;
-    max-width: 460px !important;
-    padding: 0 6px !important;
-  }
-
-  ion-tab-button {
-    height: calc(62px - 8px) !important;
-    border-radius: 36px !important;
-  }
-
-  ion-tab-button ion-icon {
-    font-size: 23px !important;
-  }
-
-  ion-tab-button ion-label {
-    font-size: 10.5px !important;
-  }
-
-  ion-tabs ion-router-outlet {
-    margin-bottom: calc(62px + 18px + env(safe-area-inset-bottom) + 8px) !important;
-  }
+  ion-tab-bar { bottom: calc(18px + env(safe-area-inset-bottom)) !important; height: 62px !important; border-radius: 42px !important; width: calc(100% - 48px) !important; max-width: 460px !important; padding: 0 6px !important; }
+  ion-tab-button { height: 54px !important; border-radius: 36px !important; }
+  ion-tab-button ion-icon { font-size: 23px !important; }
+  ion-tab-button ion-label { font-size: 10.5px !important; }
 }
-
-// ─── 7. DESKTOP ≥ 960px ───────────────────────────────────────────────────────
 
 @media (min-width: 960px) {
-  ion-tab-bar {
-    bottom: 28px !important;
-    height: 64px !important;
-    border-radius: 44px !important;
-    width: auto !important;
-    min-width: 420px !important;
-    max-width: 520px !important;
-    padding: 0 10px !important;
-  }
-
-  ion-tab-button {
-    flex: 0 0 100px !important;
-    height: calc(64px - 8px) !important;
-    border-radius: 38px !important;
-    margin: 4px 4px !important;
-  }
-
-  ion-tab-button ion-icon {
-    font-size: 24px !important;
-    margin-bottom: 3px !important;
-  }
-
-  ion-tab-button ion-label {
-    font-size: 11px !important;
-    opacity: 0.65 !important;
-  }
-
-  ion-tabs ion-router-outlet {
-    margin-bottom: calc(64px + 28px + 12px) !important;
-  }
+  ion-tab-bar { bottom: 28px !important; height: 64px !important; border-radius: 44px !important; width: auto !important; min-width: 420px !important; max-width: 520px !important; padding: 0 10px !important; }
+  ion-tab-button { flex: 0 0 100px !important; height: 56px !important; border-radius: 38px !important; margin: 4px !important; }
+  ion-tab-button ion-icon { font-size: 24px !important; margin-bottom: 3px !important; }
+  ion-tab-button ion-label { font-size: 11px !important; opacity: 0.65 !important; }
 }
-
-// ─── 8. LANDSCAPE (phone horizontal) ─────────────────────────────────────────
 
 @media (max-height: 500px) and (orientation: landscape) {
-  ion-tab-bar {
-    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
-    height: 50px !important;
-    border-radius: 32px !important;
-    max-width: 340px !important;
-    padding: 0 4px !important;
-  }
-
-  ion-tab-button {
-    height: calc(50px - 6px) !important;
-    border-radius: 28px !important;
-    margin: 3px 2px !important;
-  }
-
-  ion-tab-button ion-icon {
-    font-size: 20px !important;
-  }
-
-  ion-tab-button ion-label {
-    font-size: 9px !important;
-  }
-
-  ion-tabs ion-router-outlet {
-    margin-bottom: calc(50px + 8px + env(safe-area-inset-bottom)) !important;
-  }
+  ion-tab-bar { bottom: calc(8px + env(safe-area-inset-bottom)) !important; height: 50px !important; border-radius: 32px !important; max-width: 340px !important; padding: 0 4px !important; }
+  ion-tab-button { height: 44px !important; border-radius: 28px !important; margin: 3px 2px !important; }
+  ion-tab-button ion-icon { font-size: 20px !important; }
+  ion-tab-button ion-label { font-size: 9px !important; }
 }
-
-// ─── 9. Entrance animation ────────────────────────────────────────────────────
 
 @keyframes lgTabBarIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(40px) scale(0.84);
-    filter: blur(6px);
-  }
-
-  55% {
-    opacity: 1;
-    filter: blur(0);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
-    filter: blur(0);
-  }
+  0% { opacity: 0; transform: translateX(-50%) translateY(40px) scale(0.84); filter: blur(6px); }
+  55% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); filter: blur(0); }
 }
 
+/* Responsive application layout: phone, foldable, tablet, and web. */
+html { min-width: 280px; }
+body { overflow-x: hidden; }
+img, video, canvas { max-width: 100%; }
+input, select, textarea, button { min-width: 0; }
+.mt-screen { min-height: 100dvh; }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//  iOS 26 Liquid Glass · Responsive Floating Pill TOP BAR
-//  Matches the bottom tab bar glass language exactly
-//  Breakpoints:  Mobile (default)  |  Tablet ≥600px  |  Desktop ≥960px
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ─── Strip Ionic header defaults & float the pill ────────────────────────────
-
-ion-header {
-  // Kill Ionic chrome
-  --background: transparent;
-  --border-width: 0 !important;
-  --border-color: transparent !important;
-  contain: none !important;
-
-  // Floating pill geometry — MOBILE FIRST
-  position: fixed !important;
-  top:       calc(10px + env(safe-area-inset-top)) !important;
-  left:      16px !important;      // pinned to left edge with 16px margin
-  transform: none !important;      // no centering transform needed
-  // Compact pill — just wide enough for logo + title
-  width: fit-content !important;
-  min-width: 200px !important;
-  max-width: min(320px, calc(100vw - 32px)) !important;
-  height: 50px !important;
-  border-radius: 32px !important;
-  z-index: 9998 !important; // just below tab bar (9999)
-  overflow: hidden !important;
-
-  // Liquid Glass — light
-  background: rgba(242, 242, 247, 0.72) !important;
-  backdrop-filter: blur(32px) saturate(200%) brightness(1.04) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.04) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.52) !important;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.05),
-    0 6px 18px rgba(0, 0, 0, 0.10),
-    0 16px 36px rgba(0, 0, 0, 0.06),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.72),
-    inset 0 -1.5px 0 rgba(0, 0, 0, 0.04) !important;
-
-  // Specular top-sheen
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(175deg,
-        rgba(255, 255, 255, 0.32) 0%,
-        rgba(255, 255, 255, 0.05) 44%,
-        transparent 66%);
-    pointer-events: none;
-    z-index: 10;
-  }
-
-  animation: lgHeaderFade 0.12s ease both !important;
-  animation-delay: 0s !important;
-
-  transition:
-    width      0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    box-shadow 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    background 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-
-  &[collapse='condense'] {
-    display: none !important;
-  }
+@media (max-width: 479px) {
+  .mt-screen { width: 100% !important; padding-inline: var(--mt-topbar-inset); }
+  .mt-topbar { grid-template-columns: minmax(64px, 82px) 1fr minmax(78px, 92px); }
+  .mt-wordmark { font-size: clamp(17px, 5vw, 20px); }
+  .mt-card { border-radius: clamp(17px, 5vw, 22px); }
+  .filter-row { grid-template-columns: 1fr !important; }
+  .filter-row select { width: 100%; }
+  .post-body { grid-template-columns: minmax(96px, 35vw) 1fr !important; }
+  .post-body > img { width: 100% !important; }
+  .stamp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
 
-// Dark mode header
-@media (prefers-color-scheme: dark) {
-  ion-header {
-    background: rgba(26, 26, 32, 0.82) !important;
-    border-color: rgba(255, 255, 255, 0.10) !important;
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.25),
-      0 6px 18px rgba(0, 0, 0, 0.45),
-      0 16px 36px rgba(0, 0, 0, 0.26),
-      inset 0 1.5px 0 rgba(255, 255, 255, 0.08),
-      inset 0 -1.5px 0 rgba(0, 0, 0, 0.28) !important;
-
-    &::after {
-      background: linear-gradient(175deg,
-          rgba(255, 255, 255, 0.07) 0%,
-          rgba(255, 255, 255, 0.02) 44%,
-          transparent 66%);
-    }
+@media (max-width: 359px) {
+  :root {
+    --mt-topbar-inset: 18px;
+    --mt-topbar-offset: max(20px, calc(env(safe-area-inset-top) + 16px));
   }
+  .home-topbar .mt-brand { width: 58px; }
+  .home-topbar .mt-wordmark { font-size: 17px; }
+  .welcome-copy { left: 16px !important; }
+  .hero-wira { width: 92px !important; }
+  .destination-pill { max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .travel-summary button { padding: 7px !important; gap: 6px !important; }
+  .summary-icon { flex-basis: 40px !important; height: 40px !important; }
+  .journey-title, .journey-stops { gap: 8px; }
+  .action-card { grid-template-columns: 38px minmax(0, 1fr) 58px !important; }
+  .photo-row { grid-template-columns: 1fr 1fr !important; }
+  .photo-row button { grid-column: 1 / -1; }
+  .verification-preview, .balance-card, .active-mission { grid-template-columns: 56px minmax(0, 1fr) !important; }
+  .verification-preview .mt-primary, .balance-card p, .active-mission > strong { grid-column: 1 / -1; width: 100%; }
+  .stamp-feature, .reward-hero, .challenge-hero { grid-template-columns: 1fr !important; }
 }
 
-// ─── ion-toolbar inside the pill ─────────────────────────────────────────────
-
-ion-toolbar {
-  --background: transparent !important;
-  --border-width: 0 !important;
-  --border-color: transparent !important;
-  --padding-top: 0 !important;
-  --padding-bottom: 0 !important;
-  --padding-start: 10px !important; // logo slot hugs the left edge
-  --padding-end: 16px !important;
-  --min-height: 50px !important;
-  background: transparent !important;
-
-  // Keep the slot items vertically centred
-  display: flex !important;
-  align-items: center !important;
+@media (min-width: 480px) and (max-width: 839px) {
+  .mt-screen { width: min(100%, 760px) !important; }
+  .mt-screen { padding-inline: var(--mt-topbar-inset); }
+  .home-body { padding-inline: clamp(20px, 4vw, 34px) !important; }
+  .quick-grid { gap: clamp(10px, 2vw, 18px) !important; }
+  .post-body { grid-template-columns: minmax(150px, 34%) 1fr !important; }
+  .post-body > img { width: 100% !important; }
+  .stamp-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+  .settings-list button { min-height: 44px !important; }
 }
 
-// ─── ion-buttons (logo wrapper) ──────────────────────────────────────────────
+@media (min-width: 840px) {
+  ion-content { --padding-bottom: 122px; }
+  .home-hero, .home-body { width: min(calc(100% - 48px), 1040px); margin-inline: auto; }
+  .mt-screen { width: min(calc(100% - 48px), 1040px) !important; padding: var(--mt-topbar-offset) var(--mt-topbar-inset) 132px; }
+  .mt-topbar { grid-template-columns: 120px 1fr 120px; align-items: center; }
+  .mt-brand { width: 92px; height: 42px; }
+  .mt-wordmark { font-size: 24px; }
+  .mt-page-heading { padding-block: 22px 14px; }
+  .mt-page-heading h1 { font-size: clamp(24px, 3vw, 32px); }
+  .mt-page-heading p { font-size: 12px; }
+  .mt-card { border-radius: 26px; }
 
-ion-buttons[slot='start'] {
-  margin: 0 6px 0 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-shrink: 0 !important;
+  .community-tabs, .filter-row { max-width: 680px; margin-inline: auto; }
+  .post-card, .tip-form, .verify-place, .verify-question, .verify-reward, .notice-card { max-width: 820px; margin-inline: auto; }
+  .post-body { grid-template-columns: minmax(220px, 34%) 1fr !important; gap: 20px !important; }
+  .post-body > img { width: 100% !important; height: 190px !important; }
+  .post-body h2 { font-size: 16px !important; }
+  .post-body p { font-size: 10px !important; }
+
+  .profile-card, .challenge-banner, .settings-list, .balance-card, .season-card, .transaction-card, .earn-card, .passport-progress, .stamp-feature, .guide-card, .preview-card, .challenge-hero, .active-mission, .next-reward, .reward-hero, .unlock-list, .digital-first { max-width: 900px; margin-inline: auto; }
+  .stat-grid { max-width: 900px; margin-inline: auto !important; gap: 16px !important; }
+  .stamp-grid { grid-template-columns: repeat(8, minmax(0, 1fr)) !important; max-width: 900px; margin-inline: auto; }
+  .settings-list button { min-height: 48px !important; }
+  .settings-list b { font-size: 10px !important; }
+  .settings-list small { font-size: 8px !important; }
 }
 
-// ─── ion-title inside the pill ────────────────────────────────────────────────
-
-ion-title {
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.01em !important;
-  color: rgba(20, 20, 25, 0.90) !important;
-  text-align: left !important; // ← left-aligned
-  padding-inline-start: 0 !important;
-  padding-inline-end: 0 !important;
-  position: static !important; // override Ionic's absolute positioning
-  flex: 1 1 auto !important;
-}
-
-// ─── Logo placeholder slot ────────────────────────────────────────────────────
-// Replace the inner comment with your <img src="…"> or <svg>.
-// The slot is 34×34px on mobile; it scales slightly on tablet/desktop.
-
-.toolbar-logo-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1.5px dashed rgba(0, 122, 255, 0.40);
-  background: rgba(0, 122, 255, 0.06);
-  flex-shrink: 0;
-  overflow: hidden;
-  transition: border-color 0.2s ease, background 0.2s ease;
-
-  // Once you add an image/svg, the dashed border auto-hides:
-  &:has(img, svg) {
-    border: none;
-    background: transparent;
-  }
-
-  img,
-  svg {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .toolbar-logo-slot {
-    border-color: rgba(10, 132, 255, 0.40);
-    background: rgba(10, 132, 255, 0.08);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  ion-title {
-    color: rgba(245, 245, 250, 0.92) !important;
-  }
-}
-
-// Large/condense title — hidden since we hide [collapse=condense] headers
-ion-title[size='large'] {
-  display: none !important;
-}
-
-// ─── Push page content below the floating header ─────────────────────────────
-
-ion-content {
-  --padding-top: calc(50px + 10px + env(safe-area-inset-top) + 12px) !important;
-}
-
-// ─── TABLET ≥ 600px ───────────────────────────────────────────────────────────
-
-@media (min-width: 600px) {
-  ion-header {
-    left:      20px !important;    // slightly more margin on tablet
-    transform: none !important;
-    top: calc(14px + env(safe-area-inset-top)) !important;
-    height: 54px !important;
-    border-radius: 36px !important;
-    width: fit-content !important;
-    min-width: 220px !important;
-    max-width: min(360px, calc(100vw - 48px)) !important;
-  }
-
-  ion-toolbar {
-    --min-height: 54px !important;
-  }
-
-  ion-title {
-    font-size: 17px !important;
-  }
-
-  ion-content {
-    --padding-top: calc(54px + 14px + env(safe-area-inset-top) + 12px) !important;
-  }
-}
-
-// ─── DESKTOP ≥ 960px ──────────────────────────────────────────────────────────
-
-@media (min-width: 960px) {
-  ion-header {
-    left:      24px !important;    // comfortable left margin on desktop
-    transform: none !important;
-    top: 18px !important;
-    height: 56px !important;
-    border-radius: 40px !important;
-    width: fit-content !important;
-    min-width: 240px !important;
-    max-width: 380px !important;
-  }
-
-  ion-toolbar {
-    --min-height: 56px !important;
-    --padding-start: 24px !important;
-    --padding-end: 24px !important;
-  }
-
-  ion-title {
-    font-size: 17px !important;
-  }
-
-  ion-content {
-    --padding-top: calc(56px + 18px + 12px) !important;
-  }
-}
-
-// ─── LANDSCAPE phones ────────────────────────────────────────────────────────
-
-@media (max-height: 500px) and (orientation: landscape) {
-  ion-header {
-    top: calc(6px + env(safe-area-inset-top)) !important;
-    height: 44px !important;
-    border-radius: 28px !important;
-    max-width: 340px !important;
-  }
-
-  ion-toolbar {
-    --min-height: 44px !important;
-  }
-
-  ion-title {
-    font-size: 15px !important;
-  }
-
-  ion-content {
-    --padding-top: calc(44px + 6px + env(safe-area-inset-top) + 8px) !important;
-  }
-}
-
-// ─── Header fade-in — opacity only, NO position/scale change ─────────────────
-// Using translate/scale here caused the pill to visibly jump on every tab switch
-// because each tab mounts a new ion-header which re-triggers the animation.
-
-@keyframes lgHeaderFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-// App-wide background color
-ion-content {
-  --background: linear-gradient(180deg, #FBFDFF 0%, #F4F9FF 62%, #ECF4FF 100%);
+@media (min-width: 1100px) {
+  .home-hero, .home-body { width: min(calc(100% - 64px), 1160px); margin-inline: auto; }
+  .mt-screen { width: min(calc(100% - 64px), 1160px) !important; }
+  .home-hero { height: clamp(360px, 48vw, 560px) !important; }
+  .home-body { min-height: 520px !important; }
+  .quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 }

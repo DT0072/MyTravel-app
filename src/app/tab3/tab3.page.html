@@ -1,16 +1,92 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <!-- Logo slot: replace the div with your <img> or <svg> -->
-    <ion-buttons slot="start">
-      <div class="toolbar-logo-slot">
-        <!-- e.g. <img src="assets/logo.svg" alt="Logo" /> -->
-      </div>
-    </ion-buttons>
-
-    <ion-title>Community</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
-  <app-explore-container name="Community page"></app-explore-container>
+  <!-- Shares community travel advice, verification tasks, and notices. -->
+  <div class="mt-screen community-screen">
+    <app-topbar
+      [language]="language"
+      [notificationCount]="savedNoticeCount"
+      (languageChange)="updateLanguage($event)"
+      (notificationClick)="openNotices()"
+    ></app-topbar>
+
+    <ng-container *ngIf="view === 'community'">
+      <div class="mt-page-heading"><h1>{{ t(copy.pageTitle) }}</h1><p>{{ t(copy.pageSubtitle) }}</p></div>
+      <div class="community-tabs"><button type="button" [class.active]="communityTab === 'tips'" (click)="setCommunityTab('tips')">{{ t(copy.tipsTab) }}</button><button type="button" [class.active]="communityTab === 'verification'" (click)="setCommunityTab('verification')">{{ t(copy.verificationTab) }}</button></div>
+
+      <ng-container *ngIf="communityTab === 'tips'; else verificationFeed">
+        <div class="filter-row">
+          <select [(ngModel)]="filterState">
+            <option value="All states">{{ t(copy.allStates) }}</option>
+            <option *ngFor="let state of stateOptions" [ngValue]="state">{{ state }}</option>
+          </select>
+          <select [(ngModel)]="filterCategory">
+            <option value="All">{{ t(copy.allCategories) }}</option>
+            <option *ngFor="let category of categoryOptions" [ngValue]="category">{{ categoryLabel(category) }}</option>
+          </select>
+          <select [(ngModel)]="postSort">
+            <option value="Latest">{{ t(copy.latest) }}</option>
+            <option value="Most helpful">{{ t(copy.mostHelpful) }}</option>
+          </select>
+        </div>
+        <section class="mt-card post-card mt-reveal" *ngFor="let post of filteredPosts">
+          <div class="post-top"><b>● {{ post.state }}</b><span [class.pending]="post.status === 'In review'">{{ postStatusLabel(post.status) }}</span></div>
+          <div class="post-body"><img [src]="post.image" [alt]="t(post.place)"><div><div class="author"><span>{{ post.initials }}</span><b>{{ post.author }}</b><small>{{ t(post.date) }}</small></div><h2>{{ t(post.place) }}</h2><p>{{ t(post.copy) }}</p><strong>{{ postPointsLabel(post) }}</strong></div></div>
+          <div class="post-actions"><button type="button" [class.active]="post.reaction === 'helpful'" (click)="reactToPost(post, 'helpful')"><ion-icon name="heart-outline"></ion-icon> {{ t(copy.helpful) }}</button><button type="button" [class.active]="post.reaction === 'not-helpful'" (click)="reactToPost(post, 'not-helpful')"><ion-icon name="thumbs-down-outline"></ion-icon> {{ t(copy.notHelpful) }}</button><button type="button" (click)="showToast(t(copy.reportOpened))"><ion-icon name="flag-outline"></ion-icon> {{ t(copy.report) }}</button></div>
+        </section>
+        <section class="mt-card empty-data-card" *ngIf="filteredPosts.length === 0">
+          <h2>{{ t(copy.noPostsTitle) }}</h2>
+          <p>{{ t(copy.noPostsCopy) }}</p>
+        </section>
+        <button class="mt-primary add-tip" type="button" (click)="openAddTip()">{{ t(copy.addTip) }}</button>
+        <button class="mt-card mission-card" type="button" (click)="startVerification()"><img src="assets/mytravel/manja-ui.png" alt="Manja"><span><b>{{ t(copy.missionTitle) }}</b><small>{{ t(copy.missionCopy) }}</small><i><u></u></i></span></button>
+      </ng-container>
+
+      <ng-template #verificationFeed>
+        <section class="mt-card verification-preview" *ngIf="verificationTask; else noVerificationFeed">
+          <img src="assets/mytravel/wira-ui.png" alt="Wira">
+          <div><p>{{ t(copy.verificationNearby) }}</p><h2>{{ t(verificationTask.place) }}</h2><small>{{ t(copy.verificationPreviewCopy) }}</small></div>
+          <button class="mt-primary" type="button" (click)="startVerification()">{{ t(copy.start) }}</button>
+        </section>
+        <ng-template #noVerificationFeed>
+          <section class="mt-card empty-data-card">
+            <h2>{{ t(copy.noVerificationTitle) }}</h2>
+            <p>{{ t(copy.noVerificationCopy) }}</p>
+          </section>
+        </ng-template>
+      </ng-template>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'add'">
+      <div class="sub-heading"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToCommunity)" (click)="returnToCommunity()"><ion-icon name="arrow-back"></ion-icon></button><h1>{{ t(copy.addTravelTip) }}</h1></div>
+      <div class="steps"><b>1<small>{{ t(copy.stepDetails) }}</small></b><span>2<small>{{ t(copy.stepMedia) }}</small></span><span>3<small>{{ t(copy.stepReview) }}</small></span></div>
+      <form class="mt-card tip-form" #tipForm="ngForm" (ngSubmit)="submitTip()"><label>{{ t(copy.location) }}<input required name="location" [(ngModel)]="tipDraft.location" [placeholder]="t(copy.locationPlaceholder)"></label><label>{{ t(copy.stateOrTerritory) }}<select name="state" [(ngModel)]="tipDraft.state"><option *ngFor="let state of stateOptions" [ngValue]="state">{{ state }}</option></select></label><label>{{ t(copy.categoryLabel) }}<select name="category" [(ngModel)]="tipDraft.category"><option *ngFor="let category of categoryOptions" [ngValue]="category">{{ categoryLabel(category) }}</option></select></label><label>{{ t(copy.yourTip) }}<textarea required minlength="20" name="tip" [(ngModel)]="tipDraft.tip" [placeholder]="t(copy.yourTipPlaceholder)"></textarea></label><div class="photo-row"><img src="assets/Thean-ho-temple.png" alt="Museum reference"><img [src]="selectedPhotoPreview || 'assets/home_1.png'" [alt]="selectedPhotoName || 'Gallery reference'"><button type="button" (click)="photoInput.click()">+ {{ selectedPhotoName ? t(copy.changePhoto) : t(copy.addPhoto) }}</button><input #photoInput class="visually-hidden" type="file" accept="image/*" (change)="handlePhotoSelection($event)"></div><label class="toggle-row"><span><b>{{ t(copy.accessible) }}</b><small>{{ t(copy.accessibleCopy) }}</small></span><input type="checkbox" name="accessible" [(ngModel)]="tipDraft.accessible"><i></i></label><label class="toggle-row"><span><b>{{ t(copy.hearingAccessible) }}</b><small>{{ t(copy.hearingAccessibleCopy) }}</small></span><input type="checkbox" name="hearingAccessible" [(ngModel)]="tipDraft.hearingAccessible"><i></i></label><label class="confirm-row"><input type="checkbox" name="confirmed" [(ngModel)]="tipDraft.confirmed" required> {{ t(copy.confirmAccuracy) }}</label><div class="form-actions"><button class="mt-secondary" type="button" (click)="saveDraft()">{{ t(copy.saveDraft) }}</button><button class="mt-primary" type="submit" [disabled]="tipForm.invalid">{{ t(copy.submitForReview) }}</button></div></form>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'verification'">
+      <div class="sub-heading"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToVerification)" (click)="returnToCommunity()"><ion-icon name="arrow-back"></ion-icon></button><h1>{{ t(copy.verificationTitle) }}</h1></div>
+      <ng-container *ngIf="verificationTask; else noVerificationDetail">
+        <section class="mt-card verify-place"><img [src]="verificationTask.image" [alt]="t(verificationTask.place)"><div><b>{{ t(verificationTask.place) }}</b><strong>{{ t(verificationTask.badge) }}</strong><small>{{ t(verificationTask.address) }}</small></div></section>
+        <section class="mt-card verify-question"><span><ion-icon name="time-outline"></ion-icon></span><h2 class="mt-multiline">{{ t(verificationTask.question) }}</h2><small>{{ t(verificationTask.lastUpdated) }}</small><div><button type="button" [class.active]="verificationAnswer === 'yes'" (click)="verificationAnswer='yes'">✓ {{ t(copy.yes) }}</button><button type="button" [class.active]="verificationAnswer === 'no'" (click)="verificationAnswer='no'">× {{ t(copy.no) }}</button></div></section>
+        <section class="mt-card verify-reward"><img src="assets/mytravel/wira-ui.png" alt="Wira"><span><b>{{ t(copy.wiraReviewing) }}</b><small>{{ t(copy.pointsAwardedAfterVerification) }}</small></span><strong>+{{ verificationTask.points }}<br>{{ t(copy.points) }}</strong></section>
+        <button class="mt-primary" type="button" [disabled]="!verificationAnswer" (click)="submitVerification()">{{ t(copy.submitVerification) }}</button>
+      </ng-container>
+      <ng-template #noVerificationDetail>
+        <section class="mt-card empty-data-card">
+          <h2>{{ t(copy.noVerificationTitle) }}</h2>
+          <p>{{ t(copy.noVerificationCopy) }}</p>
+        </section>
+      </ng-template>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'notices'">
+      <div class="sub-heading"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToProfile)" (click)="returnToCommunity()"><ion-icon name="arrow-back"></ion-icon></button><h1>{{ t(copy.travelNotices) }}</h1></div>
+      <div class="notice-stats"><span><b>{{ criticalNoticeCount }}</b>{{ t(copy.critical) }}</span><span><b>{{ disruptionNoticeCount }}</b>{{ t(copy.disruption) }}</span><span><b>{{ advisoryNoticeCount }}</b>{{ t(copy.advisory) }}</span></div><div class="notice-tabs"><button type="button" [class.active]="noticeFilter === 'All'" (click)="setNoticeFilter('All')">{{ t(copy.allNotices) }} ({{ notices.length }})</button><button type="button" [class.active]="noticeFilter === 'Transit'" (click)="setNoticeFilter('Transit')">{{ t(copy.transit) }}</button><button type="button" [class.active]="noticeFilter === 'Destinations'" (click)="setNoticeFilter('Destinations')">{{ t(copy.destinations) }}</button><button type="button" [class.active]="noticeFilter === 'Weather'" (click)="setNoticeFilter('Weather')">{{ t(copy.weather) }}</button></div>
+      <section class="mt-card notice-card" *ngFor="let notice of filteredNotices" [style.border-left-color]="notice.color"><span [style.background]="notice.color">!</span><div><small [style.color]="notice.color">{{ noticeLevelLabel(notice.level) }}</small><h2>{{ t(notice.title) }}</h2><p>{{ t(notice.place) }}</p><button type="button" (click)="saveNotice(notice)">{{ notice.saved ? t(copy.savedNotice) : t(copy.saveNotice) }}</button><button type="button" (click)="shareNotice(notice)">{{ t(copy.share) }}</button></div><time>{{ notice.time }}</time></section>
+      <section class="mt-card empty-data-card" *ngIf="filteredNotices.length === 0">
+        <h2>{{ t(copy.noNoticesTitle) }}</h2>
+        <p>{{ t(copy.noNoticesCopy) }}</p>
+      </section>
+    </ng-container>
+  </div>
+
+  <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
 </ion-content>

@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { AccessibilityPreferencesService } from './services/accessibility-preferences.service';
+import { AppStateService } from './services/app-state.service';
 
 @Component({
   selector: 'app-root',
@@ -7,5 +9,11 @@ import { Component } from '@angular/core';
   standalone: false,
 })
 export class AppComponent {
-  constructor() {}
+  private readonly accessibilityPreferencesService = inject(AccessibilityPreferencesService);
+  private readonly appStateService = inject(AppStateService);
+
+  constructor() {
+    this.accessibilityPreferencesService.initialize();
+    this.appStateService.initialize();
+  }
 }

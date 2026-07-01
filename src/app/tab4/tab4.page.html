@@ -1,16 +1,61 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <!-- Logo slot: replace the div with your <img> or <svg> -->
-    <ion-buttons slot="start">
-      <div class="toolbar-logo-slot">
-        <!-- e.g. <img src="assets/logo.svg" alt="Logo" /> -->
-      </div>
-    </ion-buttons>
-
-    <ion-title>Profile</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
-  <app-explore-container name="Profile page"></app-explore-container>
+  <!-- Manages the traveller's identity, rewards, passport, and preferences. -->
+  <div class="mt-screen profile-screen">
+    <app-topbar
+      [language]="language"
+      [showNotification]="false"
+      (languageChange)="updateLanguage($event)"
+    ></app-topbar>
+
+    <ng-container *ngIf="view === 'profile'">
+      <div class="mt-page-heading"><h1>{{ t(copy.pageTitle) }}</h1><p>{{ t(copy.pageSubtitle) }}</p></div>
+      <section class="mt-card profile-card"><span>{{ t(copy.travelerInitials) }}</span><div><h2>{{ t(copy.travelerName) }}</h2><p>{{ t(copy.myDigitalVerified) }}</p><b>{{ t(copy.ecoExplorer) }}</b></div></section>
+      <section class="stat-grid"><button class="mt-card" type="button" (click)="open('points')"><span><ion-icon name="leaf-outline"></ion-icon></span><div><strong>{{ ecoPoints | number }}</strong><small>{{ t(copy.ecoPoints) }}</small></div></button><button class="mt-card" type="button" (click)="open('passport')"><span><ion-icon name="book-outline"></ion-icon></span><div><b>{{ t(copy.digitalPassport) }}</b><strong>{{ passportCollectedCount }}/{{ passportTotalCount }}</strong><i><u></u></i></div></button></section>
+      <button class="mt-card challenge-banner" type="button" (click)="open('challenges')"><img src="assets/mytravel/manja-ui.png" alt="Manja"><span><b>{{ t(copy.challengeBannerTitle) }}</b><small class="mt-multiline">{{ t(copy.challengeBannerCopy) }}</small></span></button>
+      <section class="mt-card settings-list"><h2>{{ t(copy.accountSettings) }}</h2><button *ngFor="let item of menuItems" type="button" [class.signout]="item.action === 'signout'" (click)="handleMenu(item)"><ion-icon [name]="item.icon"></ion-icon><span><b>{{ t(item.title) }}</b><small>{{ menuDescription(item) }}</small></span><ion-icon name="chevron-forward" *ngIf="item.action !== 'signout'"></ion-icon></button></section>
+    </ng-container>
+
+    <ng-container *ngIf="view !== 'profile'">
+      <div class="sub-heading"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToProfile)" (click)="open('profile')"><ion-icon name="arrow-back"></ion-icon></button><h1>{{ viewTitle }}</h1></div>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'points'">
+      <section class="mt-card balance-card"><span><ion-icon name="leaf-outline"></ion-icon></span><div><small>{{ t(copy.currentBalance) }}</small><strong>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</strong></div><p class="mt-multiline">{{ t(copy.balanceCardCopy) }}</p></section>
+      <section class="mt-card season-card"><div><h2>{{ t(copy.seasonTitle) }}</h2><p>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</p><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><button type="button" (click)="open('challenges')">{{ t(copy.viewAllMissions) }}</button></div><img src="assets/mytravel/wira-ui.png" alt="Wira"><img src="assets/mytravel/manja-ui.png" alt="Manja"></section>
+      <div class="segment-row"><button type="button" [class.active]="transactionFilter === 'All'" (click)="selectTransactionFilter('All')">{{ t(copy.filterAll) }}</button><button type="button" [class.active]="transactionFilter === 'Earned'" (click)="selectTransactionFilter('Earned')">{{ t(copy.filterEarned) }}</button><button type="button" [class.active]="transactionFilter === 'Pending'" (click)="selectTransactionFilter('Pending')">{{ t(copy.filterPending) }}</button></div>
+      <section class="mt-card transaction-card"><h2>{{ t(copy.transactionHistory) }}</h2><div *ngFor="let transaction of filteredTransactions"><span [style.background]="transaction.accent"><ion-icon name="leaf-outline"></ion-icon></span><div><b>{{ t(transaction.title) }}</b><small>{{ t(transaction.subtitle) }}</small></div><strong>{{ transaction.points }}</strong></div><p class="empty-state" *ngIf="filteredTransactions.length === 0">{{ t(copy.noTransactions).replace('{filter}', transactionFilterLabel(transactionFilter).toLowerCase()) }}</p></section>
+      <section class="mt-card earn-card"><h2>{{ t(copy.howToEarn) }}</h2><div><span><b>{{ t(copy.earnTransit) }}</b><small>{{ t(copy.earnTransitCopy) }}</small></span><span><b>{{ t(copy.earnVisits) }}</b><small>{{ t(copy.earnVisitsCopy) }}</small></span><span><b>{{ t(copy.earnCommunity) }}</b><small>{{ t(copy.earnCommunityCopy) }}</small></span><span><b>{{ t(copy.earnVerification) }}</b><small>{{ t(copy.earnVerificationCopy) }}</small></span></div></section>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'passport'">
+      <section class="mt-card passport-progress"><span><ion-icon name="book-outline"></ion-icon></span><div><strong>{{ passportCollectedCount }}/{{ passportTotalCount }}</strong><small>{{ t(copy.digitalPassport) }}</small><div class="mt-progress"><span [style.width]="passportProgressWidth"></span></div></div><button type="button" (click)="open('reward')">{{ t(copy.viewRewards) }}</button></section>
+      <div class="passport-tabs"><button type="button" [class.active]="passportFilter === 'All'" (click)="selectPassportFilter('All')">{{ t(copy.passportAll) }} ({{ passportTotalCount }})</button><button type="button" [class.active]="passportFilter === 'States'" (click)="selectPassportFilter('States')">{{ t(copy.passportStates) }} ({{ passportStateCount }})</button><button type="button" [class.active]="passportFilter === 'Federal Territories'" (click)="selectPassportFilter('Federal Territories')">{{ t(copy.passportFederal) }} ({{ passportFederalCount }})</button></div><h2 class="section-label">{{ passportSectionLabel }}</h2>
+      <div class="stamp-grid"><button *ngFor="let stamp of filteredStamps" type="button" [class.active]="stamp.active" [class.selected]="selectedStamp?.name === stamp.name" (click)="selectStamp(stamp)"><span><img [src]="stamp.image" [alt]="stamp.name + ' passport stamp'"></span><small>{{ stamp.name }}</small><i *ngIf="stamp.active">✓</i></button></div>
+      <section class="mt-card empty-data-card" *ngIf="filteredStamps.length === 0"><h2>{{ t(copy.noPassportData) }}</h2><p>{{ t(copy.noPassportCopy) }}</p></section>
+      <section class="mt-card stamp-feature" *ngIf="selectedStamp"><div><span><img [src]="selectedStamp.image" [alt]="selectedStamp.name + ' passport seal'"></span><h2>{{ selectedStamp.name }}</h2><b>{{ t(selectedStamp.label) }}</b><p>{{ t(selectedStamp.description) }}</p></div><img [src]="selectedStamp.heroImage" [alt]="selectedStamp.name + ' feature'"></section>
+      <section class="mt-card guide-card"><img src="assets/mytravel/manja-ui.png" alt="Manja"><span><b>{{ t(copy.manjaGuide) }}</b><small>{{ t(copy.manjaGuideCopy) }}</small></span></section>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'accessibility'">
+      <h2 class="section-label">{{ t(copy.appLanguage) }}</h2><section class="mt-card language-list"><label><input type="radio" name="lang" value="BM" [(ngModel)]="selectedAppLanguage"> {{ t(copy.malay) }}</label><label><input type="radio" name="lang" value="EN" [(ngModel)]="selectedAppLanguage"> {{ t(copy.english) }}</label></section>
+      <h2 class="section-label">{{ t(copy.textSize) }}</h2><div class="text-size-row" role="group" [attr.aria-label]="t(copy.textSize)"><button *ngFor="let size of textSizes" type="button" [class.active]="textSize === size" [attr.aria-pressed]="textSize === size" (click)="textSize = size">{{ textSizeLabel(size) }}</button></div>
+      <h2 class="section-label">{{ t(copy.accessibilitySettings) }}</h2><section class="accessibility-list" [attr.aria-label]="t(copy.accessibilitySettings)"><label *ngFor="let option of accessibilityOptions" class="mt-card"><span><b>{{ t(option.title) }}</b><small>{{ t(option.description) }}</small></span><input type="checkbox" [attr.aria-label]="t(option.title)" [(ngModel)]="settings[option.key]"><i></i></label></section>
+      <section class="mt-card preview-card" [class.preview-large]="textSize === 'Large'" [class.preview-extra-large]="textSize === 'Extra large'"><span><ion-icon name="train-outline"></ion-icon></span><div><h2>{{ t(copy.preview) }}</h2><b>{{ t(copy.previewTitle) }}</b><p>{{ t(copy.previewCopy) }}</p></div></section>
+      <section class="mt-card accessibility-summary"><b>{{ t(copy.savedPreferenceEffects) }}</b><small>{{ t(copy.savedPreferenceEffectsCopy) }}</small></section><button class="mt-primary" type="button" (click)="saveAccessibilitySettings()">{{ t(copy.saveSettings) }}</button><button class="mt-secondary reset-button" type="button" (click)="resetAccessibilitySettings()">{{ t(copy.resetDefaults) }}</button>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'challenges'">
+      <section class="mt-card challenge-hero"><div><img src="assets/mytravel/wira-ui.png" alt="Wira"><img src="assets/mytravel/manja-ui.png" alt="Manja"></div><span><h2 class="mt-multiline">{{ t(copy.challengeHeroTitle) }}</h2><small>{{ t(copy.seasonProgress) }}</small><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><b>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</b></span></section><h2 class="section-label">{{ t(copy.activeMissions) }}</h2>
+      <section class="mt-card active-mission" *ngFor="let mission of challengeMissions"><img [src]="mission.image" alt="Mascot"><div><b>{{ t(mission.title) }}</b><small>{{ t(mission.description) }}</small><div class="mt-progress"><span [style.width]="mission.progressWidth"></span></div><em>{{ mission.progress }}</em></div><strong>{{ t(mission.reward) }}</strong></section>
+      <section class="mt-card empty-data-card" *ngIf="challengeMissions.length === 0"><h2>{{ t(copy.noChallengeData) }}</h2><p>{{ t(copy.noChallengeCopy) }}</p></section>
+      <section class="mt-card next-reward"><span><small>{{ t(copy.nextReward) }}</small><h2>{{ t(copy.nextRewardTitle) }}</h2><p>{{ t(copy.nextRewardCopy) }}</p></span><button type="button" (click)="open('reward')">{{ t(copy.viewRewards) }}</button></section>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'reward'">
+      <section class="mt-card reward-hero"><div><img src="assets/mytravel/wira-ui.png" alt="Wira"><img src="assets/mytravel/manja-ui.png" alt="Manja"></div><span><small>{{ t(copy.collectibleBadge) }}</small><h2>Wira & Manja</h2><p>{{ t(copy.rewardHeroCopy) }}</p><em>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</em><label>{{ t(copy.yourProgress) }}</label><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><b>{{ ecoPoints | number }}</b></span></section><h2 class="section-label">{{ t(copy.howToUnlock) }}</h2>
+      <section class="unlock-list"><div class="mt-card" *ngFor="let item of unlockSteps"><span>{{ item.number }}</span><div><b>{{ t(item.title) }}</b><small>{{ t(item.description) }}</small></div></div></section><section class="mt-card digital-first"><h2>{{ t(copy.digitalRewardsFirst) }}</h2><p>{{ t(copy.digitalRewardsFirstCopy) }}</p></section><button class="reward-back" type="button" (click)="open('challenges')">{{ t(copy.backToChallenges) }}</button>
+    </ng-container>
+  </div>
+
+  <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
 </ion-content>

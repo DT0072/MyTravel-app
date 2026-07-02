@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   AccessibilityPreferencesService,
@@ -25,16 +25,9 @@ interface HomeEvent {
   targetPath: string;
 }
 
-interface SeededHomeEvent {
-  date: string;
-  title: LocalizedText;
-  description: LocalizedText;
-  targetPath: string;
-}
-
 const HOME_COPY = {
-  welcome: { EN: 'Welcome,', BM: 'Selamat datang,' },
-  travelerName: { EN: 'Traveler', BM: 'Pengembara' },
+  welcomeTitle: { EN: 'Welcome to MyTravel', BM: 'Selamat datang ke MyTravel' },
+  profileProviderPending: { EN: 'Profile provider pending', BM: 'Penyedia profil belum disambungkan' },
   destination: { EN: 'Featured destination', BM: 'Destinasi pilihan' },
   ecoPoints: { EN: 'Eco-Points', BM: 'Mata Eko' },
   digitalPassport: { EN: 'Digital Passport', BM: 'Pasport Digital' },
@@ -54,12 +47,25 @@ const HOME_COPY = {
     BM: 'Pilih laluan, masa berlepas, dan pilihan kebolehcapaian dalam Navigasi.',
   },
   planJourneyAction: { EN: 'Plan a journey', BM: 'Rancang perjalanan' },
+  featuredDestinationAlt: { EN: 'Featured destination scenic view', BM: 'Pemandangan indah destinasi pilihan' },
+  wiraMascotAlt: { EN: 'Wira travel guide mascot', BM: 'Maskot panduan perjalanan Wira' },
+  manjaMascotAlt: { EN: 'Manja travel companion mascot', BM: 'Maskot teman perjalanan Manja' },
+  closeSheet: { EN: 'Close panel', BM: 'Tutup panel' },
+  closeEventsSheet: { EN: 'Close events panel', BM: 'Tutup panel acara' },
   verificationCardTitle: { EN: 'MyTravel Verification', BM: 'Pengesahan MyTravel' },
   weeklyMission: { EN: 'Weekly Mission with Wira', BM: 'Misi Mingguan bersama Wira' },
   weeklyMissionAction: { EN: 'View\nmission', BM: 'Lihat\nmisi' },
+  weeklyMissionPendingTitle: { EN: 'Rewards provider pending', BM: 'Penyedia ganjaran belum disambungkan' },
+  weeklyMissionPendingAction: { EN: 'View\nstatus', BM: 'Lihat\nstatus' },
   verificationKicker: { EN: 'MYTRAVEL VERIFICATION', BM: 'PENGESAHAN MYTRAVEL' },
   noVerificationTitle: { EN: 'No verification task yet', BM: 'Belum ada tugasan pengesahan' },
-  noVerificationCopy: { EN: 'More checkpoint verifications will appear soon.', BM: 'Lebih banyak pengesahan pusat semakan akan dipaparkan tidak lama lagi.' },
+  noVerificationCopy: {
+    EN: 'Verification checkpoints will appear here when your Firestore verification provider is connected.',
+    BM: 'Pusat semakan pengesahan akan dipaparkan di sini apabila penyedia pengesahan Firestore anda disambungkan.',
+  },
+  verificationCardEmptyBadge: { EN: 'Awaiting\nprovider', BM: 'Menunggu\npenyedia' },
+  verificationAnswerGroupAria: { EN: 'Verification answer options', BM: 'Pilihan jawapan pengesahan' },
+  verificationAnswerPrefix: { EN: 'Select verification answer', BM: 'Pilih jawapan pengesahan' },
   answerYes: { EN: 'Yes', BM: 'Ya' },
   answerNo: { EN: 'No', BM: 'Tidak' },
   verificationReviewTitle: { EN: 'Wira is reviewing with you', BM: 'Wira sedang menyemak bersama anda' },
@@ -68,51 +74,23 @@ const HOME_COPY = {
   eventsKicker: { EN: 'EVENTS & ACTIVITIES', BM: 'ACARA & AKTIVITI' },
   eventsTitle: { EN: 'Events & Activities', BM: 'Acara & Aktiviti' },
   noEventsTitle: { EN: 'No events yet', BM: 'Belum ada acara' },
-  noEventsCopy: { EN: 'Upcoming cultural and eco-travel activities will appear soon.', BM: 'Aktiviti budaya dan eko-pelancongan yang akan datang akan dipaparkan tidak lama lagi.' },
+  noEventsCopy: {
+    EN: 'Events will appear here when your Firestore events provider is connected.',
+    BM: 'Acara akan dipaparkan di sini apabila penyedia acara Firestore anda disambungkan.',
+  },
+  noPassportProgressCopy: {
+    EN: 'Passport stamps will appear here when your Firestore passport provider is connected.',
+    BM: 'Cop pasport akan dipaparkan di sini apabila penyedia pasport Firestore anda disambungkan.',
+  },
+  noChallengeProgressCopy: {
+    EN: 'Challenge progress will appear here when your Firestore rewards provider is connected.',
+    BM: 'Kemajuan cabaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.',
+  },
   notificationToast: { EN: 'Travel notices appear when available', BM: 'Notis perjalanan dipaparkan apabila tersedia' },
   verificationAwarded: { EN: 'Eco-Points earned. Thank you!', BM: 'Mata Eko diperoleh. Terima kasih!' },
   verificationDuplicate: { EN: 'You already completed this verification.', BM: 'Anda sudah menyelesaikan pengesahan ini.' },
   journeyCompleted: { EN: 'Journey completed.', BM: 'Perjalanan selesai.' },
 } as const;
-
-const SEEDED_HOME_EVENTS: SeededHomeEvent[] = [
-  {
-    date: '2026-07-05',
-    title: {
-      EN: 'Car-Free Morning at Dataran Merdeka',
-      BM: 'Pagi Tanpa Kenderaan di Dataran Merdeka',
-    },
-    description: {
-      EN: 'Join a guided heritage walk and earn bonus eco-points for arriving by train.',
-      BM: 'Sertai berjalan kaki warisan berpandu dan kumpul mata eko bonus apabila tiba dengan tren.',
-    },
-    targetPath: '/tabs/tab2',
-  },
-  {
-    date: '2026-07-12',
-    title: {
-      EN: 'Accessible Travel Meetup with Wira',
-      BM: 'Perjumpaan Perjalanan Mesra Akses bersama Wira',
-    },
-    description: {
-      EN: 'Share route tips, accessibility feedback, and community travel stories.',
-      BM: 'Kongsi tip laluan, maklum balas kebolehcapaian, dan cerita perjalanan komuniti.',
-    },
-    targetPath: '/tabs/tab3',
-  },
-  {
-    date: '2026-07-19',
-    title: {
-      EN: 'Explore Malaysia Weekend Challenge',
-      BM: 'Cabaran Hujung Minggu Teroka Malaysia',
-    },
-    description: {
-      EN: 'Complete one rail journey and one community contribution to unlock a new stamp.',
-      BM: 'Lengkapkan satu perjalanan rel dan satu sumbangan komuniti untuk membuka cop baharu.',
-    },
-    targetPath: '/tabs/tab4',
-  },
-];
 
 @Component({
   selector: 'app-tab1',
@@ -125,6 +103,8 @@ export class Tab1Page implements OnDestroy {
   private readonly appStateService = inject(AppStateService);
   private readonly router = inject(Router);
   private readonly uiTimeouts = new ManagedTimeouts();
+  @ViewChild('verificationSheet') private verificationSheetRef?: ElementRef<HTMLElement>;
+  @ViewChild('eventsSheet') private eventsSheetRef?: ElementRef<HTMLElement>;
   readonly copy = HOME_COPY;
   language: AppLanguage = 'EN';
   activeSheet: 'verification' | 'events' | null = null;
@@ -141,6 +121,7 @@ export class Tab1Page implements OnDestroy {
   challengeTotalSteps = 0;
   verificationCompletedCount = 0;
   verificationTotalCount = 0;
+  private previousFocusedElement: HTMLElement | null = null;
 
   constructor() {
     this.language = this.accessibilityPreferencesService.getPreferences().language;
@@ -173,9 +154,50 @@ export class Tab1Page implements OnDestroy {
     this.events = this.buildHomeEvents();
   }
 
+  verificationAnswerAriaLabel(answer: 'yes' | 'no'): string {
+    const label = answer === 'yes'
+      ? this.t(this.copy.answerYes)
+      : this.t(this.copy.answerNo);
+    return `${this.t(this.copy.verificationAnswerPrefix)} ${label}`;
+  }
+
   notify(message: string): void {
     this.toast = message;
     this.uiTimeouts.schedule('toast', () => this.toast = '', 2200);
+  }
+
+  openEventsSheet(): void {
+    this.openSheet('events');
+  }
+
+  openVerificationSheet(): void {
+    this.openSheet('verification');
+  }
+
+  closeActiveSheet(): void {
+    if (!this.activeSheet) {
+      return;
+    }
+
+    this.activeSheet = null;
+    this.verificationAnswer = null;
+    this.restoreFocus();
+  }
+
+  handleSheetBackdropClick(): void {
+    this.closeActiveSheet();
+  }
+
+  handleSheetKeydown(event: KeyboardEvent, sheet: HTMLElement): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeActiveSheet();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      this.trapSheetFocus(event, sheet);
+    }
   }
 
   submitVerification(): void {
@@ -187,8 +209,7 @@ export class Tab1Page implements OnDestroy {
       this.verificationTask.id,
       this.verificationTask.title,
     );
-    this.activeSheet = null;
-    this.verificationAnswer = null;
+    this.closeActiveSheet();
     this.refreshState();
     this.notify(awarded ? `+${this.verificationTask.points} ${this.t(this.copy.verificationAwarded)}` : this.t(this.copy.verificationDuplicate));
   }
@@ -205,19 +226,51 @@ export class Tab1Page implements OnDestroy {
   }
 
   passportProgressSummary(): string {
+    if (this.passportTotalCount === 0) {
+      return this.t(this.copy.noPassportProgressCopy);
+    }
+
     return this.language === 'EN'
       ? `${this.passportCollectedCount}/${this.passportTotalCount} stamps unlocked`
       : `${this.passportCollectedCount}/${this.passportTotalCount} cop dibuka`;
   }
 
   weeklyMissionSummary(): string {
+    if (this.challengeTotalSteps === 0) {
+      return this.t(this.copy.noChallengeProgressCopy);
+    }
+
     return this.language === 'EN'
       ? `${this.challengeCompletedSteps} of ${this.challengeTotalSteps} challenge steps completed this season.`
       : `${this.challengeCompletedSteps} daripada ${this.challengeTotalSteps} langkah cabaran selesai musim ini.`;
   }
 
+  get challengeProgressWidth(): string {
+    if (this.challengeTotalSteps === 0) {
+      return '0%';
+    }
+
+    return `${Math.round((this.challengeCompletedSteps / this.challengeTotalSteps) * 100)}%`;
+  }
+
+  get weeklyMissionTitleLabel(): string {
+    return this.challengeTotalSteps === 0
+      ? this.t(this.copy.weeklyMissionPendingTitle)
+      : this.t(this.copy.weeklyMission);
+  }
+
+  get weeklyMissionActionLabel(): string {
+    return this.challengeTotalSteps === 0
+      ? this.t(this.copy.weeklyMissionPendingAction)
+      : this.t(this.copy.weeklyMissionAction);
+  }
+
   verificationCardSummary(): string {
     if (!this.verificationTask) {
+      if (this.verificationTotalCount === 0) {
+        return this.t(this.copy.noVerificationCopy);
+      }
+
       return this.language === 'EN'
         ? `All ${this.verificationTotalCount} nearby checkpoints are completed.`
         : `Semua ${this.verificationTotalCount} pusat semakan berdekatan telah selesai.`;
@@ -231,6 +284,8 @@ export class Tab1Page implements OnDestroy {
   verificationCardBadge(): string {
     return this.verificationTask
       ? `+${this.verificationTask.points}\n${this.t(this.copy.ecoPoints)}`
+      : this.verificationTotalCount === 0
+        ? this.t(this.copy.verificationCardEmptyBadge)
       : this.language === 'EN'
         ? 'All\ndone'
         : 'Selesai';
@@ -256,24 +311,56 @@ export class Tab1Page implements OnDestroy {
   }
 
   private buildHomeEvents(): HomeEvent[] {
-    return SEEDED_HOME_EVENTS.map((event) => ({
-      dateLabel: this.formatEventDate(event.date),
-      title: event.title,
-      description: event.description,
-      targetPath: event.targetPath,
-    }));
+    return [];
   }
 
-  private formatEventDate(value: string): string {
-    const date = new Date(value);
+  private openSheet(sheet: 'verification' | 'events'): void {
+    this.previousFocusedElement = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    this.activeSheet = sheet;
+    this.uiTimeouts.schedule('sheet-focus', () => {
+      const target = sheet === 'verification'
+        ? this.verificationSheetRef?.nativeElement
+        : this.eventsSheetRef?.nativeElement;
+      target?.focus();
+    }, 0);
+  }
 
-    if (Number.isNaN(date.getTime())) {
-      return value;
+  private restoreFocus(): void {
+    const previousFocusedElement = this.previousFocusedElement;
+    this.previousFocusedElement = null;
+    this.uiTimeouts.schedule('sheet-focus-restore', () => previousFocusedElement?.focus(), 0);
+  }
+
+  private trapSheetFocus(event: KeyboardEvent, sheet: HTMLElement): void {
+    const focusableElements = this.getFocusableElements(sheet);
+
+    if (focusableElements.length === 0) {
+      event.preventDefault();
+      sheet.focus();
+      return;
     }
 
-    return new Intl.DateTimeFormat(this.language === 'BM' ? 'ms-MY' : 'en-GB', {
-      day: 'numeric',
-      month: 'short',
-    }).format(date);
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    const activeElement = document.activeElement;
+
+    if (event.shiftKey && activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
+  }
+
+  private getFocusableElements(root: HTMLElement): HTMLElement[] {
+    return Array.from(root.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    )).filter((element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true');
   }
 }

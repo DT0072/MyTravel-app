@@ -80,19 +80,21 @@ describe('Tab1Page', () => {
     fixture.detectChanges();
   });
 
-  it('should create with seeded home content', () => {
+  it('should create with provider-ready empty home events', () => {
     expect(component).toBeTruthy();
-    expect(component.events.length).toBe(3);
-    expect(component.events[0].dateLabel).toBe('5 Jul');
-    expect(component.verificationTask?.id).toBe('verification-kl-sentral-access');
+    expect(component.events.length).toBe(0);
+    expect(component.verificationTask).toBeNull();
     expect(component.savedNoticeCount).toBe(0);
-    expect(component.passportProgressSummary()).toBe('3/4 stamps unlocked');
-    expect(component.weeklyMissionSummary()).toBe('2 of 7 challenge steps completed this season.');
-    expect(component.verificationCardSummary()).toBe('Next checkpoint: KL Sentral station. 0/2 completed.');
-    expect(component.verificationCardBadge()).toBe('+40\nEco-Points');
+    expect(component.challengeProgressWidth).toBe('0%');
+    expect(component.weeklyMissionTitleLabel).toBe('Rewards provider pending');
+    expect(component.weeklyMissionActionLabel).toBe('View\nstatus');
+    expect(component.passportProgressSummary()).toBe('Passport stamps will appear here when your Firestore passport provider is connected.');
+    expect(component.weeklyMissionSummary()).toBe('Challenge progress will appear here when your Firestore rewards provider is connected.');
+    expect(component.verificationCardSummary()).toBe('Verification checkpoints will appear here when your Firestore verification provider is connected.');
+    expect(component.verificationCardBadge()).toBe('Awaiting\nprovider');
   });
 
-  it('skips completed verification tasks when refreshing state', () => {
+  it('keeps verification empty-state copy even when completed ids exist locally', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
       savedNoticeIds: ['notice-kelana-jaya-delay', 'notice-melaka-heat'],
@@ -101,12 +103,12 @@ describe('Tab1Page', () => {
 
     component.ionViewWillEnter();
 
-    expect(component.verificationTask?.id).toBe('verification-pasar-seni-access');
+    expect(component.verificationTask).toBeNull();
     expect(component.savedNoticeCount).toBe(2);
-    expect(component.verificationCardSummary()).toBe('Next checkpoint: Pasar Seni station. 1/2 completed.');
+    expect(component.verificationCardSummary()).toBe('Verification checkpoints will appear here when your Firestore verification provider is connected.');
   });
 
-  it('updates seeded event date labels when the language changes', () => {
+  it('keeps the events feed empty when the language changes', () => {
     accessibilityPreferencesService.setLanguage.and.returnValue({
       ...preferences,
       language: 'BM',
@@ -115,13 +117,16 @@ describe('Tab1Page', () => {
     component.updateLanguage('BM');
 
     expect(component.language).toBe('BM');
-    expect(component.events[0].dateLabel.toLowerCase()).toContain('jul');
-    expect(component.passportProgressSummary()).toBe('3/4 cop dibuka');
-    expect(component.verificationCardSummary()).toBe('Pusat semakan seterusnya: Stesen KL Sentral. 0/2 selesai.');
-    expect(component.verificationCardBadge()).toBe('+40\nMata Eko');
+    expect(component.events).toEqual([]);
+    expect(component.weeklyMissionTitleLabel).toBe('Penyedia ganjaran belum disambungkan');
+    expect(component.weeklyMissionActionLabel).toBe('Lihat\nstatus');
+    expect(component.passportProgressSummary()).toBe('Cop pasport akan dipaparkan di sini apabila penyedia pasport Firestore anda disambungkan.');
+    expect(component.weeklyMissionSummary()).toBe('Kemajuan cabaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.');
+    expect(component.verificationCardSummary()).toBe('Pusat semakan pengesahan akan dipaparkan di sini apabila penyedia pengesahan Firestore anda disambungkan.');
+    expect(component.verificationCardBadge()).toBe('Menunggu\npenyedia');
   });
 
-  it('derives passport and mission progress from saved travel activity', () => {
+  it('keeps passport and mission summaries provider-ready even when local travel activity exists', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
       ecoPoints: 80,
@@ -179,12 +184,15 @@ describe('Tab1Page', () => {
 
     component.ionViewWillEnter();
 
-    expect(component.passportProgressSummary()).toBe('4/4 stamps unlocked');
-    expect(component.weeklyMissionSummary()).toBe('5 of 7 challenge steps completed this season.');
-    expect(component.verificationCardSummary()).toBe('Next checkpoint: Pasar Seni station. 1/2 completed.');
+    expect(component.challengeProgressWidth).toBe('0%');
+    expect(component.weeklyMissionTitleLabel).toBe('Rewards provider pending');
+    expect(component.weeklyMissionActionLabel).toBe('View\nstatus');
+    expect(component.passportProgressSummary()).toBe('Passport stamps will appear here when your Firestore passport provider is connected.');
+    expect(component.weeklyMissionSummary()).toBe('Challenge progress will appear here when your Firestore rewards provider is connected.');
+    expect(component.verificationCardSummary()).toBe('Verification checkpoints will appear here when your Firestore verification provider is connected.');
   });
 
-  it('submits verification, refreshes state, and advances to the next task', () => {
+  it('ignores verification submission when no provider-backed task exists', () => {
     appStateService.getSnapshot.and.returnValues(
       createState(),
       {
@@ -200,16 +208,13 @@ describe('Tab1Page', () => {
 
     component.submitVerification();
 
-    expect(appStateService.submitVerification).toHaveBeenCalledWith(
-      'verification-kl-sentral-access',
-      'KL Sentral accessibility review',
-    );
-    expect(component.ecoPoints).toBe(160);
-    expect(component.verificationTask?.id).toBe('verification-pasar-seni-access');
-    expect(component.toast).toContain('+40');
+    expect(appStateService.submitVerification).not.toHaveBeenCalled();
+    expect(component.ecoPoints).toBe(120);
+    expect(component.verificationTask).toBeNull();
+    expect(component.toast).toBe('');
   });
 
-  it('shows completion state when all shared verification checkpoints are done', () => {
+  it('keeps the provider-ready empty-state when all historical verification ids are present', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
       completedVerificationIds: [
@@ -221,8 +226,8 @@ describe('Tab1Page', () => {
     component.ionViewWillEnter();
 
     expect(component.verificationTask).toBeNull();
-    expect(component.verificationCardSummary()).toBe('All 2 nearby checkpoints are completed.');
-    expect(component.verificationCardBadge()).toBe('All\ndone');
+    expect(component.verificationCardSummary()).toBe('Verification checkpoints will appear here when your Firestore verification provider is connected.');
+    expect(component.verificationCardBadge()).toBe('Awaiting\nprovider');
   });
 
   it('opens travel notices directly from the topbar notification action', () => {
@@ -234,5 +239,75 @@ describe('Tab1Page', () => {
       ['/tabs/tab3'],
       { queryParams: { view: 'notices' } },
     );
+  });
+
+  it('opens a provider-ready empty events sheet instead of showing a toast-only dead end', () => {
+    component.openEventsSheet();
+    fixture.detectChanges();
+
+    const eventsSheet = fixture.nativeElement.querySelector('.events-sheet') as HTMLElement;
+
+    expect(component.activeSheet).toBe('events');
+    expect(component.toast).toBe('');
+    expect(eventsSheet.getAttribute('role')).toBe('dialog');
+    expect(eventsSheet.textContent).toContain('No events yet');
+    expect(eventsSheet.textContent).toContain('Events will appear here when your Firestore events provider is connected.');
+  });
+
+  it('renders the verification sheet as an accessible dialog and closes it on escape', () => {
+    component.openVerificationSheet();
+    fixture.detectChanges();
+
+    const verificationSheet = fixture.nativeElement.querySelector('.verification-sheet') as HTMLElement;
+
+    expect(verificationSheet.getAttribute('role')).toBe('dialog');
+    expect(verificationSheet.getAttribute('aria-modal')).toBe('true');
+    expect(verificationSheet.getAttribute('tabindex')).toBe('-1');
+
+    verificationSheet.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(component.activeSheet).toBeNull();
+  });
+
+  it('renders accessible pressed states for verification answer buttons', () => {
+    component.activeSheet = 'verification';
+    component.verificationTask = {
+      id: 'verification-kl-sentral-access',
+      title: 'KL Sentral access check',
+      question: { EN: 'Is the lift working?', BM: 'Adakah lif berfungsi?' },
+      station: { EN: 'KL Sentral', BM: 'KL Sentral' },
+      place: { EN: 'KL Sentral', BM: 'KL Sentral' },
+      badge: { EN: 'Verified transit hub', BM: 'Hab transit disahkan' },
+      address: { EN: 'Jalan Stesen Sentral', BM: 'Jalan Stesen Sentral' },
+      image: 'assets/mytravel/wira-ui.png',
+      points: 20,
+    } as never;
+    fixture.detectChanges();
+
+    const answerButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.answer-grid button'),
+    ) as HTMLButtonElement[];
+
+    expect(answerButtons[0].getAttribute('aria-pressed')).toBe('false');
+    expect(answerButtons[0].getAttribute('aria-label')).toBe('Select verification answer Yes');
+
+    component.verificationAnswer = 'no';
+    fixture.detectChanges();
+
+    expect(answerButtons[0].getAttribute('aria-pressed')).toBe('false');
+    expect(answerButtons[1].getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('localizes verification answer accessibility labels in Bahasa Melayu', () => {
+    accessibilityPreferencesService.setLanguage.and.returnValue({
+      ...preferences,
+      language: 'BM',
+    });
+
+    component.updateLanguage('BM');
+
+    expect(component.verificationAnswerAriaLabel('yes')).toBe('Pilih jawapan pengesahan Ya');
+    expect(component.verificationAnswerAriaLabel('no')).toBe('Pilih jawapan pengesahan Tidak');
   });
 });

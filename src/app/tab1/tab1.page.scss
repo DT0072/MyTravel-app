@@ -11,11 +11,9 @@
 .mt-multiline { white-space: pre-line; }
 
 .welcome-copy { position: absolute; top: 82px; left: 22px; color: #fff; }
-.welcome-copy h2 { margin: 0 0 9px; font-size: 20px; line-height: 1.65; }
+.welcome-copy h2 { margin: 0 0 9px; font-size: 20px; line-height: 1.35; }
 .identity-pill { height: 42px; display: flex; align-items: center; gap: 7px; padding: 5px 10px 5px 6px; border: 1px solid rgba(255,255,255,.48); border-radius: 22px; background: rgba(255,255,255,.2); backdrop-filter: blur(12px); font-size: 11px; box-shadow: 0 7px 16px rgba(4,16,50,.18); }
 .identity-pill .identity-mark { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; background: #0754cc; }
-.identity-pill i { width: 1px; height: 25px; background: rgba(255,255,255,.5); }
-.identity-pill .verified { color: #0aa15d; font-size: 19px; background: white; border-radius: 50%; }
 .hero-wira { position: absolute; width: 112px; height: 138px; object-fit: contain; right: 7px; bottom: 27px; }
 .destination-pill { position: absolute; left: 18px; bottom: 40px; height: 43px; padding: 5px 16px 5px 6px; border: 1px solid rgba(255,255,255,.65); border-radius: 22px; color: white; background: rgba(4,17,40,.48); backdrop-filter: blur(12px); font-size: 13px; font-weight: 700; }
 .destination-pill span { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: 6px; color: var(--mt-red); background: white; border-radius: 50%; vertical-align: middle; }
@@ -67,7 +65,7 @@
 .action-card em { font-style: normal; text-align: center; padding: 7px; border-radius: 20px; background: rgba(255,255,255,.18); font-size: 9px; }
 .mission-action img { width: 42px; height: 48px; object-fit: contain; }
 .mission-action span > i { display: block; width: 100%; height: 4px; margin-top: 3px; border-radius: 3px; background: rgba(255,255,255,.25); }
-.mission-action span > i u { display: block; width: 68%; height: 100%; border-radius: inherit; background: var(--mt-green); }
+.mission-action span > i u { display: block; height: 100%; border-radius: inherit; background: var(--mt-green); }
 .mission-action em { background: rgba(3,33,82,.86); }
 
 .sheet-backdrop { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: flex-end; justify-content: center; background: rgba(3,12,35,.34); backdrop-filter: blur(5px); }

@@ -62,7 +62,7 @@ describe('Tab2Page', () => {
       ecoPoints: 0,
       activeJourney: null,
       journeyHistory: [],
-      recentLocationValues: ['KL Sentral', 'Pasar Seni', 'Merdeka 118'],
+      recentLocationValues: [],
       postReactions: {},
       contributions: [],
       communityTips: [],
@@ -136,7 +136,7 @@ describe('Tab2Page', () => {
 
     expect(appStateService.recordRecentLocations).toHaveBeenCalledWith(['Batu Caves', 'KLCC']);
     expect(component.view).toBe('results');
-    expect(navigationService.getRecentLocations).toHaveBeenCalledWith('EN', ['KL Sentral', 'Pasar Seni', 'Merdeka 118']);
+    expect(navigationService.getRecentLocations).toHaveBeenCalledWith('EN', []);
   });
 
   it('shows state-aware departure and arrival summaries on the results card', () => {
@@ -177,6 +177,119 @@ describe('Tab2Page', () => {
 
     expect(appStateService.removeRecentLocation).toHaveBeenCalledWith('KL Sentral');
     expect(component.recentLocations).toEqual([]);
+  });
+
+  it('builds localized accessibility labels for recent-location removal and route details', () => {
+    const location: RecentLocation = {
+      label: 'KL Sentral',
+      value: 'KL Sentral',
+      description: 'Transit hub',
+    };
+    const route = createRoute('Bus');
+
+    expect(component.removeRecentLocationAriaLabel(location)).toBe('Remove recent location: KL Sentral');
+    expect(component.routeDetailsAriaLabel(route)).toBe('View details for Bus');
+  });
+
+  it('localizes Tab 2 accessibility labels in Bahasa Melayu', () => {
+    accessibilityPreferencesService.setLanguage.and.returnValue({
+      ...preferences,
+      language: 'BM',
+    });
+
+    component.updateLanguage('BM');
+
+    const location: RecentLocation = {
+      label: 'KL Sentral',
+      value: 'KL Sentral',
+      description: 'Hab transit',
+    };
+    const route = createRoute('Bus');
+
+    expect(component.removeRecentLocationAriaLabel(location)).toBe('Buang lokasi terkini: KL Sentral');
+    expect(component.routeDetailsAriaLabel(route)).toBe('Lihat butiran untuk Bas');
+  });
+
+  it('shows the empty-state transport status message when no provider data exists', () => {
+    component.serviceStatuses = [];
+
+    component.openServiceStatus();
+
+    expect(component.toast).toBe('Service updates will appear here when your Firestore transport-status provider is connected.');
+  });
+
+  it('renders accessible pressed states for transport mode options', () => {
+    fixture.detectChanges();
+
+    const modeButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.mode-row button'),
+    ) as HTMLButtonElement[];
+
+    expect(modeButtons[0].getAttribute('aria-pressed')).toBe('true');
+    expect(modeButtons[0].getAttribute('aria-label')).toBe('Select transport mode MRT');
+
+    component.selectMode('Bus');
+    fixture.detectChanges();
+
+    expect(modeButtons[0].getAttribute('aria-pressed')).toBe('false');
+    expect(modeButtons[1].getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('renders accessible pressed states for route sort options', () => {
+    component.view = 'results';
+    fixture.detectChanges();
+
+    const sortButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.sort-row button'),
+    ) as HTMLButtonElement[];
+
+    expect(sortButtons[0].getAttribute('aria-pressed')).toBe('false');
+    expect(sortButtons[0].getAttribute('aria-label')).toBe('Sort routes by Fastest');
+    expect(sortButtons[2].getAttribute('aria-pressed')).toBe('true');
+
+    component.selectSort('Fastest');
+    fixture.detectChanges();
+
+    expect(sortButtons[0].getAttribute('aria-pressed')).toBe('true');
+    expect(sortButtons[2].getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('localizes transport mode and sort accessibility labels in Bahasa Melayu', () => {
+    accessibilityPreferencesService.setLanguage.and.returnValue({
+      ...preferences,
+      language: 'BM',
+    });
+
+    component.updateLanguage('BM');
+
+    expect(component.modeButtonAriaLabel('Bus')).toBe('Pilih mod pengangkutan Bas');
+    expect(component.sortButtonAriaLabel('Less walking')).toBe('Susun laluan mengikut Kurang berjalan');
+  });
+
+  it('marks decorative Tab 2 icons as hidden from assistive technology', () => {
+    component.view = 'planner';
+    fixture.detectChanges();
+
+    const swapIcon = fixture.nativeElement.querySelector('.swap-button ion-icon') as HTMLElement;
+    const modeIcon = fixture.nativeElement.querySelector('.mode-row button ion-icon') as HTMLElement;
+    const findRouteIcon = fixture.nativeElement.querySelector('.find-route ion-icon') as HTMLElement;
+
+    expect(swapIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(modeIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(findRouteIcon.getAttribute('aria-hidden')).toBe('true');
+
+    component.view = 'results';
+    component.routes = [createRoute('MRT')];
+    component.from = 'KL Sentral';
+    component.to = 'Pasar Seni';
+    component.selectedRoute = createRoute('MRT');
+    fixture.detectChanges();
+
+    const routeDetailsIcon = fixture.nativeElement.querySelector('.route-meta button ion-icon') as HTMLElement;
+    const closeSheetIcon = fixture.nativeElement.querySelector('.sheet-close ion-icon') as HTMLElement;
+
+    expect(routeDetailsIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(closeSheetIcon.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('keeps the newest route results when earlier requests finish later', () => {
@@ -232,5 +345,23 @@ describe('Tab2Page', () => {
       ['/tabs/tab3'],
       { queryParams: { view: 'notices' } },
     );
+  });
+
+  it('renders the route details sheet as an accessible dialog and closes it on escape', () => {
+    component.view = 'results';
+    component.selectedRoute = createRoute('MRT');
+    fixture.detectChanges();
+
+    const routeSheet = fixture.nativeElement.querySelector('.route-sheet') as HTMLElement;
+
+    expect(routeSheet.getAttribute('role')).toBe('dialog');
+    expect(routeSheet.getAttribute('aria-modal')).toBe('true');
+    expect(routeSheet.getAttribute('tabindex')).toBe('-1');
+    expect(routeSheet.getAttribute('aria-label')).toBe('MRT route details');
+
+    routeSheet.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(component.selectedRoute).toBeNull();
   });
 });

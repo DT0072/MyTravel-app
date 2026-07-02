@@ -79,7 +79,7 @@ interface PersistedAppState {
 
 const MAX_COMMUNITY_IMAGE_PREVIEW_LENGTH = 350_000;
 const MAX_RECENT_LOCATION_VALUES = 6;
-const DEFAULT_RECENT_LOCATION_VALUES = ['KL Sentral', 'Pasar Seni', 'Merdeka 118'];
+const DEFAULT_RECENT_LOCATION_VALUES: string[] = [];
 
 const EMPTY_TIP_DRAFT: CommunityTipDraft = {
   location: '',
@@ -238,8 +238,8 @@ export class AppStateService {
     const tip: SavedCommunityTip = {
       ...sanitizedDraft,
       id: this.createId('tip'),
-      author: 'Traveler',
-      initials: 'TR',
+      author: '',
+      initials: '',
       createdAt,
       status: 'In review',
     };

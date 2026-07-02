@@ -43,6 +43,8 @@ describe('AppStateService', () => {
 
     expect(savedTip.imageName).toBeUndefined();
     expect(savedTip.imagePreview).toBeUndefined();
+    expect(savedTip.author).toBe('');
+    expect(savedTip.initials).toBe('');
     expect(service.getSnapshot().communityTips[0].imagePreview).toBeUndefined();
   });
 
@@ -80,17 +82,15 @@ describe('AppStateService', () => {
     expect(service.getSnapshot().recentLocationValues).toEqual([
       'Batu Caves',
       'KL Sentral',
-      'Pasar Seni',
-      'Merdeka 118',
     ]);
   });
 
   it('removes recent locations and preserves the updated list in storage', () => {
-    service.removeRecentLocation('Pasar Seni');
+    service.recordRecentLocations(['Batu Caves', 'KL Sentral']);
+    service.removeRecentLocation('KL Sentral');
 
     expect(service.getSnapshot().recentLocationValues).toEqual([
-      'KL Sentral',
-      'Merdeka 118',
+      'Batu Caves',
     ]);
 
     const persistedState = JSON.parse(globalThis.localStorage.getItem(storageKey) ?? '{}') as {
@@ -98,8 +98,7 @@ describe('AppStateService', () => {
     };
 
     expect(persistedState.recentLocationValues).toEqual([
-      'KL Sentral',
-      'Merdeka 118',
+      'Batu Caves',
     ]);
   });
 
@@ -129,7 +128,7 @@ describe('AppStateService', () => {
       ecoPoints: 0,
       activeJourney: null,
       journeyHistory: [],
-      recentLocationValues: ['KL Sentral', 'Pasar Seni', 'Merdeka 118'],
+      recentLocationValues: [],
       postReactions: {},
       contributions: [],
       communityTips: [],

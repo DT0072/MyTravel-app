@@ -108,6 +108,19 @@ describe('ProfileSectionPage', () => {
     expect(component.content.items[2].meta).toBe('Saiz teks: Besar');
   });
 
+  it('keeps a single top-level heading on the profile section page', () => {
+    fixture.detectChanges();
+
+    const pageHeadings = Array.from(
+      fixture.nativeElement.querySelectorAll('h1'),
+    ) as HTMLElement[];
+    const sectionHeading = fixture.nativeElement.querySelector('.mt-page-heading h2') as HTMLElement;
+
+    expect(pageHeadings.length).toBe(1);
+    expect(pageHeadings[0].textContent?.trim()).toBe('Tetapan');
+    expect(sectionHeading.textContent?.trim()).toBe('Tetapan');
+  });
+
   it('refreshes content when the app language changes', () => {
     routeStub.snapshot.data.section = 'my-contributions';
     appStateService.getSnapshot.and.returnValue(createState({
@@ -166,8 +179,9 @@ describe('ProfileSectionPage', () => {
     expect(component.content.summaryValue).toBe('2');
     expect(component.content.summaryCopy).toContain('2 saved notices');
     expect(component.content.primaryAction).toBe('Open notice board');
-    expect(component.content.items[0].title).toBe('Kelana Jaya Line delay alert');
-    expect(component.content.items[1].meta).toBe('Weather advisory');
+    expect(component.content.items[0].title).toBe('Saved travel notice');
+    expect(component.content.items[0].subtitle).toBe('This saved notice will show provider-backed details after Firestore notices are connected.');
+    expect(component.content.items[1].meta).toBe('notice-melaka-heat');
     expect(component.content.items[0].action).toBe('notices');
   });
 

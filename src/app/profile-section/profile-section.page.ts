@@ -45,12 +45,6 @@ interface ProfileSectionContent {
   items: ProfileSectionItem[];
 }
 
-interface SavedDestinationNotice {
-  title: LocalizedText;
-  subtitle: LocalizedText;
-  meta: LocalizedText;
-}
-
 const PROFILE_SECTION_COPY: Record<ProfileSectionKey, StaticProfileSectionContent> = {
   'my-contributions': {
     title: { EN: 'My contributions', BM: 'Sumbangan saya' },
@@ -202,51 +196,6 @@ const SECTION_UI_COPY = {
   inReview: { EN: 'In review', BM: 'Dalam semakan' },
   points: { EN: 'points', BM: 'mata' },
 } satisfies Record<string, LocalizedText>;
-
-const SAVED_NOTICE_DETAILS: Record<string, SavedDestinationNotice> = {
-  'notice-kelana-jaya-delay': {
-    title: {
-      EN: 'Kelana Jaya Line delay alert',
-      BM: 'Amaran kelewatan Laluan Kelana Jaya',
-    },
-    subtitle: {
-      EN: 'Transit disruption between KLCC and Ampang Park.',
-      BM: 'Gangguan transit antara KLCC dan Ampang Park.',
-    },
-    meta: {
-      EN: 'Critical transit notice',
-      BM: 'Notis transit kritikal',
-    },
-  },
-  'notice-melaka-heat': {
-    title: {
-      EN: 'Melaka heritage heat advisory',
-      BM: 'Nasihat cuaca panas warisan Melaka',
-    },
-    subtitle: {
-      EN: 'Best reviewed before midday outdoor plans.',
-      BM: 'Paling sesuai disemak sebelum pelan luar waktu tengah hari.',
-    },
-    meta: {
-      EN: 'Weather advisory',
-      BM: 'Nasihat cuaca',
-    },
-  },
-  'notice-sabah-boardwalk': {
-    title: {
-      EN: 'Tanjung Aru access update',
-      BM: 'Kemas kini akses Tanjung Aru',
-    },
-    subtitle: {
-      EN: 'Boardwalk entrance changes and accessible ramp guidance.',
-      BM: 'Perubahan pintu masuk pelantar dan panduan tanjakan mesra akses.',
-    },
-    meta: {
-      EN: 'Destination disruption notice',
-      BM: 'Notis gangguan destinasi',
-    },
-  },
-};
 
 function renderStaticSection(content: StaticProfileSectionContent, language: AppLanguage): ProfileSectionContent {
   return {
@@ -576,21 +525,12 @@ export class ProfileSectionPage implements OnInit {
   }
 
   private buildSavedDestinationItem(id: string): ProfileSectionItem {
-    const notice = SAVED_NOTICE_DETAILS[id];
-
-    if (!notice) {
-      return {
-        title: this.language === 'EN' ? 'Saved travel notice' : 'Notis perjalanan tersimpan',
-        subtitle: this.language === 'EN' ? 'Open Community to review the latest details.' : 'Buka Komuniti untuk menyemak butiran terkini.',
-        meta: id,
-        action: 'notices',
-      };
-    }
-
     return {
-      title: this.t(notice.title),
-      subtitle: this.t(notice.subtitle),
-      meta: this.t(notice.meta),
+      title: this.language === 'EN' ? 'Saved travel notice' : 'Notis perjalanan tersimpan',
+      subtitle: this.language === 'EN'
+        ? 'This saved notice will show provider-backed details after Firestore notices are connected.'
+        : 'Notis tersimpan ini akan memaparkan butiran daripada penyedia selepas notis Firestore disambungkan.',
+      meta: id,
       action: 'notices',
     };
   }

@@ -1,16 +1,122 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <!-- Logo slot: replace the div with your <img> or <svg> -->
-    <ion-buttons slot="start">
-      <div class="toolbar-logo-slot">
-        <!-- e.g. <img src="assets/logo.svg" alt="Logo" /> -->
-      </div>
-    </ion-buttons>
-
-    <ion-title>Explore</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
-  <app-explore-container name="Explore page"></app-explore-container>
+  <!-- Presents the Discover dashboard and its travel shortcuts. -->
+  <ng-container>
+    <section class="home-hero">
+      <img class="hero-image" src="assets/mytravel/timah-tasoh-hero.png" alt="Featured destination">
+      <div class="hero-shade"></div>
+
+      <app-topbar
+        [light]="true"
+        [extraClass]="'home-topbar'"
+        [language]="language"
+        [notificationCount]="savedNoticeCount"
+        (languageChange)="updateLanguage($event)"
+        (notificationClick)="openNotifications()"
+      ></app-topbar>
+
+      <div class="welcome-copy mt-reveal">
+        <h2>{{ t(copy.welcome) }}<br>{{ t(copy.travelerName) }}</h2>
+        <div class="identity-pill">
+          <span class="identity-mark"><ion-icon name="diamond"></ion-icon></span>
+          <span>MyDigital ID</span><i></i>
+          <ion-icon class="verified" name="checkmark-circle"></ion-icon>
+        </div>
+      </div>
+
+      <img class="hero-wira" src="assets/mytravel/wira-ui.png" alt="Wira mascot">
+      <button class="destination-pill" type="button" (click)="go('/tabs/tab2')">
+        <span><ion-icon name="location"></ion-icon></span> {{ t(copy.destination) }}
+      </button>
+      <div class="carousel-dots"><i></i><i></i><i></i><i class="active"></i><i></i></div>
+    </section>
+
+    <main class="home-body">
+      <section class="travel-summary mt-reveal">
+        <button type="button" (click)="go('/tabs/tab4')">
+          <span class="summary-icon"><ion-icon name="leaf-outline"></ion-icon></span>
+          <span><b>{{ ecoPoints | number }}</b><small>{{ t(copy.ecoPoints) }}</small></span>
+        </button>
+        <button type="button" (click)="go('/tabs/tab4')">
+          <span class="summary-icon"><ion-icon name="book-outline"></ion-icon></span>
+          <span><strong>{{ t(copy.digitalPassport) }}</strong><small>{{ passportProgressSummary() }}</small></span>
+        </button>
+      </section>
+
+      <section class="quick-grid mt-reveal">
+        <button type="button" (click)="activeSheet = 'events'"><span class="quick-icon"><ion-icon name="calendar-number-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickEvents) }}</span></button>
+        <button type="button" (click)="go('/tabs/tab2')"><span class="quick-icon"><ion-icon name="sparkles-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickExplore) }}</span></button>
+        <button type="button" (click)="activeSheet = 'verification'"><span class="quick-icon"><ion-icon name="checkmark"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickVerification) }}</span></button>
+        <button type="button" (click)="go('/tabs/tab3')"><span class="quick-icon"><ion-icon name="alert-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickNotices) }}</span></button>
+      </section>
+
+      <section class="journey-card mt-reveal" *ngIf="activeJourney; else noActiveJourney">
+        <div class="journey-title"><b>{{ t(copy.currentJourney) }}</b><span><i></i> {{ t(copy.inTransit) }}</span></div>
+        <div class="journey-stops">
+          <div><strong>{{ activeJourney.from }}</strong><small>{{ t(copy.departs) }} {{ activeJourney.depart }}</small></div>
+          <div><strong>{{ activeJourney.to }}</strong><small>{{ t(copy.arrives) }} {{ activeJourney.arrive }}</small></div>
+        </div>
+        <div class="route-line"><i></i><span><ion-icon name="train-outline"></ion-icon></span><i></i></div>
+        <div class="journey-footer"><small>{{ activeJourney.mode }} · {{ activeJourney.duration }}</small><button type="button" (click)="completeJourney()">{{ t(copy.completeJourney) }}</button></div>
+      </section>
+      <ng-template #noActiveJourney>
+        <button class="journey-card journey-empty mt-reveal" type="button" (click)="go('/tabs/tab2')">
+          <div class="journey-title"><b>{{ t(copy.planJourneyTitle) }}</b><span>{{ t(copy.readyWhenYouAre) }}</span></div>
+          <p>{{ t(copy.planJourneyPrompt) }}</p>
+          <strong>{{ t(copy.planJourneyAction) }} <ion-icon name="arrow-forward"></ion-icon></strong>
+        </button>
+      </ng-template>
+
+      <button class="action-card verification-action" type="button" (click)="activeSheet = 'verification'">
+        <span class="action-icon"><ion-icon name="scan-outline"></ion-icon></span>
+        <span><b>{{ t(copy.verificationCardTitle) }}</b><small class="mt-multiline">{{ verificationCardSummary() }}</small></span>
+        <em class="mt-multiline">{{ verificationCardBadge() }}</em>
+      </button>
+
+      <button class="action-card mission-action" type="button" (click)="go('/tabs/tab4')">
+        <img src="assets/mytravel/wira-ui.png" alt="">
+        <span><b>{{ t(copy.weeklyMission) }}</b><small class="mt-multiline">{{ weeklyMissionSummary() }}</small><i><u></u></i></span>
+        <em class="mt-multiline">{{ t(copy.weeklyMissionAction) }}</em>
+      </button>
+    </main>
+  </ng-container>
+
+  <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
+
+  <div class="sheet-backdrop" *ngIf="activeSheet === 'verification'" (click)="activeSheet = null">
+    <section class="verification-sheet" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" type="button" aria-label="Close" (click)="activeSheet = null"><ion-icon name="close"></ion-icon></button>
+      <p class="sheet-kicker">{{ t(copy.verificationKicker) }}</p>
+      <ng-container *ngIf="verificationTask; else noVerificationTask">
+        <h2 class="mt-multiline">{{ t(verificationTask.question) }}</h2>
+        <p>{{ t(verificationTask.station) }}</p>
+        <div class="answer-grid">
+          <button type="button" [class.active]="verificationAnswer === 'yes'" (click)="verificationAnswer = 'yes'">✓ {{ t(copy.answerYes) }}</button>
+          <button type="button" [class.active]="verificationAnswer === 'no'" (click)="verificationAnswer = 'no'">× {{ t(copy.answerNo) }}</button>
+        </div>
+        <div class="reward-row"><img src="assets/mytravel/wira-ui.png" alt="Wira"><span><b>{{ t(copy.verificationReviewTitle) }}</b><small>{{ t(copy.verificationReviewCopy) }}</small></span><strong>+{{ verificationTask.points }}<br>{{ language === 'EN' ? 'points' : 'mata' }}</strong></div>
+        <button class="mt-primary" type="button" [disabled]="!verificationAnswer" (click)="submitVerification()">{{ t(copy.verificationSubmit) }}</button>
+      </ng-container>
+      <ng-template #noVerificationTask>
+        <section class="route-loading">
+          <b>{{ t(copy.noVerificationTitle) }}</b>
+          <small>{{ t(copy.noVerificationCopy) }}</small>
+        </section>
+      </ng-template>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop" *ngIf="activeSheet === 'events'" (click)="activeSheet = null">
+    <section class="verification-sheet events-sheet" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" type="button" aria-label="Close events" (click)="activeSheet = null"><ion-icon name="close"></ion-icon></button>
+      <p class="sheet-kicker">{{ t(copy.eventsKicker) }}</p>
+      <h2>{{ t(copy.eventsTitle) }}</h2>
+      <button class="event-row" *ngFor="let event of events" type="button" (click)="activeSheet = null; go(event.targetPath)"><span>{{ event.dateLabel }}</span><div><b>{{ t(event.title) }}</b><small>{{ t(event.description) }}</small></div><ion-icon name="chevron-forward"></ion-icon></button>
+      <section class="route-loading" *ngIf="events.length === 0">
+        <b>{{ t(copy.noEventsTitle) }}</b>
+        <small>{{ t(copy.noEventsCopy) }}</small>
+      </section>
+    </section>
+  </div>
 </ion-content>

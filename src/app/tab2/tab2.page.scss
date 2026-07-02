@@ -1,0 +1,159 @@
+.nav-screen { padding-left: var(--mt-topbar-inset); padding-right: var(--mt-topbar-inset); }
+.planner-card { position: relative; padding: 10px; }
+.planner-card label { display: block; position: relative; margin-bottom: 7px; font-size: 9px; font-weight: 700; }
+.planner-card label input { width: 100%; height: 34px; margin-top: 3px; padding: 0 37px 0 28px; border: 1px solid var(--mt-line); border-radius: 17px; color: var(--mt-muted); background: #fff; font-size: 10px; outline: none; }
+.planner-card label > ion-icon { position: absolute; left: 10px; bottom: 10px; color: var(--mt-blue); }
+.planner-card label > ion-icon.red { color: var(--mt-red); }
+.swap-button { position: absolute; z-index: 2; right: 8px; top: 49px; width: 32px; height: 32px; border: 1px solid #b9ceec; border-radius: 50%; color: var(--mt-navy); background: white; font-size: 16px; }
+.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px; }
+.date-row label { margin: 0; }
+.date-row label span { display: block; margin: 0 0 4px 8px; color: var(--mt-muted); font-size: 8px; }
+.date-row label input { width: 100%; height: 36px; margin: 0; padding: 0 10px; border: 1px solid var(--mt-line); border-radius: 17px; color: var(--mt-navy); background: white; font-size: 9px; }
+.planner-card > p { margin: 10px 0 7px; font-size: 9px; font-weight: 700; }
+.mode-row { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; }
+.mode-row button { flex: 1 0 auto; min-width: 57px; height: 29px; border: 1px solid var(--mt-line); border-radius: 15px; background: white; color: var(--mt-navy); font-size: 9px; font-weight: 700; }
+.mode-row ion-icon { margin-right: 4px; vertical-align: middle; }
+.mode-row button.active { color: white; background: var(--mt-navy); border-color: var(--mt-navy); }
+.find-route { margin: 10px 0 0; }
+
+.section-title { display: flex; justify-content: space-between; align-items: center; }
+.section-title button { border: 0; color: var(--mt-blue); background: transparent; font-size: 8px; font-weight: 700; }
+.service-card, .map-card, .recent-card { margin-top: 10px; padding: 12px; }
+.section-title b, .map-card > b { font-size: 10px; }
+.service-row { width: 100%; min-height: 38px; display: grid; grid-template-columns: 29px 1fr 90px 14px; align-items: center; gap: 7px; padding: 0; border: 0; color: var(--mt-navy); background: transparent; text-align: left; }
+.service-row > span { width: 27px; height: 27px; display: grid; place-items: center; color: white; border-radius: 50%; }
+.service-row b, .service-row small { display: block; }.service-row b { font-size: 9px; }.service-row small { color: var(--mt-muted); font-size: 7px; margin-top: 3px; }
+.service-row em { color: var(--mt-green); font-size: 7px; font-style: normal; }
+.map-wrap { position: relative; height: 80px; margin-top: 7px; overflow: hidden; border: 1px solid #e1eaf5; border-radius: 18px; }
+.map-wrap > img { width: 100%; height: 100%; object-fit: cover; }
+.map-wrap aside { position: absolute; inset: 0 0 0 auto; width: 112px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(250,255,252,.92); }
+.map-wrap aside img { width: 54px; height: 58px; object-fit: contain; }.map-wrap aside strong { font-size: 9px; }.map-wrap aside small { margin-top: 3px; color: var(--mt-green); font-size: 7px; }
+.recent-card { margin-top: 1px; }
+.recent-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; margin-top: 4px; }
+.recent-row > button:first-child { width: 100%; min-height: 34px; padding: 4px 10px; border: 0; border-radius: 17px; background: rgba(250,252,255,.8); color: var(--mt-navy); text-align: left; }
+.recent-row b, .recent-row small { display: block; }.recent-row b { font-size: 9px; }.recent-row small { color: var(--mt-muted); font-size: 7px; }
+.recent-remove { width: 34px; height: 34px; border: 1px solid #f1cbd0; border-radius: 50%; color: var(--mt-red); background: white; }
+.recent-empty { margin: 12px 4px 2px; color: var(--mt-muted); font-size: 8px; }
+
+.results-heading { display: flex; gap: 8px; align-items: flex-start; padding: 8px 8px 5px; }
+.results-heading h1 { margin: 0; font-size: 21px; }.results-heading p { margin: 5px 0; color: var(--mt-muted); font-size: 10px; }
+.route-summary { display: grid; grid-template-columns: 38px 1fr 22px 38px 1fr; align-items: center; gap: 6px; padding: 12px; }
+.route-summary > span { width: 36px; height: 36px; display: grid; place-items: center; color: white; background: var(--mt-navy); border-radius: 50%; }.route-summary > span.destination { background: var(--mt-red); }
+.route-summary b,.route-summary small { display: block; }.route-summary b { font-size: 10px; }.route-summary small { margin-top: 3px; color: var(--mt-muted); font-size: 8px; }
+.sort-row { display: flex; gap: 7px; margin: 9px 0; }.sort-row button { height: 27px; padding: 0 12px; border: 1px solid var(--mt-line); border-radius: 14px; background: white; color: var(--mt-navy); font-size: 8px; }.sort-row button.active { color: white; background: var(--mt-navy); border-color: var(--mt-navy); }
+.route-loading { padding: 14px; margin-bottom: 10px; }
+.route-loading b, .route-loading small { display: block; }
+.route-loading b { font-size: 11px; }
+.route-loading small { margin-top: 6px; color: var(--mt-muted); font-size: 8px; }
+.route-card { padding: 11px; margin-bottom: 10px; }
+.route-name { display: grid; grid-template-columns: 36px 1fr 34px; gap: 7px; align-items: center; }.route-name > span { width: 35px; height: 35px; display: grid; place-items: center; color: white; border-radius: 50%; }.route-name b,.route-name small { display: block; }.route-name b { font-size: 11px; }.route-name small { margin-top: 3px; font-size: 8px; }.route-name img { width: 34px; height: 42px; object-fit: contain; }
+.route-time { display: grid; grid-template-columns: 1fr 80px 1fr; align-items: end; margin-top: 12px; }.route-time strong { font-size: 18px; }.route-time strong:last-child { text-align: right; }.route-time span { text-align: center; font-size: 9px; }
+.route-bar { height: 2px; margin: 7px 62px; }
+.route-meta { display: grid; grid-template-columns: repeat(4,1fr) 36px; gap: 4px; align-items: center; margin-top: 13px; }.route-meta small,.route-meta b { display: block; }.route-meta small { color: var(--mt-muted); font-size: 7px; }.route-meta b { margin-top: 4px; font-size: 8px; }.route-meta .fare { color: var(--mt-red); }.route-meta button { width: 32px; height: 32px; border: 1px solid var(--mt-blue); border-radius: 50%; color: var(--mt-blue); background: white; }
+.info-note { display: flex; gap: 10px; align-items: center; padding: 12px; }.info-note > ion-icon { font-size: 28px; color: var(--mt-blue); }.info-note b,.info-note small { display: block; }.info-note b { font-size: 9px; }.info-note small { margin-top: 4px; color: var(--mt-muted); font-size: 7px; }
+
+.sheet-backdrop { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: flex-end; justify-content: center; background: rgba(3,12,35,.34); backdrop-filter: blur(5px); }
+.route-sheet { position: relative; width: min(430px, 100%); padding: 12px 20px calc(24px + env(safe-area-inset-bottom)); border-radius: 30px 30px 0 0; background: #f8fbff; box-shadow: 0 -20px 50px rgba(3,15,51,.24); }
+.sheet-handle { width: 42px; height: 5px; margin: 0 auto 18px; border-radius: 3px; background: #cad5e5; }
+.sheet-close { position: absolute; top: 14px; right: 16px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: #e8eff8; }
+.sheet-kicker { color: var(--mt-blue); font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.route-sheet h2 { margin: 0 0 7px; font-size: 21px; }
+.route-sheet > p:not(.sheet-kicker) { margin: 0; color: var(--mt-muted); font-size: 11px; }
+.route-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 14px; }
+.route-detail-grid span, .route-detail-note { padding: 12px; border-radius: 18px; background: white; border: 1px solid #d9e6f4; }
+.route-detail-grid small, .route-detail-grid strong, .route-detail-note b, .route-detail-note small { display: block; }
+.route-detail-grid small, .route-detail-note small { color: var(--mt-muted); font-size: 8px; }
+.route-detail-grid strong { margin-top: 5px; font-size: 12px; color: var(--mt-navy); }
+.route-detail-note { margin-bottom: 14px; }
+.route-detail-note b { font-size: 10px; }
+.route-detail-note small { margin-top: 4px; line-height: 1.4; }
+.route-cancel { width: 100%; margin-top: 8px; }
+.planner-error { margin: 10px 4px 0; color: var(--mt-red); font-size: calc(9px * var(--mt-text-scale)); font-weight: 700; }
+
+.planner-note,
+.sort-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  color: var(--mt-blue);
+  font-size: calc(8px * var(--mt-text-scale));
+  font-weight: 700;
+  line-height: var(--mt-copy-line-height);
+}
+
+.results-heading h1 {
+  font-size: calc(21px * var(--mt-text-scale));
+}
+
+.results-heading p,
+.planner-card label,
+.planner-card > p,
+.planner-note,
+.sort-note,
+.route-summary small,
+.route-name small,
+.route-loading small,
+.info-note small,
+.route-detail-grid small,
+.route-detail-note small {
+  line-height: var(--mt-copy-line-height);
+}
+
+.planner-card label,
+.planner-card > p,
+.section-title b,
+.section-title button,
+.route-summary b,
+.sort-row button,
+.route-name b,
+.route-loading b,
+.info-note b,
+.route-detail-note b {
+  font-size: calc(1em * var(--mt-text-scale));
+}
+
+.planner-card label {
+  font-size: calc(9px * var(--mt-text-scale));
+}
+
+.planner-card label input {
+  font-size: calc(10px * var(--mt-text-scale));
+}
+
+.date-row button,
+.mode-row button,
+.recent-card > button b,
+.service-row b,
+.route-summary b,
+.route-name b,
+.route-meta b,
+.route-detail-grid strong {
+  font-size: calc(9px * var(--mt-text-scale));
+}
+
+.date-row small,
+.recent-card > button small,
+.service-row small,
+.service-row em,
+.route-summary small,
+.sort-row button,
+.route-name small,
+.route-meta small,
+.info-note b,
+.info-note small,
+.sheet-kicker {
+  font-size: calc(8px * var(--mt-text-scale));
+}
+
+.route-time strong,
+.route-sheet h2 {
+  font-size: calc(21px * var(--mt-text-scale));
+}
+
+.route-time span,
+.route-sheet > p:not(.sheet-kicker),
+.route-loading b,
+.route-detail-note b {
+  font-size: calc(10px * var(--mt-text-scale));
+}

@@ -2,13 +2,13 @@
   <img class="mt-brand" src="assets/mytravel/tourism-malaysia-logo.png" alt="Tourism Malaysia">
   <h1 class="mt-wordmark"></h1>
   <div class="mt-top-actions">
-    <button *ngIf="showLanguageToggle" class="mt-language" type="button" (click)="toggleLanguage()">
+    <button *ngIf="showLanguageToggle" class="mt-language" type="button" [attr.aria-label]="languageToggleAriaLabel" (click)="toggleLanguage()">
       <span [class.selected]="language === 'BM'">BM</span>
       <strong [class.selected]="language === 'EN'">EN</strong>
     </button>
-    <button *ngIf="showNotification" class="mt-icon-button" type="button" aria-label="Notifications" (click)="openNotifications()">
+    <button *ngIf="showNotification" class="mt-icon-button" type="button" [attr.aria-label]="notificationsAriaLabel" (click)="openNotifications()">
       <ion-icon name="notifications-outline"></ion-icon>
-      <i *ngIf="notificationBadge" class="topbar-notice-dot"></i>
+      <i *ngIf="notificationCount > 0" class="topbar-notice-dot">{{ notificationCount }}</i>
     </button>
   </div>
 </header>

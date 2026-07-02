@@ -19,6 +19,9 @@
   --mt-shadow: 0 8px 22px rgba(5, 24, 65, 0.1);
   --mt-topbar-inset: 24px;
   --mt-topbar-offset: max(24px, calc(env(safe-area-inset-top) + 18px));
+  --mt-text-scale: 1;
+  --mt-copy-line-height: 1.4;
+  --mt-focus-ring: 0 0 0 3px rgba(7, 84, 204, 0.18);
   --ion-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
 }
 
@@ -29,6 +32,16 @@ html, body, ion-app { background: #eaf2fc; }
 button, input, select, textarea { font: inherit; }
 
 button { -webkit-tap-highlight-color: transparent; }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+ion-tab-button:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--mt-focus-ring);
+}
 
 ion-content {
   --background: linear-gradient(180deg, #fcfeff 0%, #f1f7ff 52%, #dfedff 100%);
@@ -109,14 +122,42 @@ ion-content {
 }
 
 .mt-page-heading { padding: 8px 10px 6px; }
-.mt-page-heading h1 { margin: 0; font-size: 20px; line-height: 1.15; letter-spacing: -0.01em; }
-.mt-page-heading p { margin: 6px 0 0; font-size: 10px; line-height: 1.35; color: var(--mt-muted); }
+.mt-page-heading h1 { margin: 0; font-size: calc(20px * var(--mt-text-scale)); line-height: 1.15; letter-spacing: -0.01em; }
+.mt-page-heading p { margin: 6px 0 0; font-size: calc(10px * var(--mt-text-scale)); line-height: var(--mt-copy-line-height); color: var(--mt-muted); }
 
 .mt-card {
   border: 1px solid rgba(201, 217, 240, 0.65);
   border-radius: 22px;
   background: var(--mt-card);
   box-shadow: var(--mt-shadow);
+}
+
+.empty-data-card,
+.route-loading {
+  padding: 16px;
+  margin-top: 10px;
+}
+
+.empty-data-card h2,
+.empty-data-card p,
+.route-loading b,
+.route-loading small {
+  display: block;
+}
+
+.empty-data-card h2,
+.route-loading b {
+  margin: 0;
+  color: var(--mt-navy);
+  font-size: calc(12px * var(--mt-text-scale));
+}
+
+.empty-data-card p,
+.route-loading small {
+  margin: 7px 0 0;
+  color: var(--mt-muted);
+  font-size: calc(9px * var(--mt-text-scale));
+  line-height: var(--mt-copy-line-height);
 }
 
 .mt-primary,
@@ -137,7 +178,7 @@ ion-content {
   border-radius: 18px;
   color: #fff;
   background: var(--mt-red);
-  font-size: 11px;
+  font-size: calc(11px * var(--mt-text-scale));
   font-weight: 700;
   box-shadow: 0 8px 18px rgba(244, 7, 25, .18);
 }
@@ -148,7 +189,7 @@ ion-content {
   background: white;
   color: var(--mt-navy);
   border-radius: 18px;
-  font-size: 11px;
+  font-size: calc(11px * var(--mt-text-scale));
   font-weight: 700;
 }
 
@@ -183,7 +224,8 @@ ion-content {
   background: rgba(6, 25, 87, .92);
   box-shadow: 0 14px 30px rgba(4, 16, 50, .28);
   backdrop-filter: blur(18px);
-  font-size: 12px;
+  font-size: calc(12px * var(--mt-text-scale));
+  line-height: var(--mt-copy-line-height);
   animation: mtDrop .35s cubic-bezier(.2,.8,.2,1) both;
 }
 @keyframes mtDrop { from { opacity: 0; transform: translate(-50%, -18px); } }
@@ -207,6 +249,37 @@ ion-content {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+html.mt-high-contrast {
+  --mt-muted: #314564;
+  --mt-line: #8ca0c0;
+  --mt-card: #ffffff;
+  --mt-shadow: 0 0 0 1px rgba(6, 25, 87, 0.12), 0 12px 28px rgba(5, 24, 65, 0.16);
+  --mt-focus-ring: 0 0 0 4px rgba(244, 7, 25, 0.2);
+}
+
+html.mt-reader-enhanced {
+  --mt-copy-line-height: 1.6;
+}
+
+html.mt-reduce-motion *,
+html.mt-reduce-motion *::before,
+html.mt-reduce-motion *::after {
+  scroll-behavior: auto !important;
+  animation-duration: .01ms !important;
+  transition-duration: .01ms !important;
+}
+
+html.mt-underline-links .section-title button,
+html.mt-underline-links .settings-list button b,
+html.mt-underline-links .recent-row button b,
+html.mt-underline-links .passport-progress button,
+html.mt-underline-links .next-reward button,
+html.mt-underline-links .reward-back,
+html.mt-underline-links .section-item h2 {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 /* Original iOS 26 Liquid Glass navigation — restored from repository baseline. */
@@ -384,13 +457,23 @@ input, select, textarea, button { min-width: 0; }
   .welcome-copy { left: 16px !important; }
   .hero-wira { width: 92px !important; }
   .destination-pill { max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
   .travel-summary button { padding: 7px !important; gap: 6px !important; }
   .summary-icon { flex-basis: 40px !important; height: 40px !important; }
   .journey-title, .journey-stops { gap: 8px; }
   .action-card { grid-template-columns: 38px minmax(0, 1fr) 58px !important; }
   .photo-row { grid-template-columns: 1fr 1fr !important; }
   .photo-row button { grid-column: 1 / -1; }
+  .date-row { grid-template-columns: 1fr !important; }
+  .post-body { grid-template-columns: 1fr !important; }
+  .post-body > img { height: 170px !important; }
+  .route-summary { grid-template-columns: 38px minmax(0, 1fr) 22px !important; }
+  .route-summary > span.destination { grid-column: 1; }
+  .route-meta { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .route-meta button { grid-column: 1 / -1; width: 100% !important; border-radius: 16px !important; }
+  .notice-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .notice-card { grid-template-columns: 35px minmax(0, 1fr) !important; }
+  .notice-card time { grid-column: 2; }
   .verification-preview, .balance-card, .active-mission { grid-template-columns: 56px minmax(0, 1fr) !important; }
   .verification-preview .mt-primary, .balance-card p, .active-mission > strong { grid-column: 1 / -1; width: 100%; }
   .stamp-feature, .reward-hero, .challenge-hero { grid-template-columns: 1fr !important; }
@@ -420,6 +503,8 @@ input, select, textarea, button { min-width: 0; }
   .mt-card { border-radius: 26px; }
 
   .community-tabs, .filter-row { max-width: 680px; margin-inline: auto; }
+  .planner-card, .find-route, .service-card, .map-card, .recent-card, .results-heading, .route-summary, .sort-row, .sort-note, .route-loading, .route-card, .info-note { max-width: 900px; margin-inline: auto; }
+  .find-route, .service-card, .map-card, .recent-card, .route-loading, .route-card { margin-top: 12px; }
   .post-card, .tip-form, .verify-place, .verify-question, .verify-reward, .notice-card { max-width: 820px; margin-inline: auto; }
   .post-body { grid-template-columns: minmax(220px, 34%) 1fr !important; gap: 20px !important; }
   .post-body > img { width: 100% !important; height: 190px !important; }
@@ -440,4 +525,204 @@ input, select, textarea, button { min-width: 0; }
   .home-hero { height: clamp(360px, 48vw, 560px) !important; }
   .home-body { min-height: 520px !important; }
   .quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+}
+
+.profile-screen .sub-heading h1,
+.profile-screen .section-label,
+.profile-screen .profile-card h2,
+.profile-screen .challenge-banner b,
+.profile-screen .settings-list h2,
+.profile-screen .settings-list b,
+.profile-screen .settings-list small,
+.profile-screen .balance-card strong,
+.profile-screen .balance-card p,
+.profile-screen .balance-card small,
+.profile-screen .season-card h2,
+.profile-screen .season-card p,
+.profile-screen .season-card button,
+.profile-screen .segment-row button,
+.profile-screen .passport-tabs button,
+.profile-screen .text-size-row button,
+.profile-screen .transaction-card h2,
+.profile-screen .transaction-card b,
+.profile-screen .transaction-card small,
+.profile-screen .transaction-card > div > strong,
+.profile-screen .earn-card h2,
+.profile-screen .earn-card span b,
+.profile-screen .earn-card span small,
+.profile-screen .passport-progress strong,
+.profile-screen .passport-progress small,
+.profile-screen .passport-progress button,
+.profile-screen .stamp-feature h2,
+.profile-screen .stamp-feature b,
+.profile-screen .stamp-feature p,
+.profile-screen .guide-card b,
+.profile-screen .guide-card small,
+.profile-screen .language-list label,
+.profile-screen .accessibility-list b,
+.profile-screen .accessibility-list small,
+.profile-screen .preview-card h2,
+.profile-screen .preview-card b,
+.profile-screen .preview-card p,
+.profile-screen .accessibility-summary b,
+.profile-screen .accessibility-summary small,
+.profile-screen .challenge-hero h2,
+.profile-screen .challenge-hero small,
+.profile-screen .challenge-hero b,
+.profile-screen .active-mission b,
+.profile-screen .active-mission small,
+.profile-screen .active-mission em,
+.profile-screen .active-mission > strong,
+.profile-screen .next-reward small,
+.profile-screen .next-reward h2,
+.profile-screen .next-reward p,
+.profile-screen .next-reward button,
+.profile-screen .reward-hero h2,
+.profile-screen .reward-hero p,
+.profile-screen .reward-hero em,
+.profile-screen .reward-hero label,
+.profile-screen .reward-hero b,
+.profile-screen .unlock-list b,
+.profile-screen .unlock-list small,
+.profile-screen .digital-first h2,
+.profile-screen .digital-first p,
+.profile-screen .reward-back {
+  line-height: var(--mt-copy-line-height);
+}
+
+.profile-screen .sub-heading h1 {
+  font-size: calc(21px * var(--mt-text-scale));
+}
+
+.profile-screen .section-label,
+.profile-screen .season-card h2,
+.profile-screen .transaction-card h2,
+.profile-screen .guide-card b,
+.profile-screen .preview-card h2,
+.profile-screen .digital-first h2 {
+  font-size: calc(12px * var(--mt-text-scale));
+}
+
+.profile-screen .profile-card h2,
+.profile-screen .stamp-feature h2,
+.profile-screen .next-reward h2,
+.profile-screen .reward-hero h2 {
+  font-size: calc(16px * var(--mt-text-scale));
+}
+
+.profile-screen .balance-card strong,
+.profile-screen .passport-progress strong {
+  font-size: calc(22px * var(--mt-text-scale));
+}
+
+.profile-screen .challenge-hero h2 {
+  font-size: calc(17px * var(--mt-text-scale));
+}
+
+.profile-screen .language-list label,
+.profile-screen .preview-card b,
+.profile-screen .active-mission b,
+.profile-screen .unlock-list b,
+.profile-screen .reward-back {
+  font-size: calc(10px * var(--mt-text-scale));
+}
+
+.profile-screen .challenge-banner b,
+.profile-screen .section-summary small,
+.profile-screen .section-summary p,
+.profile-screen .section-summary strong,
+.profile-screen .settings-list h2,
+.profile-screen .settings-list b,
+.profile-screen .balance-card small,
+.profile-screen .balance-card p,
+.profile-screen .season-card p,
+.profile-screen .season-card button,
+.profile-screen .segment-row button,
+.profile-screen .passport-tabs button,
+.profile-screen .text-size-row button,
+.profile-screen .transaction-card b,
+.profile-screen .transaction-card > div > strong,
+.profile-screen .earn-card h2,
+.profile-screen .guide-card small,
+.profile-screen .accessibility-summary b,
+.profile-screen .challenge-hero small,
+.profile-screen .challenge-hero b,
+.profile-screen .active-mission > strong,
+.profile-screen .next-reward h2,
+.profile-screen .next-reward button,
+.profile-screen .reward-hero em,
+.profile-screen .digital-first p {
+  font-size: calc(11px * var(--mt-text-scale));
+}
+
+.profile-screen .settings-list small,
+.profile-screen .transaction-card small,
+.profile-screen .earn-card span b,
+.profile-screen .passport-progress small,
+.profile-screen .passport-progress button,
+.profile-screen .stamp-feature p,
+.profile-screen .language-list label,
+.profile-screen .accessibility-list b,
+.profile-screen .preview-card h2,
+.profile-screen .preview-card p,
+.profile-screen .accessibility-summary small,
+.profile-screen .active-mission em,
+.profile-screen .next-reward p,
+.profile-screen .reward-hero p,
+.profile-screen .reward-hero label,
+.profile-screen .reward-hero b,
+.profile-screen .unlock-list small {
+  font-size: calc(8px * var(--mt-text-scale));
+}
+
+.profile-screen .earn-card span small,
+.profile-screen .stamp-feature b,
+.profile-screen .guide-card small,
+.profile-screen .challenge-banner small,
+.profile-screen .settings-list b,
+.profile-screen .settings-list small,
+.profile-screen .accessibility-list small,
+.profile-screen .challenge-hero small,
+.profile-screen .active-mission small,
+.profile-screen .next-reward small {
+  font-size: calc(7px * var(--mt-text-scale));
+}
+
+.profile-screen .preview-card.preview-large h2 {
+  font-size: 13px;
+}
+
+.profile-screen .preview-card.preview-large b {
+  font-size: 11px;
+}
+
+.profile-screen .preview-card.preview-large p {
+  font-size: 8px;
+}
+
+.profile-screen .preview-card.preview-extra-large h2 {
+  font-size: 14px;
+}
+
+.profile-screen .preview-card.preview-extra-large b {
+  font-size: 12px;
+}
+
+.profile-screen .preview-card.preview-extra-large p {
+  font-size: 9px;
+}
+
+.profile-screen .accessibility-summary {
+  padding: 12px;
+  margin: 10px 0;
+}
+
+.profile-screen .accessibility-summary b,
+.profile-screen .accessibility-summary small {
+  display: block;
+}
+
+.profile-screen .accessibility-summary small {
+  margin-top: 4px;
+  color: var(--mt-muted);
 }

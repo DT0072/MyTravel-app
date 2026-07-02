@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { ProfileSectionPage } from '../profile-section/profile-section.page';
 import { TabsPage } from './tabs.page';
 
 const routes: Routes = [
@@ -22,6 +23,36 @@ const routes: Routes = [
       {
         path: 'tab4',
         loadChildren: () => import('../tab4/tab4.module').then(m => m.Tab4PageModule)
+      },
+      {
+        path: 'profile/my-contributions',
+        component: ProfileSectionPage,
+        data: { section: 'my-contributions' }
+      },
+      {
+        path: 'profile/settings',
+        component: ProfileSectionPage,
+        data: { section: 'settings' }
+      },
+      {
+        path: 'profile/journey-history',
+        component: ProfileSectionPage,
+        data: { section: 'journey-history' }
+      },
+      {
+        path: 'profile/saved-destinations',
+        component: ProfileSectionPage,
+        data: { section: 'saved-destinations' }
+      },
+      {
+        path: 'profile/privacy',
+        component: ProfileSectionPage,
+        data: { section: 'privacy' }
+      },
+      {
+        path: 'profile/help',
+        component: ProfileSectionPage,
+        data: { section: 'help' }
       },
       {
         path: '',

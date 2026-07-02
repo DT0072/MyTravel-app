@@ -1,0 +1,43 @@
+<ion-content [fullscreen]="true">
+  <!-- Shows a dedicated account management page inside the shared tab shell. -->
+  <div class="mt-screen profile-section-screen">
+    <app-topbar
+      [language]="language"
+      [showNotification]="false"
+      (languageChange)="updateLanguage($event)"
+    ></app-topbar>
+
+    <div class="sub-heading">
+      <button class="mt-back" type="button" [attr.aria-label]="t(backToProfileLabel)" (click)="goBack()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </button>
+      <h1>{{ content.title }}</h1>
+    </div>
+
+    <section class="mt-card section-summary">
+      <small>{{ content.summaryLabel }}</small>
+      <strong>{{ content.summaryValue }}</strong>
+      <p>{{ content.summaryCopy }}</p>
+      <button class="mt-primary" type="button" (click)="handlePrimaryAction()">{{ content.primaryAction }}</button>
+    </section>
+
+    <div class="mt-page-heading">
+      <h1>{{ content.title }}</h1>
+      <p>{{ content.description }}</p>
+    </div>
+
+    <section class="section-list">
+      <button class="mt-card section-item" type="button" *ngFor="let item of content.items" (click)="handleItemClick(item)">
+        <div>
+          <h2>{{ item.title }}</h2>
+          <p>{{ item.subtitle }}</p>
+        </div>
+        <small *ngIf="item.meta">{{ item.meta }}</small>
+      </button>
+      <section class="mt-card section-empty" *ngIf="content.items.length === 0">
+        <h2>{{ t(emptyTitle) }}</h2>
+        <p>{{ t(emptyCopy) }}</p>
+      </section>
+    </section>
+  </div>
+</ion-content>

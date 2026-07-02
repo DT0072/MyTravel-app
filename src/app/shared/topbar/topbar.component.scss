@@ -18,22 +18,25 @@
 
 .topbar-notice-dot {
   position: absolute;
-  top: 4px;
+  top: clamp(4px, calc(4px * var(--mt-text-scale)), 6px);
   right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  min-width: clamp(16px, calc(16px * var(--mt-text-scale)), 20px);
+  max-width: clamp(24px, calc(24px * var(--mt-text-scale)), 30px);
+  height: clamp(16px, calc(16px * var(--mt-text-scale)), 20px);
+  padding: 0 clamp(4px, calc(4px * var(--mt-text-scale)), 5px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   border-radius: 999px;
   background: var(--mt-red);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.92);
   color: #fff;
-  font-size: 9px;
+  font-size: clamp(9px, calc(9px * var(--mt-text-scale)), 11px);
   font-style: normal;
   font-weight: 700;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .home-topbar {
@@ -53,9 +56,9 @@
 .home-topbar .mt-language strong {
   color: var(--mt-blue);
   background: rgba(255, 255, 255, 0.94);
-  padding: 8px 7px;
-  margin: -1px -8px -1px 0;
-  border-radius: 14px;
+  padding: clamp(8px, calc(8px * var(--mt-text-scale)), 10px) clamp(7px, calc(7px * var(--mt-text-scale)), 9px);
+  margin: -1px calc(-1 * clamp(8px, calc(8px * var(--mt-text-scale)), 11px)) -1px 0;
+  border-radius: clamp(14px, calc(14px * var(--mt-text-scale)), 18px);
 }
 
 .home-topbar .mt-language span.selected {

@@ -33,17 +33,29 @@ export class TopbarComponent {
 
   get languageToggleAriaLabel(): string {
     return this.language === 'EN'
-      ? 'Switch app language to Malay'
-      : 'Tukar bahasa aplikasi ke Bahasa Inggeris';
+      ? 'App language is English. Switch app language to Malay'
+      : 'Bahasa aplikasi ialah Bahasa Melayu. Tukar bahasa aplikasi ke Bahasa Inggeris';
+  }
+
+  get brandLogoAlt(): string {
+    return this.language === 'EN'
+      ? 'Tourism Malaysia logo'
+      : 'Logo Tourism Malaysia';
   }
 
   get notificationsAriaLabel(): string {
     if (this.notificationCount > 0) {
+      const noticeLabel = this.notificationCount === 1 ? 'saved notice' : 'saved notices';
+
       return this.language === 'EN'
-        ? `Notifications, ${this.notificationCount} saved notices`
+        ? `Notifications, ${this.notificationCount} ${noticeLabel}`
         : `Pemberitahuan, ${this.notificationCount} notis disimpan`;
     }
 
     return this.language === 'EN' ? 'Notifications' : 'Pemberitahuan';
+  }
+
+  get notificationBadgeLabel(): string {
+    return this.notificationCount > 99 ? '99+' : `${this.notificationCount}`;
   }
 }

@@ -235,6 +235,57 @@ describe('Tab2Page', () => {
     expect(modeButtons[1].getAttribute('aria-pressed')).toBe('true');
   });
 
+  it('keeps navigation planner helper typography above the tiny-text readability floor', () => {
+    component.serviceStatuses = [
+      {
+        line: 'MRT Kajang',
+        route: 'Kajang to SBK13',
+        state: 'Normal',
+        color: '#0754cc',
+      },
+    ];
+    component.recentLocations = [
+      {
+        label: 'KL Sentral',
+        value: 'KL Sentral',
+        description: 'Transit hub and airport rail link',
+      },
+    ];
+    fixture.detectChanges();
+
+    const plannerLabel = fixture.nativeElement.querySelector('.planner-card label') as HTMLElement;
+    const plannerInput = fixture.nativeElement.querySelector('.planner-card label input') as HTMLElement;
+    const dateCaption = fixture.nativeElement.querySelector('.date-row label span') as HTMLElement;
+    const dateInput = fixture.nativeElement.querySelector('.date-row label input') as HTMLElement;
+    const modeButton = fixture.nativeElement.querySelector('.mode-row button') as HTMLElement;
+    const sectionTitle = fixture.nativeElement.querySelector('.service-card .section-title b') as HTMLElement;
+    const sectionAction = fixture.nativeElement.querySelector('.service-card .section-title button') as HTMLElement;
+    const serviceLabel = fixture.nativeElement.querySelector('.service-row b') as HTMLElement;
+    const serviceCopy = fixture.nativeElement.querySelector('.service-row small') as HTMLElement;
+    const serviceRow = fixture.nativeElement.querySelector('.service-row') as HTMLElement;
+    const recentLabel = fixture.nativeElement.querySelector('.recent-row b') as HTMLElement;
+    const recentCopy = fixture.nativeElement.querySelector('.recent-row small') as HTMLElement;
+    const recentAction = fixture.nativeElement.querySelector('.recent-row > button:first-child') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(plannerLabel).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(plannerInput).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(plannerInput).minHeight)).toBeGreaterThanOrEqual(42);
+    expect(parseFloat(getComputedStyle(dateCaption).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(dateInput).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(dateInput).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(modeButton).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(modeButton).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(sectionTitle).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(sectionAction).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(sectionAction).minHeight)).toBeGreaterThanOrEqual(36);
+    expect(parseFloat(getComputedStyle(serviceLabel).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(serviceCopy).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(serviceRow).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(recentLabel).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(recentCopy).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(recentAction).minHeight)).toBeGreaterThanOrEqual(40);
+  });
+
   it('renders accessible pressed states for route sort options', () => {
     component.view = 'results';
     fixture.detectChanges();
@@ -363,5 +414,51 @@ describe('Tab2Page', () => {
     fixture.detectChanges();
 
     expect(component.selectedRoute).toBeNull();
+  });
+
+  it('keeps navigation result and route-detail helper typography above the tiny-text readability floor', () => {
+    component.view = 'results';
+    component.from = 'KL Sentral';
+    component.to = 'Pasar Seni';
+    component.isLoadingRoutes = true;
+    fixture.detectChanges();
+
+    const sortButton = fixture.nativeElement.querySelector('.sort-row button') as HTMLElement;
+    const routeLoadingTitle = fixture.nativeElement.querySelector('.route-loading b') as HTMLElement;
+    const routeLoadingCopy = fixture.nativeElement.querySelector('.route-loading small') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(sortButton).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(sortButton).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(routeLoadingTitle).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(routeLoadingCopy).fontSize)).toBeGreaterThanOrEqual(10);
+
+    component.isLoadingRoutes = false;
+    component.routes = [createRoute('MRT')];
+    component.selectedRoute = createRoute('MRT');
+    fixture.detectChanges();
+
+    const routeSummaryTitle = fixture.nativeElement.querySelector('.route-summary b') as HTMLElement;
+    const routeSummaryCopy = fixture.nativeElement.querySelector('.route-summary small') as HTMLElement;
+    const sheetKicker = fixture.nativeElement.querySelector('.sheet-kicker') as HTMLElement;
+    const routeMetaLabel = fixture.nativeElement.querySelector('.route-meta small') as HTMLElement;
+    const routeMetaValue = fixture.nativeElement.querySelector('.route-meta b') as HTMLElement;
+    const routeMetaAction = fixture.nativeElement.querySelector('.route-meta button') as HTMLElement;
+    const routeDetailMeta = fixture.nativeElement.querySelector('.route-detail-grid small') as HTMLElement;
+    const routeDetailNoteTitle = fixture.nativeElement.querySelector('.route-detail-note b') as HTMLElement;
+    const routeDetailNoteCopy = fixture.nativeElement.querySelector('.route-detail-note small') as HTMLElement;
+    const closeSheetButton = fixture.nativeElement.querySelector('.sheet-close') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(routeSummaryTitle).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(routeSummaryCopy).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(sheetKicker).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(routeMetaLabel).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(routeMetaValue).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(routeMetaAction).width)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(routeMetaAction).height)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(routeDetailMeta).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(routeDetailNoteTitle).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(routeDetailNoteCopy).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(closeSheetButton).width)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(closeSheetButton).height)).toBeGreaterThanOrEqual(40);
   });
 });

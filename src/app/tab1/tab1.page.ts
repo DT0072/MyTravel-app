@@ -74,9 +74,24 @@ const HOME_COPY = {
   eventsKicker: { EN: 'EVENTS & ACTIVITIES', BM: 'ACARA & AKTIVITI' },
   eventsTitle: { EN: 'Events & Activities', BM: 'Acara & Aktiviti' },
   noEventsTitle: { EN: 'No events yet', BM: 'Belum ada acara' },
-  noEventsCopy: {
+  eventsProviderPendingTitle: { EN: 'Events provider pending', BM: 'Penyedia acara belum disambungkan' },
+  eventsProviderPendingCopy: {
     EN: 'Events will appear here when your Firestore events provider is connected.',
     BM: 'Acara akan dipaparkan di sini apabila penyedia acara Firestore anda disambungkan.',
+  },
+  noEventsAvailableCopy: {
+    EN: 'Upcoming events will appear here as soon as organisers publish them.',
+    BM: 'Acara akan datang akan dipaparkan di sini sebaik sahaja penganjur menerbitkannya.',
+  },
+  eventsQuickStatus: { EN: 'Soon', BM: 'Segera' },
+  eventsQuickPendingTitle: { EN: 'Events provider pending', BM: 'Penyedia acara belum disambungkan' },
+  eventsQuickPendingCopy: {
+    EN: 'Events & Activities will unlock here when your Firestore events provider is connected.',
+    BM: 'Acara & Aktiviti akan dibuka di sini apabila penyedia acara Firestore anda disambungkan.',
+  },
+  eventsQuickUnavailableAria: {
+    EN: 'Events and Activities unavailable. Events provider pending.',
+    BM: 'Acara dan Aktiviti tidak tersedia. Penyedia acara belum disambungkan.',
   },
   noPassportProgressCopy: {
     EN: 'Passport stamps will appear here when your Firestore passport provider is connected.',
@@ -114,6 +129,7 @@ export class Tab1Page implements OnDestroy {
   savedNoticeCount = 0;
   activeJourney: AppJourney | null = null;
   events: HomeEvent[] = [];
+  eventsProviderConnected = false;
   verificationTask: VerificationTaskDefinition | null = null;
   passportCollectedCount = 0;
   passportTotalCount = 0;
@@ -151,7 +167,7 @@ export class Tab1Page implements OnDestroy {
 
   updateLanguage(language: AppLanguage): void {
     this.language = this.accessibilityPreferencesService.setLanguage(language).language;
-    this.events = this.buildHomeEvents();
+    this.loadHomeEvents();
   }
 
   verificationAnswerAriaLabel(answer: 'yes' | 'no'): string {
@@ -167,6 +183,10 @@ export class Tab1Page implements OnDestroy {
   }
 
   openEventsSheet(): void {
+    if (!this.eventsProviderConnected) {
+      return;
+    }
+
     this.openSheet('events');
   }
 
@@ -291,6 +311,18 @@ export class Tab1Page implements OnDestroy {
         : 'Selesai';
   }
 
+  eventsEmptyStateTitle(): string {
+    return this.eventsProviderConnected
+      ? this.t(this.copy.noEventsTitle)
+      : this.t(this.copy.eventsProviderPendingTitle);
+  }
+
+  eventsEmptyStateCopy(): string {
+    return this.eventsProviderConnected
+      ? this.t(this.copy.noEventsAvailableCopy)
+      : this.t(this.copy.eventsProviderPendingCopy);
+  }
+
   private refreshState(): void {
     const state = this.appStateService.getSnapshot();
     const progress = buildTravelProgress(state);
@@ -306,12 +338,14 @@ export class Tab1Page implements OnDestroy {
     this.challengeTotalSteps = challengeSummary.totalSteps;
     this.verificationCompletedCount = verificationProgress.completedCount;
     this.verificationTotalCount = verificationProgress.totalCount;
-    this.events = this.buildHomeEvents();
+    this.loadHomeEvents();
     this.verificationTask = verificationProgress.nextTask;
   }
 
-  private buildHomeEvents(): HomeEvent[] {
-    return [];
+  private loadHomeEvents(): void {
+    // Keep the provider boundary explicit until Firestore-backed events are implemented.
+    this.eventsProviderConnected = false;
+    this.events = [];
   }
 
   private openSheet(sheet: 'verification' | 'events'): void {

@@ -42,10 +42,28 @@
       </section>
 
       <section class="quick-grid mt-reveal">
-        <button type="button" (click)="openEventsSheet()"><span class="quick-icon"><ion-icon name="calendar-number-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickEvents) }}</span></button>
+        <button
+          class="events-quick-action"
+          type="button"
+          [disabled]="!eventsProviderConnected"
+          [attr.aria-label]="!eventsProviderConnected ? t(copy.eventsQuickUnavailableAria) : t(copy.eventsTitle)"
+          (click)="openEventsSheet()"
+        >
+          <span class="quick-icon"><ion-icon name="calendar-number-outline"></ion-icon></span>
+          <span class="quick-label mt-multiline">{{ t(copy.quickEvents) }}</span>
+          <small class="quick-status" *ngIf="!eventsProviderConnected">{{ t(copy.eventsQuickStatus) }}</small>
+        </button>
         <button type="button" (click)="go('/tabs/tab2')"><span class="quick-icon"><ion-icon name="sparkles-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickExplore) }}</span></button>
         <button type="button" (click)="openVerificationSheet()"><span class="quick-icon"><ion-icon name="checkmark"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickVerification) }}</span></button>
         <button type="button" (click)="go('/tabs/tab3')"><span class="quick-icon"><ion-icon name="alert-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickNotices) }}</span></button>
+      </section>
+
+      <section class="quick-grid-note mt-reveal" *ngIf="!eventsProviderConnected" aria-live="polite">
+        <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+        <span>
+          <b>{{ t(copy.eventsQuickPendingTitle) }}</b>
+          <small>{{ t(copy.eventsQuickPendingCopy) }}</small>
+        </span>
       </section>
 
       <section class="journey-card mt-reveal" *ngIf="activeJourney; else noActiveJourney">
@@ -131,8 +149,8 @@
       <h2>{{ t(copy.eventsTitle) }}</h2>
       <button class="event-row" *ngFor="let event of events" type="button" (click)="closeActiveSheet(); go(event.targetPath)"><span>{{ event.dateLabel }}</span><div><b>{{ t(event.title) }}</b><small>{{ t(event.description) }}</small></div><ion-icon name="chevron-forward"></ion-icon></button>
       <section class="route-loading" *ngIf="events.length === 0">
-        <b>{{ t(copy.noEventsTitle) }}</b>
-        <small>{{ t(copy.noEventsCopy) }}</small>
+        <b>{{ eventsEmptyStateTitle() }}</b>
+        <small>{{ eventsEmptyStateCopy() }}</small>
       </section>
     </section>
   </div>

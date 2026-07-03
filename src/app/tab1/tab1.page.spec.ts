@@ -7,7 +7,7 @@ import {
   AccessibilityPreferences,
   AccessibilityPreferencesService,
 } from '../services/accessibility-preferences.service';
-import { AppStateService } from '../services/app-state.service';
+import { AppJourney, AppStateService } from '../services/app-state.service';
 import { Tab1Page } from './tab1.page';
 
 describe('Tab1Page', () => {
@@ -241,17 +241,144 @@ describe('Tab1Page', () => {
     );
   });
 
-  it('opens a provider-ready empty events sheet instead of showing a toast-only dead end', () => {
-    component.openEventsSheet();
+  it('renders the events quick action as provider-pending instead of opening a dead-end sheet', () => {
     fixture.detectChanges();
 
-    const eventsSheet = fixture.nativeElement.querySelector('.events-sheet') as HTMLElement;
+    const eventsButton = fixture.nativeElement.querySelector('.events-quick-action') as HTMLButtonElement;
+    const pendingNote = fixture.nativeElement.querySelector('.quick-grid-note') as HTMLElement;
 
-    expect(component.activeSheet).toBe('events');
+    eventsButton.click();
+    fixture.detectChanges();
+
+    expect(eventsButton.disabled).toBeTrue();
+    expect(eventsButton.getAttribute('aria-label')).toBe('Events and Activities unavailable. Events provider pending.');
+    expect(eventsButton.textContent).toContain('Soon');
     expect(component.toast).toBe('');
-    expect(eventsSheet.getAttribute('role')).toBe('dialog');
-    expect(eventsSheet.textContent).toContain('No events yet');
-    expect(eventsSheet.textContent).toContain('Events will appear here when your Firestore events provider is connected.');
+    expect(component.activeSheet).toBeNull();
+    expect(pendingNote.textContent).toContain('Events provider pending');
+    expect(pendingNote.textContent).toContain('Events & Activities will unlock here when your Firestore events provider is connected.');
+    expect(component.eventsEmptyStateTitle()).toBe('Events provider pending');
+    expect(component.eventsEmptyStateCopy()).toBe('Events will appear here when your Firestore events provider is connected.');
+  });
+
+  it('keeps home helper typography above the tiny-text readability floor', () => {
+    fixture.detectChanges();
+
+    const quickStatus = fixture.nativeElement.querySelector('.quick-status') as HTMLElement;
+    const quickNote = fixture.nativeElement.querySelector('.quick-grid-note small') as HTMLElement;
+    const journeyBadge = fixture.nativeElement.querySelector('.journey-title span') as HTMLElement;
+    const journeyFooterCopy = fixture.nativeElement.querySelector('.journey-empty p') as HTMLElement;
+    const actionTitle = fixture.nativeElement.querySelector('.verification-action b') as HTMLElement;
+    const actionSupport = fixture.nativeElement.querySelector('.verification-action small') as HTMLElement;
+    const actionBadge = fixture.nativeElement.querySelector('.verification-action em') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(quickStatus).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(quickNote).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(journeyBadge).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(journeyFooterCopy).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(actionTitle).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(actionSupport).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(actionBadge).fontSize)).toBeGreaterThanOrEqual(10);
+
+    component.openVerificationSheet();
+    fixture.detectChanges();
+
+    const sheetKicker = fixture.nativeElement.querySelector('.sheet-kicker') as HTMLElement;
+    const sheetEmptyTitle = fixture.nativeElement.querySelector('.route-loading b') as HTMLElement;
+    const sheetEmptyCopy = fixture.nativeElement.querySelector('.route-loading small') as HTMLElement;
+    const sheetCloseButton = fixture.nativeElement.querySelector('.sheet-close') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(sheetKicker).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(sheetEmptyTitle).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(sheetEmptyCopy).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(sheetCloseButton).width)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(sheetCloseButton).height)).toBeGreaterThanOrEqual(40);
+  });
+
+  it('keeps active-journey and provider-backed sheet controls above the compact-control floor', () => {
+    component.activeJourney = {
+      id: 'journey-kl-sentral-pasar-seni',
+      from: 'KL Sentral',
+      to: 'Pasar Seni',
+      detail: 'Direct MRT route',
+      depart: '10:00 AM',
+      arrive: '10:20 AM',
+      duration: '20 min',
+      mode: 'MRT',
+      fare: 'RM1.80',
+      walk: '180 m',
+      isAccessible: true,
+      travelDate: '2026-07-03',
+      travelTime: '10:00',
+      startedAt: '2026-07-03T10:00:00.000Z',
+      completedAt: null,
+      points: 20,
+    } as AppJourney;
+    fixture.detectChanges();
+
+    const travelSummaryCopy = fixture.nativeElement.querySelector('.travel-summary small') as HTMLElement;
+    const journeyFooterMeta = fixture.nativeElement.querySelector('.journey-footer small') as HTMLElement;
+    const journeyFooterAction = fixture.nativeElement.querySelector('.journey-footer button') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(travelSummaryCopy).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(journeyFooterMeta).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(journeyFooterAction).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(journeyFooterAction).minHeight)).toBeGreaterThanOrEqual(40);
+
+    component.events = [
+      {
+        dateLabel: '12 JUL',
+        title: { EN: 'Forest Rail Walk', BM: 'Jalan Rel Hutan' },
+        description: {
+          EN: 'Provider-backed event details appear here when available.',
+          BM: 'Butiran acara bersumber penyedia dipaparkan di sini apabila tersedia.',
+        },
+        targetPath: '/tabs/tab3',
+      },
+    ];
+    component.activeSheet = 'events';
+    fixture.detectChanges();
+
+    const eventDate = fixture.nativeElement.querySelector('.event-row > span') as HTMLElement;
+    const eventCopy = fixture.nativeElement.querySelector('.event-row small') as HTMLElement;
+    const eventCloseButton = fixture.nativeElement.querySelector('.events-sheet .sheet-close') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(eventDate).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(eventDate).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(eventCopy).fontSize)).toBeGreaterThanOrEqual(10);
+    expect(parseFloat(getComputedStyle(eventCloseButton).width)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(eventCloseButton).height)).toBeGreaterThanOrEqual(40);
+
+    component.activeSheet = 'verification';
+    component.verificationTask = {
+      id: 'verification-kl-sentral-access',
+      title: 'KL Sentral access check',
+      question: { EN: 'Is the lift working?', BM: 'Adakah lif berfungsi?' },
+      station: { EN: 'KL Sentral', BM: 'KL Sentral' },
+      place: { EN: 'KL Sentral', BM: 'KL Sentral' },
+      badge: { EN: 'Verified transit hub', BM: 'Hab transit disahkan' },
+      address: { EN: 'Jalan Stesen Sentral', BM: 'Jalan Stesen Sentral' },
+      image: 'assets/mytravel/wira-ui.png',
+      points: 20,
+    } as never;
+    fixture.detectChanges();
+
+    const rewardCopy = fixture.nativeElement.querySelector('.reward-row small') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(rewardCopy).fontSize)).toBeGreaterThanOrEqual(10);
+  });
+
+  it('keeps the featured destination control clear of the raised summary panel', () => {
+    fixture.detectChanges();
+
+    const destinationPill = fixture.nativeElement.querySelector('.destination-pill') as HTMLElement;
+    const homeBody = fixture.nativeElement.querySelector('.home-body') as HTMLElement;
+    const travelSummary = fixture.nativeElement.querySelector('.travel-summary') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(destinationPill).bottom)).toBeGreaterThanOrEqual(64);
+    expect(parseFloat(getComputedStyle(homeBody).marginTop)).toBeGreaterThanOrEqual(-18);
+    expect(parseFloat(getComputedStyle(travelSummary).minHeight)).toBeGreaterThanOrEqual(82);
+    expect(getComputedStyle(destinationPill).zIndex).toBe('3');
   });
 
   it('renders the verification sheet as an accessible dialog and closes it on escape', () => {

@@ -29,6 +29,14 @@
 .profile-card p {
   margin: 5px 0;
   color: var(--mt-green);
+  font-size: calc(11px * var(--mt-text-scale));
+  line-height: 1.45;
+}
+
+.profile-card b {
+  display: block;
+  font-size: calc(11px * var(--mt-text-scale));
+  font-weight: 700;
 }
 
 .stat-grid {
@@ -252,11 +260,25 @@
 .segment-row button,
 .passport-tabs button,
 .text-size-row button {
-  height: 29px;
+  min-height: 40px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
   border: 1px solid var(--mt-line);
   border-radius: 15px;
   color: var(--mt-navy);
   background: white;
+  font-size: calc(11px * var(--mt-text-scale));
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.passport-tabs button,
+.text-size-row button {
+  white-space: normal;
 }
 
 .segment-row button.active,
@@ -486,9 +508,14 @@
 
 .language-list label {
   display: block;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   padding: 7px;
   border-radius: 12px;
   color: var(--mt-navy);
+  font-size: calc(12px * var(--mt-text-scale));
+  line-height: 1.4;
   transition: box-shadow 0.18s ease, background 0.18s ease;
 }
 
@@ -537,9 +564,15 @@
   display: block;
 }
 
+.accessibility-list b {
+  font-size: calc(12px * var(--mt-text-scale));
+}
+
 .accessibility-list small {
   margin-top: 3px;
   color: var(--mt-muted);
+  font-size: calc(11px * var(--mt-text-scale));
+  line-height: 1.45;
 }
 
 .accessibility-list input {
@@ -606,11 +639,19 @@
 
 .preview-card h2 {
   margin: 0 0 8px;
+  font-size: calc(16px * var(--mt-text-scale));
+  line-height: 1.25;
+}
+
+.preview-card b {
+  font-size: calc(12px * var(--mt-text-scale));
 }
 
 .preview-card p {
   margin: 3px 0;
   color: var(--mt-muted);
+  font-size: calc(11px * var(--mt-text-scale));
+  line-height: 1.45;
 }
 
 .preview-card.preview-contrast {
@@ -631,6 +672,30 @@
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.16em;
+}
+
+.preview-card.preview-large h2 {
+  font-size: calc(18px * var(--mt-text-scale));
+}
+
+.preview-card.preview-large b {
+  font-size: calc(13px * var(--mt-text-scale));
+}
+
+.preview-card.preview-large p {
+  font-size: calc(12px * var(--mt-text-scale));
+}
+
+.preview-card.preview-extra-large h2 {
+  font-size: calc(20px * var(--mt-text-scale));
+}
+
+.preview-card.preview-extra-large b {
+  font-size: calc(14px * var(--mt-text-scale));
+}
+
+.preview-card.preview-extra-large p {
+  font-size: calc(13px * var(--mt-text-scale));
 }
 
 .reset-button {

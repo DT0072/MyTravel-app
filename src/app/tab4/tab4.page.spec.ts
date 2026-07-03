@@ -167,15 +167,22 @@ describe('Tab4Page', () => {
     const pointsTotal = fixture.nativeElement.querySelector('.balance-card strong') as HTMLElement;
     const filterButton = fixture.nativeElement.querySelector('.segment-row button') as HTMLButtonElement;
     expect(parseFloat(getComputedStyle(pointsTotal).fontSize)).toBeGreaterThan(24);
-    expect(parseFloat(getComputedStyle(filterButton).fontSize)).toBeGreaterThan(8);
+    expect(parseFloat(getComputedStyle(filterButton).fontSize)).toBeGreaterThan(14);
+    expect(parseFloat(getComputedStyle(filterButton).minHeight)).toBeGreaterThanOrEqual(40);
 
     component.view = 'accessibility';
     fixture.detectChanges();
 
     const languageOption = fixture.nativeElement.querySelector('.language-list label') as HTMLElement;
+    const textSizeButton = fixture.nativeElement.querySelector('.text-size-row button') as HTMLButtonElement;
     const previewTitle = fixture.nativeElement.querySelector('.preview-card h2') as HTMLElement;
-    expect(parseFloat(getComputedStyle(languageOption).fontSize)).toBeGreaterThan(9);
-    expect(parseFloat(getComputedStyle(previewTitle).fontSize)).toBeGreaterThan(12);
+    const previewCopy = fixture.nativeElement.querySelector('.preview-card p') as HTMLElement;
+    expect(parseFloat(getComputedStyle(languageOption).fontSize)).toBeGreaterThan(16);
+    expect(parseFloat(getComputedStyle(languageOption).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(textSizeButton).fontSize)).toBeGreaterThan(14);
+    expect(parseFloat(getComputedStyle(textSizeButton).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(previewTitle).fontSize)).toBeGreaterThan(20);
+    expect(parseFloat(getComputedStyle(previewCopy).fontSize)).toBeGreaterThan(15);
   });
 
   it('steps the accessibility preview typography through Standard, Large, and Extra large states', () => {

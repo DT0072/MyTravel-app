@@ -167,6 +167,25 @@ describe('Tab3Page', () => {
     expect(component.verificationMissionWidth).toBe('0%');
   });
 
+  it('presents the community mission card with balanced image, text, and action sizing', () => {
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.mission-card') as HTMLElement;
+    const mascot = fixture.nativeElement.querySelector('.mission-card img') as HTMLElement;
+    const title = fixture.nativeElement.querySelector('.mission-card b') as HTMLElement;
+    const copy = fixture.nativeElement.querySelector('.mission-card small') as HTMLElement;
+    const progress = fixture.nativeElement.querySelector('.mission-card i') as HTMLElement;
+    const action = fixture.nativeElement.querySelector('.mission-card em') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(card).minHeight)).toBeGreaterThanOrEqual(84);
+    expect(parseFloat(getComputedStyle(mascot).width)).toBeLessThanOrEqual(52);
+    expect(parseFloat(getComputedStyle(title).fontSize)).toBeGreaterThanOrEqual(13);
+    expect(parseFloat(getComputedStyle(copy).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(progress).height)).toBeGreaterThanOrEqual(7);
+    expect(parseFloat(getComputedStyle(action).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(getComputedStyle(action).whiteSpace).toBe('nowrap');
+  });
+
   it('filters locally submitted community posts by state and category', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
@@ -396,10 +415,17 @@ describe('Tab3Page', () => {
     fixture.detectChanges();
 
     const addHeading = fixture.nativeElement.querySelector('.sub-heading h1') as HTMLElement;
+    const stepCopy = fixture.nativeElement.querySelector('.steps small') as HTMLElement;
+    const tipLabel = fixture.nativeElement.querySelector('.tip-form label') as HTMLElement;
     const tipInput = fixture.nativeElement.querySelector('.tip-form input[name="location"]') as HTMLInputElement;
+    const confirmRow = fixture.nativeElement.querySelector('.confirm-row') as HTMLElement;
 
     expect(parseFloat(getComputedStyle(addHeading).fontSize)).toBeGreaterThan(21);
-    expect(parseFloat(getComputedStyle(tipInput).fontSize)).toBeGreaterThan(9);
+    expect(parseFloat(getComputedStyle(stepCopy).fontSize)).toBeGreaterThan(13);
+    expect(parseFloat(getComputedStyle(tipLabel).fontSize)).toBeGreaterThan(14);
+    expect(parseFloat(getComputedStyle(tipInput).fontSize)).toBeGreaterThan(14);
+    expect(parseFloat(getComputedStyle(tipInput).minHeight)).toBeGreaterThanOrEqual(42);
+    expect(parseFloat(getComputedStyle(confirmRow).fontSize)).toBeGreaterThan(14);
 
     component.openNotices();
     fixture.detectChanges();
@@ -459,6 +485,94 @@ describe('Tab3Page', () => {
 
     expect(parseFloat(getComputedStyle(noticeFilter).fontSize)).toBeGreaterThan(9);
     expect(parseFloat(getComputedStyle(noticeTime).fontSize)).toBeGreaterThan(9);
+  });
+
+  it('keeps community and notice filters above the cramped control floor', () => {
+    fixture.detectChanges();
+
+    const communityFilters = Array.from(
+      fixture.nativeElement.querySelectorAll('.filter-row select'),
+    ) as HTMLSelectElement[];
+
+    expect(communityFilters.length).toBe(3);
+    communityFilters.forEach((filter) => {
+      expect(parseFloat(getComputedStyle(filter).fontSize)).toBeGreaterThan(10);
+      expect(parseFloat(getComputedStyle(filter).minHeight)).toBeGreaterThanOrEqual(42);
+    });
+
+    component.notices = [
+      {
+        id: 'notice-1',
+        level: 'CRITICAL',
+        color: '#c62828',
+        title: { EN: 'Service disruption', BM: 'Gangguan perkhidmatan' },
+        place: { EN: 'Kelana Jaya Line', BM: 'Laluan Kelana Jaya' },
+        time: '10 min ago',
+        category: 'Transit',
+        saved: false,
+      },
+    ];
+    component.openNotices();
+    fixture.detectChanges();
+
+    const noticeButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.notice-tabs button'),
+    ) as HTMLButtonElement[];
+
+    expect(noticeButtons.length).toBe(4);
+    noticeButtons.forEach((button) => {
+      expect(parseFloat(getComputedStyle(button).fontSize)).toBeGreaterThan(10);
+      expect(parseFloat(getComputedStyle(button).minHeight)).toBeGreaterThanOrEqual(42);
+    });
+  });
+
+  it('groups notice actions and timestamp into a reflowable footer layout', () => {
+    component.notices = [
+      {
+        id: 'notice-1',
+        level: 'CRITICAL',
+        color: '#c62828',
+        title: { EN: 'Service disruption', BM: 'Gangguan perkhidmatan' },
+        place: { EN: 'Kelana Jaya Line', BM: 'Laluan Kelana Jaya' },
+        time: '10 min ago',
+        category: 'Transit',
+        saved: false,
+      },
+    ];
+    component.openNotices();
+    fixture.detectChanges();
+
+    const noticeCard = fixture.nativeElement.querySelector('.notice-card') as HTMLElement;
+    const noticeFooter = fixture.nativeElement.querySelector('.notice-footer') as HTMLElement;
+    const noticeActions = fixture.nativeElement.querySelector('.notice-actions') as HTMLElement;
+    const noticeTime = fixture.nativeElement.querySelector('.notice-footer time') as HTMLElement;
+
+    expect(noticeCard).not.toBeNull();
+    expect(noticeFooter).not.toBeNull();
+    expect(noticeActions).not.toBeNull();
+    expect(noticeTime.textContent?.trim()).toBe('10 min ago');
+    expect(getComputedStyle(noticeFooter).display).toBe('flex');
+    expect(getComputedStyle(noticeFooter).flexWrap).toBe('wrap');
+    expect(getComputedStyle(noticeActions).display).toBe('flex');
+    expect(getComputedStyle(noticeTime).whiteSpace).toBe('nowrap');
+  });
+
+  it('keeps the add-tip form controls above the cramped mobile readability floor', () => {
+    component.openAddTip();
+    fixture.detectChanges();
+
+    const steps = fixture.nativeElement.querySelector('.steps') as HTMLElement;
+    const tipInput = fixture.nativeElement.querySelector('.tip-form input[name="location"]') as HTMLInputElement;
+    const photoButton = fixture.nativeElement.querySelector('.photo-row button') as HTMLButtonElement;
+    const toggleRow = fixture.nativeElement.querySelector('.toggle-row') as HTMLElement;
+    const toggleCopy = fixture.nativeElement.querySelector('.toggle-row small') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(steps).minHeight)).toBeGreaterThanOrEqual(48);
+    expect(parseFloat(getComputedStyle(tipInput).fontSize)).toBeGreaterThan(10);
+    expect(parseFloat(getComputedStyle(tipInput).minHeight)).toBeGreaterThanOrEqual(42);
+    expect(parseFloat(getComputedStyle(photoButton).fontSize)).toBeGreaterThan(10);
+    expect(parseFloat(getComputedStyle(toggleRow).minHeight)).toBeGreaterThanOrEqual(52);
+    expect(parseFloat(getComputedStyle(toggleCopy).fontSize)).toBeGreaterThan(10);
   });
 
   it('hides decorative icons from assistive tech across Tab3 surfaces', () => {

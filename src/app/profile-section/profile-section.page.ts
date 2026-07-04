@@ -160,7 +160,10 @@ const SECTION_UI_COPY = {
   switchLanguage: { EN: 'Switch content language and locale', BM: 'Tukar bahasa kandungan dan lokaliti' },
   notificationPreferences: { EN: 'Notification preferences', BM: 'Pilihan pemberitahuan' },
   notificationSubtitle: { EN: 'Travel notices and journey reminders', BM: 'Notis perjalanan dan peringatan perjalanan' },
-  notificationMeta: { EN: '2 priority alerts enabled', BM: '2 amaran keutamaan diaktifkan' },
+  notificationEmptyStateMeta: {
+    EN: 'No saved notices yet. Open Community notices when they are available.',
+    BM: 'Belum ada notis tersimpan. Buka notis Komuniti apabila tersedia.',
+  },
   savedTravelData: { EN: 'Saved travel data', BM: 'Data perjalanan tersimpan' },
   savedTravelDataSubtitle: { EN: 'Journeys, notices, and reactions stay available on this device.', BM: 'Perjalanan, notis, dan reaksi kekal tersedia pada peranti ini.' },
   savedTravelDataMeta: { EN: '{count} saved notices · local device storage', BM: '{count} notis tersimpan · storan setempat peranti' },
@@ -179,10 +182,17 @@ const SECTION_UI_COPY = {
   accessibilityGuide: { EN: 'Accessibility support guide', BM: 'Panduan sokongan kebolehcapaian' },
   accessibilityGuideSubtitle: { EN: 'Adjust text size, contrast, motion, and wheelchair-route preferences before a trip.', BM: 'Laraskan saiz teks, kontras, gerakan, dan pilihan laluan kerusi roda sebelum perjalanan.' },
   accessibilityGuideMeta: { EN: 'Open accessibility controls', BM: 'Buka kawalan kebolehcapaian' },
+  opensProfileOverview: { EN: 'Opens your profile overview.', BM: 'Membuka ringkasan profil anda.' },
+  opensAccessibilityControls: { EN: 'Opens accessibility controls.', BM: 'Membuka kawalan kebolehcapaian.' },
+  opensNavigationPlanner: { EN: 'Opens the Navigation planner.', BM: 'Membuka perancang Navigasi.' },
+  opensCommunityBoard: { EN: 'Opens the Community board.', BM: 'Membuka papan Komuniti.' },
+  opensTravelNotices: { EN: 'Opens saved travel notices in Community.', BM: 'Membuka notis perjalanan tersimpan dalam Komuniti.' },
+  opensSettingsSection: { EN: 'Opens the Settings section.', BM: 'Membuka bahagian Tetapan.' },
   accessibilitySupport: { EN: 'Accessibility and route support', BM: 'Kebolehcapaian dan sokongan laluan' },
   accessibilityMeta: { EN: 'Text size: {size}', BM: 'Saiz teks: {size}' },
   helperActiveSingular: { EN: '{count} helper active', BM: '{count} bantuan aktif' },
   helperActivePlural: { EN: '{count} helpers active', BM: '{count} bantuan aktif' },
+  savedNoticeReadyInCommunity: { EN: 'ready in Community', BM: 'sedia dalam Komuniti' },
   accessibleRoutesOn: { EN: 'Accessible routes on', BM: 'Laluan mesra akses aktif' },
   accessibleRoutesOff: { EN: 'Accessible routes off', BM: 'Laluan mesra akses tidak aktif' },
   englishRegion: { EN: 'English (EN)', BM: 'Bahasa Inggeris (EN)' },
@@ -252,6 +262,25 @@ export class ProfileSectionPage implements OnInit {
 
   t(text: LocalizedText): string {
     return text[this.language];
+  }
+
+  primaryActionAriaLabel(): string {
+    return this.composeAriaLabel([
+      this.content.primaryAction,
+      this.actionDestinationHint(),
+    ]);
+  }
+
+  sectionItemAriaLabel(item: ProfileSectionItem): string {
+    const parts = [item.title, item.subtitle];
+
+    if (item.meta) {
+      parts.push(item.meta);
+    }
+
+    parts.push(this.actionDestinationHint(item.action));
+
+    return this.composeAriaLabel(parts);
   }
 
   goBack(): void {
@@ -389,6 +418,7 @@ export class ProfileSectionPage implements OnInit {
   private buildSettingsContent(): ProfileSectionContent {
     const staticContent = renderStaticSection(PROFILE_SECTION_COPY.settings, this.language);
     const preferences = this.accessibilityPreferencesService.getPreferences();
+    const savedNoticeCount = this.appStateService.getSnapshot().savedNoticeIds.length;
     const helperCount = Object.values(preferences.settings).filter(Boolean).length;
     const languageLabel = this.languageRegionLabel(preferences.language);
 
@@ -408,7 +438,7 @@ export class ProfileSectionPage implements OnInit {
         {
           title: this.t(SECTION_UI_COPY.notificationPreferences),
           subtitle: this.t(SECTION_UI_COPY.notificationSubtitle),
-          meta: this.t(SECTION_UI_COPY.notificationMeta),
+          meta: this.savedNoticeReadinessMeta(savedNoticeCount),
           action: 'profile',
         },
         {
@@ -495,9 +525,7 @@ export class ProfileSectionPage implements OnInit {
         {
           title: this.t(SECTION_UI_COPY.travelNoticeGuide),
           subtitle: this.t(SECTION_UI_COPY.travelNoticeGuideSubtitle),
-          meta: this.language === 'EN'
-            ? `${savedNoticeCount} ${this.countLabel(savedNoticeCount, SECTION_UI_COPY.savedNoticeSingular, SECTION_UI_COPY.savedNoticePlural)} ready in Community`
-            : `${savedNoticeCount} ${this.countLabel(savedNoticeCount, SECTION_UI_COPY.savedNoticeSingular, SECTION_UI_COPY.savedNoticePlural)} sedia dalam Komuniti`,
+          meta: this.savedNoticeReadinessMeta(savedNoticeCount),
           action: 'notices',
         },
         {
@@ -571,6 +599,60 @@ export class ProfileSectionPage implements OnInit {
       this.countLabel(count, SECTION_UI_COPY.helperActiveSingular, SECTION_UI_COPY.helperActivePlural),
       { count: String(count) },
     );
+  }
+
+  private actionDestinationHint(action?: ProfileSectionAction): string {
+    switch (action) {
+      case 'accessibility':
+        return this.t(SECTION_UI_COPY.opensAccessibilityControls);
+      case 'navigation':
+        return this.t(SECTION_UI_COPY.opensNavigationPlanner);
+      case 'community':
+        return this.t(SECTION_UI_COPY.opensCommunityBoard);
+      case 'notices':
+        return this.t(SECTION_UI_COPY.opensTravelNotices);
+      case 'settings':
+        return this.t(SECTION_UI_COPY.opensSettingsSection);
+      case 'profile':
+        return this.t(SECTION_UI_COPY.opensProfileOverview);
+      default:
+        break;
+    }
+
+    switch (this.section) {
+      case 'journey-history':
+        return this.t(SECTION_UI_COPY.opensNavigationPlanner);
+      case 'saved-destinations':
+        return this.t(SECTION_UI_COPY.opensTravelNotices);
+      case 'privacy':
+        return this.t(SECTION_UI_COPY.opensSettingsSection);
+      case 'help':
+        return this.t(SECTION_UI_COPY.opensCommunityBoard);
+      case 'settings':
+        return this.t(SECTION_UI_COPY.opensAccessibilityControls);
+      default:
+        return this.t(SECTION_UI_COPY.opensProfileOverview);
+    }
+  }
+
+  private composeAriaLabel(parts: Array<string | undefined>): string {
+    return parts
+      .filter((part): part is string => Boolean(part?.trim()))
+      .map((part) => part.trim().replace(/\.+$/, ''))
+      .join('. ')
+      .concat('.');
+  }
+
+  private savedNoticeReadinessMeta(count: number): string {
+    if (count === 0) {
+      return this.t(SECTION_UI_COPY.notificationEmptyStateMeta);
+    }
+
+    return `${count} ${this.countLabel(
+      count,
+      SECTION_UI_COPY.savedNoticeSingular,
+      SECTION_UI_COPY.savedNoticePlural,
+    )} ${this.t(SECTION_UI_COPY.savedNoticeReadyInCommunity)}`;
   }
 
   private countLabel(count: number, singular: LocalizedText, plural: LocalizedText): string {

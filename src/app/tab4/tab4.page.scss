@@ -29,14 +29,19 @@
 .profile-card p {
   margin: 5px 0;
   color: var(--mt-green);
-  font-size: calc(11px * var(--mt-text-scale));
   line-height: 1.45;
 }
 
 .profile-card b {
   display: block;
-  font-size: calc(11px * var(--mt-text-scale));
   font-weight: 700;
+}
+
+.profile-card p,
+.profile-card b,
+.accessibility-list small,
+.preview-card p {
+  font-size: calc(11px * var(--mt-text-scale));
 }
 
 .stat-grid {
@@ -109,7 +114,6 @@
   padding: 5px;
   text-align: left;
   color: var(--mt-ink);
-  background: #fafffc;
 }
 
 .challenge-banner img {
@@ -118,14 +122,8 @@
   object-fit: contain;
 }
 
-.challenge-banner b,
-.challenge-banner small {
-  display: block;
-}
-
 .challenge-banner small {
   margin-top: 8px;
-  color: var(--mt-muted);
   line-height: 1.4;
 }
 
@@ -138,29 +136,11 @@
   margin: 0 0 4px;
 }
 
-.settings-list button {
-  width: 100%;
-  min-height: 34px;
-  display: grid;
-  grid-template-columns: 23px 1fr 14px;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 6px;
-  border: 0;
-  background: transparent;
-  color: var(--mt-navy);
-  text-align: left;
-}
+.settings-list button { width: 100%; min-height: 44px; display: grid; grid-template-columns: 24px 1fr 16px; align-items: center; gap: 8px; padding: 8px 6px; border: 0; background: transparent; color: var(--mt-navy); text-align: left; }
 
-.settings-list b,
-.settings-list small {
-  display: block;
-}
+.settings-list b,.settings-list small { display: block; }
 
-.settings-list small {
-  margin-top: 3px;
-  color: var(--mt-muted);
-}
+.settings-list small { margin-top: 3px; color: var(--mt-muted); }
 
 .settings-list .signout b {
   color: var(--mt-red);
@@ -221,7 +201,6 @@
   align-items: center;
   padding: 10px;
   margin-top: 10px;
-  background: #fafffc;
 }
 
 .season-card h2 {
@@ -238,6 +217,8 @@
   height: 58px;
   object-fit: contain;
 }
+
+.season-card button,.passport-progress button,.next-reward button,.reward-back{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
 
 .season-card button {
   margin-top: 7px;
@@ -376,17 +357,14 @@
 }
 
 .passport-progress button {
+  padding: 0 12px;
   border: 0;
   background: transparent;
   color: var(--mt-navy);
   font-weight: 700;
 }
 
-.stamp-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 7px;
-}
+.stamp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 7px; }
 
 .stamp-grid button {
   position: relative;
@@ -483,7 +461,6 @@
   gap: 10px;
   padding: 6px 12px;
   margin-top: 10px;
-  background: #fafffc;
 }
 
 .guide-card img {
@@ -492,14 +469,8 @@
   object-fit: contain;
 }
 
-.guide-card b,
-.guide-card small {
-  display: block;
-}
-
 .guide-card small {
   margin-top: 5px;
-  color: var(--mt-muted);
 }
 
 .language-list {
@@ -564,15 +535,15 @@
   display: block;
 }
 
-.accessibility-list b {
-  font-size: calc(12px * var(--mt-text-scale));
-}
-
 .accessibility-list small {
   margin-top: 3px;
   color: var(--mt-muted);
-  font-size: calc(11px * var(--mt-text-scale));
   line-height: 1.45;
+}
+
+.accessibility-list b,
+.preview-card b {
+  font-size: calc(12px * var(--mt-text-scale));
 }
 
 .accessibility-list input {
@@ -643,14 +614,9 @@
   line-height: 1.25;
 }
 
-.preview-card b {
-  font-size: calc(12px * var(--mt-text-scale));
-}
-
 .preview-card p {
   margin: 3px 0;
   color: var(--mt-muted);
-  font-size: calc(11px * var(--mt-text-scale));
   line-height: 1.45;
 }
 
@@ -709,7 +675,6 @@
   align-items: center;
   gap: 5px;
   padding: 10px;
-  background: #fafffc;
 }
 
 .challenge-hero > div {
@@ -723,13 +688,7 @@
   margin-right: -13px;
 }
 
-.challenge-hero small,
-.challenge-hero b {
-  display: block;
-}
-
 .challenge-hero small {
-  color: var(--mt-muted);
   margin: 8px 0;
 }
 
@@ -746,7 +705,6 @@
   gap: 7px;
   padding: 8px;
   margin-bottom: 10px;
-  background: #fafffc;
 }
 
 .active-mission img {
@@ -763,7 +721,6 @@
 
 .active-mission small {
   margin: 5px 0 9px;
-  color: var(--mt-muted);
 }
 
 .active-mission em {
@@ -807,6 +764,14 @@
   grid-template-columns: 170px 1fr;
   align-items: center;
   padding: 10px;
+}
+
+.challenge-banner,
+.season-card,
+.guide-card,
+.challenge-hero,
+.active-mission,
+.reward-hero {
   background: #fafffc;
 }
 
@@ -888,14 +853,19 @@
   font-weight: 800;
 }
 
+.unlock-list small {
+  margin-top: 4px;
+}
+
+.challenge-banner b,
+.challenge-banner small,
+.guide-card b,
+.guide-card small,
+.challenge-hero small,
+.challenge-hero b,
 .unlock-list b,
 .unlock-list small {
   display: block;
-}
-
-.unlock-list small {
-  margin-top: 4px;
-  color: var(--mt-muted);
 }
 
 .digital-first {
@@ -904,13 +874,17 @@
   color: var(--mt-green);
 }
 
+.challenge-banner small,
+.guide-card small,
+.challenge-hero small,
+.active-mission small,
+.unlock-list small,
 .digital-first p {
   color: var(--mt-muted);
 }
 
 .reward-back {
   width: 100%;
-  height: 36px;
   border: 0;
   border-radius: 18px;
   color: white;

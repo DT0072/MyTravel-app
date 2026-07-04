@@ -151,6 +151,40 @@ describe('Tab4Page', () => {
     expect(component.viewTitle).toBe('Rewards status');
   });
 
+  it('marks decorative profile icons as hidden from assistive technology', () => {
+    component.view = 'points';
+    component.transactions = [
+      {
+        title: { EN: 'Public transport journey', BM: 'Perjalanan pengangkutan awam' },
+        subtitle: { EN: 'Provider-ready trip summary', BM: 'Ringkasan perjalanan sedia penyedia' },
+        points: '+20',
+        accent: '#0754cc',
+        status: 'Earned',
+      },
+    ];
+    fixture.detectChanges();
+
+    const backIcon = fixture.nativeElement.querySelector('.sub-heading .mt-back ion-icon') as HTMLElement;
+    const balanceIcon = fixture.nativeElement.querySelector('.balance-card ion-icon') as HTMLElement;
+    const transactionIcon = fixture.nativeElement.querySelector('.transaction-card ion-icon') as HTMLElement;
+
+    expect(backIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(balanceIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(transactionIcon.getAttribute('aria-hidden')).toBe('true');
+
+    component.view = 'passport';
+    fixture.detectChanges();
+
+    const passportIcon = fixture.nativeElement.querySelector('.passport-progress ion-icon') as HTMLElement;
+    expect(passportIcon.getAttribute('aria-hidden')).toBe('true');
+
+    component.view = 'accessibility';
+    fixture.detectChanges();
+
+    const previewIcon = fixture.nativeElement.querySelector('.preview-card ion-icon') as HTMLElement;
+    expect(previewIcon.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('scales Tab4 typography with the shared text-size preference', () => {
     document.documentElement.style.setProperty('--mt-text-scale', '1.4');
     component.view = 'profile';
@@ -398,6 +432,36 @@ describe('Tab4Page', () => {
     expect(component.profileMenuItemAriaLabel(component.menuItems[0])).toBe(
       'Buka Sumbangan saya. Tip, pengesahan & maklumat yang dikongsi',
     );
+  });
+
+  it('keeps profile secondary controls above the compact touch-target floor', () => {
+    component.view = 'profile';
+    fixture.detectChanges();
+
+    const settingsButton = fixture.nativeElement.querySelector('.settings-list button') as HTMLButtonElement;
+
+    expect(parseFloat(getComputedStyle(settingsButton).minHeight)).toBeGreaterThanOrEqual(44);
+
+    component.view = 'points';
+    fixture.detectChanges();
+
+    const seasonCardButton = fixture.nativeElement.querySelector('.season-card button') as HTMLButtonElement;
+
+    expect(parseFloat(getComputedStyle(seasonCardButton).minHeight)).toBeGreaterThanOrEqual(40);
+
+    component.view = 'passport';
+    fixture.detectChanges();
+
+    const passportAction = fixture.nativeElement.querySelector('.passport-progress button') as HTMLButtonElement;
+
+    expect(parseFloat(getComputedStyle(passportAction).minHeight)).toBeGreaterThanOrEqual(40);
+
+    component.view = 'reward';
+    fixture.detectChanges();
+
+    const rewardBackButton = fixture.nativeElement.querySelector('.reward-back') as HTMLButtonElement;
+
+    expect(parseFloat(getComputedStyle(rewardBackButton).minHeight)).toBeGreaterThanOrEqual(40);
   });
 
   it('disables accessibility actions when preferences already match defaults', () => {

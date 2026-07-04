@@ -15,6 +15,8 @@ import {
   buildVerificationProgress,
   VerificationTaskDefinition,
 } from '../shared/utils/verification-tasks';
+import { getTransportModeIconName } from '../shared/utils/transport-mode-icon';
+import { getTransportModeLabel } from '../shared/utils/transport-mode-label';
 
 type LocalizedText = Record<AppLanguage, string>;
 
@@ -225,13 +227,14 @@ export class Tab1Page implements OnDestroy {
       return;
     }
 
+    const submittedTask = this.verificationTask;
     const awarded = this.appStateService.submitVerification(
-      this.verificationTask.id,
-      this.verificationTask.title,
+      submittedTask.id,
+      submittedTask.title,
     );
     this.closeActiveSheet();
     this.refreshState();
-    this.notify(awarded ? `+${this.verificationTask.points} ${this.t(this.copy.verificationAwarded)}` : this.t(this.copy.verificationDuplicate));
+    this.notify(awarded ? `+${submittedTask.points} ${this.t(this.copy.verificationAwarded)}` : this.t(this.copy.verificationDuplicate));
   }
 
   completeJourney(): void {
@@ -243,6 +246,14 @@ export class Tab1Page implements OnDestroy {
 
     this.refreshState();
     this.notify(`${this.t(this.copy.journeyCompleted)} +${completedJourney.points} ${this.t(this.copy.ecoPoints).toLowerCase()} ${this.language === 'EN' ? 'earned.' : 'diperoleh.'}`);
+  }
+
+  activeJourneyIconName(): string {
+    return getTransportModeIconName(this.activeJourney?.mode ?? '');
+  }
+
+  activeJourneyModeLabel(): string {
+    return getTransportModeLabel(this.language, this.activeJourney?.mode ?? '');
   }
 
   passportProgressSummary(): string {

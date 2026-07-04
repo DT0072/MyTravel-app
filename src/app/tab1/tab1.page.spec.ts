@@ -214,6 +214,37 @@ describe('Tab1Page', () => {
     expect(component.toast).toBe('');
   });
 
+  it('keeps verification submit feedback stable when refresh clears the active task', () => {
+    appStateService.getSnapshot.and.returnValues(
+      createState(),
+      createState(),
+    );
+
+    fixture = TestBed.createComponent(Tab1Page);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.verificationTask = {
+      id: 'verification-kl-sentral-access',
+      title: 'KL Sentral access check',
+      question: { EN: 'Is the lift working?', BM: 'Adakah lif berfungsi?' },
+      station: { EN: 'KL Sentral', BM: 'KL Sentral' },
+      place: { EN: 'KL Sentral', BM: 'KL Sentral' },
+      badge: { EN: 'Verified transit hub', BM: 'Hab transit disahkan' },
+      address: { EN: 'Jalan Stesen Sentral', BM: 'Jalan Stesen Sentral' },
+      image: 'assets/mytravel/wira-ui.png',
+      points: 20,
+    } as never;
+
+    expect(() => component.submitVerification()).not.toThrow();
+    expect(appStateService.submitVerification).toHaveBeenCalledWith(
+      'verification-kl-sentral-access',
+      'KL Sentral access check',
+    );
+    expect(component.verificationTask).toBeNull();
+    expect(component.toast).toBe('+20 Eco-Points earned. Thank you!');
+  });
+
   it('keeps the provider-ready empty-state when all historical verification ids are present', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
@@ -259,6 +290,47 @@ describe('Tab1Page', () => {
     expect(pendingNote.textContent).toContain('Events & Activities will unlock here when your Firestore events provider is connected.');
     expect(component.eventsEmptyStateTitle()).toBe('Events provider pending');
     expect(component.eventsEmptyStateCopy()).toBe('Events will appear here when your Firestore events provider is connected.');
+  });
+
+  it('marks decorative home and sheet icons as hidden from assistive technology', () => {
+    fixture.detectChanges();
+
+    const identityIcon = fixture.nativeElement.querySelector('.identity-mark ion-icon') as HTMLElement;
+    const destinationIcon = fixture.nativeElement.querySelector('.destination-pill ion-icon') as HTMLElement;
+    const summaryIcon = fixture.nativeElement.querySelector('.summary-icon ion-icon') as HTMLElement;
+    const quickActionIcon = fixture.nativeElement.querySelector('.quick-icon ion-icon') as HTMLElement;
+    const journeyActionIcon = fixture.nativeElement.querySelector('.journey-empty ion-icon') as HTMLElement;
+    const missionIcon = fixture.nativeElement.querySelector('.action-icon ion-icon') as HTMLElement;
+
+    expect(identityIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(destinationIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(summaryIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(quickActionIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(journeyActionIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(missionIcon.getAttribute('aria-hidden')).toBe('true');
+
+    component.openVerificationSheet();
+    fixture.detectChanges();
+
+    const verificationCloseIcon = fixture.nativeElement.querySelector('.verification-sheet .sheet-close ion-icon') as HTMLElement;
+    expect(verificationCloseIcon.getAttribute('aria-hidden')).toBe('true');
+
+    component.activeSheet = 'events';
+    component.events = [
+      {
+        dateLabel: '12 JUL',
+        title: { EN: 'Accessible travel workshop', BM: 'Bengkel perjalanan mesra akses' },
+        description: { EN: 'Provider-backed event summary', BM: 'Ringkasan acara berasaskan penyedia' },
+        targetPath: '/tabs/tab3',
+      },
+    ];
+    fixture.detectChanges();
+
+    const eventsCloseIcon = fixture.nativeElement.querySelector('.events-sheet .sheet-close ion-icon') as HTMLElement;
+    const eventChevronIcon = fixture.nativeElement.querySelector('.event-row ion-icon') as HTMLElement;
+
+    expect(eventsCloseIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(eventChevronIcon.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('keeps home helper typography above the tiny-text readability floor', () => {
@@ -366,6 +438,42 @@ describe('Tab1Page', () => {
     const rewardCopy = fixture.nativeElement.querySelector('.reward-row small') as HTMLElement;
 
     expect(parseFloat(getComputedStyle(rewardCopy).fontSize)).toBeGreaterThanOrEqual(10);
+  });
+
+  it('matches the active-journey icon to the saved transport mode', () => {
+    component.activeJourney = {
+      id: 'journey-kl-sentral-bukit-bintang',
+      from: 'KL Sentral',
+      to: 'Bukit Bintang',
+      detail: 'Direct bus route',
+      depart: '10:00 AM',
+      arrive: '10:28 AM',
+      duration: '28 min',
+      mode: 'Bus',
+      fare: 'RM1.50',
+      walk: '120 m',
+      isAccessible: true,
+      travelDate: '2026-07-03',
+      travelTime: '10:00',
+      startedAt: '2026-07-03T10:00:00.000Z',
+      completedAt: null,
+      points: 20,
+    } as AppJourney;
+    fixture.detectChanges();
+
+    const routeIcon = fixture.nativeElement.querySelector('.route-line ion-icon') as HTMLElement & { name?: string };
+
+    expect(component.activeJourneyIconName()).toBe('bus-outline');
+    expect(routeIcon.name).toBe('bus-outline');
+
+    component.activeJourney = {
+      ...component.activeJourney,
+      mode: 'Walk',
+    };
+    fixture.detectChanges();
+
+    expect(component.activeJourneyIconName()).toBe('walk-outline');
+    expect(routeIcon.name).toBe('walk-outline');
   });
 
   it('keeps the featured destination control clear of the raised summary panel', () => {

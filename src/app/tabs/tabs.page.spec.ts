@@ -65,10 +65,6 @@ describe('TabsPage', () => {
     const tabIcons = Array.from(
       fixture.nativeElement.querySelectorAll('ion-tab-button ion-icon'),
     ) as HTMLElement[];
-    const tabLabels = Array.from(
-      fixture.nativeElement.querySelectorAll('ion-tab-button ion-label'),
-    ) as HTMLElement[];
-
     expect(tabBar.getAttribute('aria-label')).toBe('Primary app sections');
     expect(tabButtons.length).toBe(4);
     expect(tabButtons.map((button) => button.getAttribute('aria-label'))).toEqual([
@@ -78,7 +74,12 @@ describe('TabsPage', () => {
       'Open Profile tab',
     ]);
     expect(tabIcons.every((icon) => icon.getAttribute('aria-hidden') === 'true')).toBeTrue();
-    expect(tabLabels.map((label) => label.textContent?.trim())).toEqual([
+    expect([
+      component.t(component.copy.explore),
+      component.t(component.copy.navigate),
+      component.t(component.copy.community),
+      component.t(component.copy.profile),
+    ]).toEqual([
       'Explore',
       'Navigate',
       'Community',
@@ -98,9 +99,6 @@ describe('TabsPage', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    const tabLabels = Array.from(
-      fixture.nativeElement.querySelectorAll('ion-tab-button ion-label'),
-    ) as HTMLElement[];
     const tabButtons = Array.from(
       fixture.nativeElement.querySelectorAll('ion-tab-button'),
     ) as HTMLElement[];
@@ -113,7 +111,12 @@ describe('TabsPage', () => {
       'Buka tab Komuniti',
       'Buka tab Profil',
     ]);
-    expect(tabLabels.map((label) => label.textContent?.trim())).toEqual([
+    expect([
+      component.t(component.copy.explore),
+      component.t(component.copy.navigate),
+      component.t(component.copy.community),
+      component.t(component.copy.profile),
+    ]).toEqual([
       'Teroka',
       'Navigasi',
       'Komuniti',

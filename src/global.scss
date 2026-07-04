@@ -19,6 +19,16 @@
   --mt-shadow: 0 8px 22px rgba(5, 24, 65, 0.1);
   --mt-topbar-inset: 24px;
   --mt-topbar-offset: max(24px, calc(env(safe-area-inset-top) + 18px));
+  --mt-floating-tabbar-height: 58px;
+  --mt-floating-tabbar-bottom-offset: 12px;
+  --mt-floating-tabbar-shell-padding: 22px;
+  --mt-floating-tabbar-clearance:
+    calc(
+      var(--mt-floating-tabbar-height)
+      + var(--mt-floating-tabbar-bottom-offset)
+      + var(--mt-floating-tabbar-shell-padding)
+      + env(safe-area-inset-bottom)
+    );
   --mt-text-scale: 1;
   --mt-copy-line-height: 1.4;
   --mt-focus-ring: 0 0 0 3px rgba(7, 84, 204, 0.18);
@@ -60,14 +70,17 @@ ion-tab-button:focus-visible,
 
 ion-content {
   --background: linear-gradient(180deg, #fcfeff 0%, #f1f7ff 52%, #dfedff 100%);
-  --padding-bottom: 92px;
+  --padding-bottom: max(92px, var(--mt-floating-tabbar-clearance));
 }
 
 .mt-screen {
   width: min(100%, 430px);
   min-height: 100%;
   margin: 0 auto;
-  padding: var(--mt-topbar-offset) var(--mt-topbar-inset) 104px;
+  padding:
+    var(--mt-topbar-offset)
+    var(--mt-topbar-inset)
+    max(104px, calc(var(--mt-floating-tabbar-clearance) + 8px));
   color: var(--mt-ink);
 }
 
@@ -310,13 +323,13 @@ ion-tab-bar {
   --border: none;
   --color: transparent;
   position: fixed !important;
-  bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  bottom: calc(var(--mt-floating-tabbar-bottom-offset) + env(safe-area-inset-bottom)) !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   width: calc(100% - 24px) !important;
   max-width: 420px !important;
   min-width: 280px !important;
-  height: 58px !important;
+  height: var(--mt-floating-tabbar-height) !important;
   border-radius: 38px !important;
   z-index: 99999 !important;
   overflow: visible !important;
@@ -424,21 +437,21 @@ ion-tab-button ion-label {
 }
 
 @media (min-width: 600px) {
-  ion-tab-bar { bottom: calc(18px + env(safe-area-inset-bottom)) !important; height: 62px !important; border-radius: 42px !important; width: calc(100% - 48px) !important; max-width: 460px !important; padding: 0 6px !important; }
+  ion-tab-bar { border-radius: 42px !important; width: calc(100% - 48px) !important; max-width: 460px !important; padding: 0 6px !important; }
   ion-tab-button { height: 54px !important; border-radius: 36px !important; }
   ion-tab-button ion-icon { font-size: 23px !important; }
   ion-tab-button ion-label { font-size: 10.5px !important; }
 }
 
 @media (min-width: 960px) {
-  ion-tab-bar { bottom: 28px !important; height: 64px !important; border-radius: 44px !important; width: auto !important; min-width: 420px !important; max-width: 520px !important; padding: 0 10px !important; }
+  ion-tab-bar { border-radius: 44px !important; width: auto !important; min-width: 420px !important; max-width: 520px !important; padding: 0 10px !important; }
   ion-tab-button { flex: 0 0 100px !important; height: 56px !important; border-radius: 38px !important; margin: 4px !important; }
   ion-tab-button ion-icon { font-size: 24px !important; margin-bottom: 3px !important; }
   ion-tab-button ion-label { font-size: 11px !important; opacity: 0.65 !important; }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-  ion-tab-bar { bottom: calc(8px + env(safe-area-inset-bottom)) !important; height: 50px !important; border-radius: 32px !important; max-width: 340px !important; padding: 0 4px !important; }
+  ion-tab-bar { border-radius: 32px !important; max-width: 340px !important; padding: 0 4px !important; }
   ion-tab-button { height: 44px !important; border-radius: 28px !important; margin: 3px 2px !important; }
   ion-tab-button ion-icon { font-size: 20px !important; }
   ion-tab-button ion-label { font-size: 9px !important; }
@@ -516,9 +529,15 @@ input, select, textarea, button { min-width: 0; }
 }
 
 @media (min-width: 840px) {
-  ion-content { --padding-bottom: 122px; }
+  ion-content { --padding-bottom: max(122px, calc(var(--mt-floating-tabbar-clearance) + 8px)); }
   .home-hero, .home-body { width: min(calc(100% - 48px), 1040px); margin-inline: auto; }
-  .mt-screen { width: min(calc(100% - 48px), 1040px) !important; padding: var(--mt-topbar-offset) var(--mt-topbar-inset) 132px; }
+  .mt-screen {
+    width: min(calc(100% - 48px), 1040px) !important;
+    padding:
+      var(--mt-topbar-offset)
+      var(--mt-topbar-inset)
+      max(132px, calc(var(--mt-floating-tabbar-clearance) + 12px));
+  }
   .mt-topbar { grid-template-columns: clamp(120px, calc(120px * var(--mt-text-scale)), 148px) 1fr clamp(120px, calc(120px * var(--mt-text-scale)), 148px); align-items: center; }
   .mt-brand { width: clamp(92px, calc(92px * var(--mt-text-scale)), 110px); height: clamp(42px, calc(42px * var(--mt-text-scale)), 50px); }
   .mt-wordmark { font-size: clamp(24px, calc(24px * var(--mt-text-scale)), 30px); }
@@ -543,6 +562,13 @@ input, select, textarea, button { min-width: 0; }
   .settings-list button { min-height: 48px !important; }
   .settings-list b { font-size: 10px !important; }
   .settings-list small { font-size: 8px !important; }
+}
+
+@media (min-width: 840px) and (max-height: 820px) {
+  ion-content { --padding-bottom: max(108px, calc(var(--mt-floating-tabbar-clearance) + 6px)); }
+  .mt-screen {
+    padding-bottom: max(116px, calc(var(--mt-floating-tabbar-clearance) + 8px));
+  }
 }
 
 @media (min-width: 1100px) {

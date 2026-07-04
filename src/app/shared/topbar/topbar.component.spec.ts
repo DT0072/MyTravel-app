@@ -39,6 +39,15 @@ describe('TopbarComponent', () => {
     expect(component.notificationsAriaLabel).toBe('Notifications, 3 saved notices');
   });
 
+  it('describes the zero-notification state in both supported languages', () => {
+    component.notificationCount = 0;
+    component.language = 'EN';
+    expect(component.notificationsAriaLabel).toBe('Notifications, no saved notices');
+
+    component.language = 'BM';
+    expect(component.notificationsAriaLabel).toBe('Pemberitahuan, tiada notis disimpan');
+  });
+
   it('localizes the Tourism Malaysia logo alt text', () => {
     component.language = 'EN';
     expect(component.brandLogoAlt).toBe('Tourism Malaysia logo');

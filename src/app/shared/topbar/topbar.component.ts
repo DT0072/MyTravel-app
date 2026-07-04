@@ -52,7 +52,9 @@ export class TopbarComponent {
         : `Pemberitahuan, ${this.notificationCount} notis disimpan`;
     }
 
-    return this.language === 'EN' ? 'Notifications' : 'Pemberitahuan';
+    return this.language === 'EN'
+      ? 'Notifications, no saved notices'
+      : 'Pemberitahuan, tiada notis disimpan';
   }
 
   get notificationBadgeLabel(): string {

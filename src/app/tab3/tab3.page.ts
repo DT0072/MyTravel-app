@@ -112,6 +112,11 @@ const COMMUNITY_COPY = {
   },
   selectedPhotoAlt: { EN: 'Selected travel photo preview', BM: 'Pratonton foto perjalanan yang dipilih' },
   uploadPhotoAria: { EN: 'Choose a travel photo', BM: 'Pilih foto perjalanan' },
+  noPostPhotoTitle: { EN: 'No photo uploaded', BM: 'Tiada foto dimuat naik' },
+  noPostPhotoCopy: {
+    EN: 'Submitted without a travel photo.',
+    BM: 'Dihantar tanpa foto perjalanan.',
+  },
   manjaMascotAlt: { EN: 'Manja travel companion mascot', BM: 'Maskot teman perjalanan Manja' },
   wiraMascotAlt: { EN: 'Wira travel guide mascot', BM: 'Maskot panduan perjalanan Wira' },
   accessible: { EN: 'Accessible', BM: 'Mesra akses' },
@@ -126,6 +131,8 @@ const COMMUNITY_COPY = {
   verifiedTransitHub: { EN: 'Verified transit hub', BM: 'Hab transit disahkan' },
   verificationQuestion: { EN: 'Are the operating hours still\n6:00 AM – 11:30 PM?', BM: 'Adakah waktu operasi masih\n6:00 PAGI – 11:30 MALAM?' },
   verificationLastUpdated: { EN: 'Last updated on 1 June 2026.', BM: 'Kali terakhir dikemas kini pada 1 Jun 2026.' },
+  verificationAnswerGroupAria: { EN: 'Verification answer options', BM: 'Pilihan jawapan pengesahan' },
+  verificationAnswerPrefix: { EN: 'Select verification answer', BM: 'Pilih jawapan pengesahan' },
   yes: { EN: 'Yes', BM: 'Ya' },
   no: { EN: 'No', BM: 'Tidak' },
   wiraReviewing: { EN: 'Wira is reviewing with you', BM: 'Wira sedang menyemak bersama anda' },
@@ -181,7 +188,7 @@ interface CommunityPost {
   place: LocalizedText;
   copy: LocalizedText;
   points: number;
-  image: string;
+  image: string | null;
   date: LocalizedText;
   createdAt: string;
   helpfulCount: number;
@@ -522,6 +529,18 @@ export class Tab3Page implements OnDestroy {
     return `${this.t(this.copy.reportPostAriaPrefix)}: ${this.t(post.place)}`;
   }
 
+  verificationAnswerAriaLabel(answer: 'yes' | 'no'): string {
+    const label = answer === 'yes'
+      ? this.t(this.copy.yes)
+      : this.t(this.copy.no);
+
+    return `${this.t(this.copy.verificationAnswerPrefix)} ${label}`;
+  }
+
+  postHasImage(post: CommunityPost): boolean {
+    return Boolean(post.image);
+  }
+
   noticeFilterAriaLabel(filter: NoticeFilter): string {
     return `${this.t(this.copy.noticeFilterAriaPrefix)} ${this.noticeCategoryLabel(filter)}`;
   }
@@ -689,7 +708,7 @@ export class Tab3Page implements OnDestroy {
       place: this.localizeUserText(tip.location),
       copy: this.localizeUserText(tip.tip),
       points: 20,
-      image: tip.imagePreview || 'assets/home_1.png',
+      image: tip.imagePreview || null,
       date: this.formatDate(tip.createdAt),
       createdAt: tip.createdAt,
       helpfulCount: 0,

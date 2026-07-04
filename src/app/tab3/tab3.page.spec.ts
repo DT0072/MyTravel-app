@@ -308,6 +308,78 @@ describe('Tab3Page', () => {
     expect(component.filteredPosts[0].id).toBe('tip-2');
   });
 
+  it('renders an honest no-photo state instead of a stock image for local tips without uploads', () => {
+    appStateService.getSnapshot.and.returnValue({
+      ...createState(),
+      communityTips: [
+        {
+          id: 'tip-1',
+          location: 'Museum',
+          state: 'Kuala Lumpur',
+          category: 'Heritage',
+          tip: 'Detailed community tip',
+          accessible: true,
+          hearingAccessible: false,
+          confirmed: true,
+          author: 'Traveler',
+          initials: 'TR',
+          createdAt: '2026-06-30T00:00:00.000Z',
+          status: 'In review',
+        },
+      ],
+    });
+
+    fixture = TestBed.createComponent(Tab3Page);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.posts[0].image).toBeNull();
+
+    const renderedImage = fixture.nativeElement.querySelector('.post-body > img') as HTMLImageElement | null;
+    const placeholder = fixture.nativeElement.querySelector('.post-image-placeholder') as HTMLElement | null;
+
+    expect(renderedImage).toBeNull();
+    expect(placeholder).not.toBeNull();
+    expect(placeholder?.textContent).toContain('No photo uploaded');
+    expect(placeholder?.textContent).toContain('Submitted without a travel photo.');
+  });
+
+  it('keeps uploaded local tip photos when a user preview exists', () => {
+    appStateService.getSnapshot.and.returnValue({
+      ...createState(),
+      communityTips: [
+        {
+          id: 'tip-1',
+          location: 'Museum',
+          state: 'Kuala Lumpur',
+          category: 'Heritage',
+          tip: 'Detailed community tip',
+          accessible: true,
+          hearingAccessible: false,
+          confirmed: true,
+          imageName: 'museum.jpg',
+          imagePreview: 'data:image/jpeg;base64,abc123',
+          author: 'Traveler',
+          initials: 'TR',
+          createdAt: '2026-06-30T00:00:00.000Z',
+          status: 'In review',
+        },
+      ],
+    });
+
+    fixture = TestBed.createComponent(Tab3Page);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.posts[0].image).toBe('data:image/jpeg;base64,abc123');
+
+    const renderedImage = fixture.nativeElement.querySelector('.post-body > img') as HTMLImageElement | null;
+    const placeholder = fixture.nativeElement.querySelector('.post-image-placeholder') as HTMLElement | null;
+
+    expect(renderedImage?.getAttribute('src')).toBe('data:image/jpeg;base64,abc123');
+    expect(placeholder).toBeNull();
+  });
+
   it('opens the notices surface from route query params', () => {
     queryParamMap$.next(convertToParamMap({
       view: 'notices',
@@ -402,6 +474,39 @@ describe('Tab3Page', () => {
 
     expect(noticeButtons[1].getAttribute('aria-pressed')).toBe('false');
     expect(noticeButtons[3].getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('renders explicit accessibility labels for verification answers', () => {
+    component.verificationTask = {
+      id: 'verification-kl-sentral-access',
+      title: 'KL Sentral access check',
+      place: { EN: 'KL Sentral', BM: 'KL Sentral' },
+      station: { EN: 'KL Sentral Station', BM: 'Stesen KL Sentral' },
+      badge: { EN: 'Verified transit hub', BM: 'Hab transit disahkan' },
+      address: { EN: 'Main concourse', BM: 'Ruang legar utama' },
+      question: { EN: 'Is the lift still available?', BM: 'Adakah lif masih tersedia?' },
+      lastUpdated: { EN: 'Last updated today.', BM: 'Kali terakhir dikemas kini hari ini.' },
+      image: 'assets/mytravel/wira-ui.png',
+      points: 40,
+    };
+    component.startVerification();
+    fixture.detectChanges();
+
+    const answerGroup = fixture.nativeElement.querySelector('.verify-question [role="group"]') as HTMLElement;
+    const answerButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.verify-question button'),
+    ) as HTMLButtonElement[];
+
+    expect(answerGroup.getAttribute('aria-label')).toBe('Verification answer options');
+    expect(answerButtons[0].getAttribute('aria-label')).toBe('Select verification answer Yes');
+    expect(answerButtons[1].getAttribute('aria-label')).toBe('Select verification answer No');
+    expect(answerButtons[0].getAttribute('aria-pressed')).toBe('false');
+
+    answerButtons[1].click();
+    fixture.detectChanges();
+
+    expect(answerButtons[0].getAttribute('aria-pressed')).toBe('false');
+    expect(answerButtons[1].getAttribute('aria-pressed')).toBe('true');
   });
 
   it('scales Tab3 typography with the shared text-size preference', () => {
@@ -835,6 +940,18 @@ describe('Tab3Page', () => {
     expect(component.helpfulPostAriaLabel(post)).toBe('Tandakan tip sebagai membantu: Muzium Negara');
     expect(component.notHelpfulPostAriaLabel(post)).toBe('Tandakan tip sebagai tidak membantu: Muzium Negara');
     expect(component.reportPostAriaLabel(post)).toBe('Laporkan tip perjalanan: Muzium Negara');
+  });
+
+  it('localizes verification answer accessibility labels in Bahasa Melayu', () => {
+    accessibilityPreferencesService.setLanguage.and.returnValue({
+      ...preferences,
+      language: 'BM',
+    });
+
+    component.updateLanguage('BM');
+
+    expect(component.verificationAnswerAriaLabel('yes')).toBe('Pilih jawapan pengesahan Ya');
+    expect(component.verificationAnswerAriaLabel('no')).toBe('Pilih jawapan pengesahan Tidak');
   });
 
   it('keeps saved notice counts from local state while the notice feed stays provider-ready', () => {

@@ -14,6 +14,8 @@ import {
 } from '../services/navigation.service';
 import { AppStateService } from '../services/app-state.service';
 import { ManagedTimeouts } from '../shared/utils/managed-timeouts';
+import { getTransportModeIconName } from '../shared/utils/transport-mode-icon';
+import { getTransportModeLabel } from '../shared/utils/transport-mode-label';
 
 type LocalizedText = Record<AppLanguage, string>;
 
@@ -36,6 +38,8 @@ const NAVIGATION_COPY = {
   findRoute: { EN: 'Find route', BM: 'Cari laluan' },
   serviceStatus: { EN: 'Service status', BM: 'Status perkhidmatan' },
   viewAll: { EN: 'View all', BM: 'Lihat semua' },
+  viewAllServiceStatuses: { EN: 'Show all service updates', BM: 'Tunjukkan semua kemas kini perkhidmatan' },
+  openServiceStatusPrefix: { EN: 'Open service update', BM: 'Buka kemas kini perkhidmatan' },
   transitMap: { EN: 'Transit map', BM: 'Peta transit' },
   transitMapAlt: { EN: 'Kuala Lumpur transit map', BM: 'Peta transit Kuala Lumpur' },
   wiraTip: { EN: 'Wira Tip', BM: 'Tip Wira' },
@@ -44,6 +48,9 @@ const NAVIGATION_COPY = {
   recentLocations: { EN: 'Recent locations', BM: 'Lokasi terkini' },
   manage: { EN: 'Manage', BM: 'Urus' },
   done: { EN: 'Done', BM: 'Selesai' },
+  manageRecentLocations: { EN: 'Manage recent locations', BM: 'Urus lokasi terkini' },
+  finishManagingRecentLocations: { EN: 'Finish managing recent locations', BM: 'Selesai mengurus lokasi terkini' },
+  useRecentLocationPrefix: { EN: 'Use recent location', BM: 'Guna lokasi terkini' },
   removeRecentLocationPrefix: { EN: 'Remove recent location', BM: 'Buang lokasi terkini' },
   noRecentLocations: { EN: 'No recent locations saved yet.', BM: 'Belum ada lokasi terkini yang disimpan.' },
   journeyOptions: { EN: 'Journey options', BM: 'Pilihan perjalanan' },
@@ -207,14 +214,19 @@ export class Tab2Page implements OnDestroy {
   }
 
   modeLabel(mode: string): string {
-    switch (mode) {
-      case 'Bus':
-        return this.language === 'EN' ? 'Bus' : 'Bas';
-      case 'Walk':
-        return this.language === 'EN' ? 'Walk' : 'Jalan kaki';
-      default:
-        return mode;
-    }
+    return getTransportModeLabel(this.language, mode);
+  }
+
+  modeIconName(mode: string): string {
+    return getTransportModeIconName(mode);
+  }
+
+  resultsSummaryIconName(): string {
+    return this.modeIconName(this.activeMode || this.routes[0]?.mode || '');
+  }
+
+  resultsSummaryModeLabel(): string {
+    return this.modeLabel(this.activeMode || this.routes[0]?.mode || '');
   }
 
   sortLabel(sort: string): string {
@@ -235,6 +247,24 @@ export class Tab2Page implements OnDestroy {
 
   sortButtonAriaLabel(sort: string): string {
     return `${this.t(this.copy.sortRoutesPrefix)} ${this.sortLabel(sort)}`;
+  }
+
+  serviceStatusOverviewAriaLabel(): string {
+    return this.t(this.copy.viewAllServiceStatuses);
+  }
+
+  serviceStatusAriaLabel(status: ServiceStatus): string {
+    return `${this.t(this.copy.openServiceStatusPrefix)}: ${status.line}. ${status.route}. ${status.state}.`;
+  }
+
+  manageRecentLocationsAriaLabel(): string {
+    return this.managingRecentLocations
+      ? this.t(this.copy.finishManagingRecentLocations)
+      : this.t(this.copy.manageRecentLocations);
+  }
+
+  recentLocationAriaLabel(location: RecentLocation): string {
+    return `${this.t(this.copy.useRecentLocationPrefix)}: ${location.label}. ${location.description}.`;
   }
 
   removeRecentLocationAriaLabel(location: RecentLocation): string {
@@ -264,7 +294,7 @@ export class Tab2Page implements OnDestroy {
     const primaryRoute = this.routes[0];
 
     if (primaryRoute) {
-      return `${primaryRoute.arrive} · ${this.modeLabel(primaryRoute.mode)}`;
+      return `${primaryRoute.arrive} · ${this.resultsSummaryModeLabel()}`;
     }
 
     if (this.isLoadingRoutes) {
@@ -330,7 +360,7 @@ export class Tab2Page implements OnDestroy {
       travelTime: this.plannerTime,
     });
     this.closeRouteDetails();
-    this.notify(`${journey.mode} ${this.t(this.copy.journeyStarted)}`);
+    this.notify(`${this.modeLabel(journey.mode)} ${this.t(this.copy.journeyStarted)}`);
     this.uiTimeouts.schedule('start-journey-nav', () => void this.router.navigate(['/tabs/tab1']), 500);
   }
 
@@ -339,7 +369,7 @@ export class Tab2Page implements OnDestroy {
       return this.t(this.copy.routeInfoTitle);
     }
 
-    return `${this.selectedRoute.mode} ${this.t(this.copy.routeDetails).toLowerCase()}`;
+    return `${this.modeLabel(this.selectedRoute.mode)} ${this.t(this.copy.routeDetails).toLowerCase()}`;
   }
 
   handleRouteSheetKeydown(event: KeyboardEvent, sheet: HTMLElement): void {

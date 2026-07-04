@@ -152,6 +152,20 @@ describe('Tab2Page', () => {
     expect(component.journeyArrivalSummary()).toBe('10:30 AM · MRT');
   });
 
+  it('uses the active transport context in the results summary text', () => {
+    component.activeMode = 'Bus';
+    component.routes = [createRoute('MRT')];
+
+    expect(component.resultsSummaryModeLabel()).toBe('Bus');
+    expect(component.journeyArrivalSummary()).toBe('10:30 AM · Bus');
+
+    component.activeMode = 'Walk';
+    component.routes = [createRoute('Bus')];
+
+    expect(component.resultsSummaryModeLabel()).toBe('Walk');
+    expect(component.journeyArrivalSummary()).toBe('10:30 AM · Walk');
+  });
+
   it('falls back to a live loading summary while route options are still resolving', () => {
     const pendingRoutes$ = new Subject<RouteOption[]>();
 
@@ -191,6 +205,29 @@ describe('Tab2Page', () => {
     expect(component.routeDetailsAriaLabel(route)).toBe('View details for Bus');
   });
 
+  it('builds descriptive planner action labels for service-status and recent-location actions', () => {
+    const location: RecentLocation = {
+      label: 'KL Sentral',
+      value: 'KL Sentral',
+      description: 'Transit hub',
+    };
+    const status: ServiceStatus = {
+      line: 'MRT Kajang',
+      route: 'Kajang to Sungai Buloh',
+      state: 'Normal',
+      color: '#0754cc',
+    };
+
+    expect(component.serviceStatusOverviewAriaLabel()).toBe('Show all service updates');
+    expect(component.serviceStatusAriaLabel(status)).toBe('Open service update: MRT Kajang. Kajang to Sungai Buloh. Normal.');
+    expect(component.manageRecentLocationsAriaLabel()).toBe('Manage recent locations');
+    expect(component.recentLocationAriaLabel(location)).toBe('Use recent location: KL Sentral. Transit hub.');
+
+    component.manageRecentLocations();
+
+    expect(component.manageRecentLocationsAriaLabel()).toBe('Finish managing recent locations');
+  });
+
   it('localizes Tab 2 accessibility labels in Bahasa Melayu', () => {
     accessibilityPreferencesService.setLanguage.and.returnValue({
       ...preferences,
@@ -208,6 +245,109 @@ describe('Tab2Page', () => {
 
     expect(component.removeRecentLocationAriaLabel(location)).toBe('Buang lokasi terkini: KL Sentral');
     expect(component.routeDetailsAriaLabel(route)).toBe('Lihat butiran untuk Bas');
+    expect(component.serviceStatusOverviewAriaLabel()).toBe('Tunjukkan semua kemas kini perkhidmatan');
+    expect(component.serviceStatusAriaLabel({
+      line: 'MRT Kajang',
+      route: 'Kajang ke Sungai Buloh',
+      state: 'Normal',
+      color: '#0754cc',
+    })).toBe('Buka kemas kini perkhidmatan: MRT Kajang. Kajang ke Sungai Buloh. Normal.');
+    expect(component.manageRecentLocationsAriaLabel()).toBe('Urus lokasi terkini');
+    expect(component.recentLocationAriaLabel(location)).toBe('Guna lokasi terkini: KL Sentral. Hab transit.');
+  });
+
+  it('renders descriptive aria labels for planner service and recent-location controls', () => {
+    component.serviceStatuses = [
+      {
+        line: 'MRT Kajang',
+        route: 'Kajang to Sungai Buloh',
+        state: 'Normal',
+        color: '#0754cc',
+      },
+    ];
+    component.recentLocations = [
+      {
+        label: 'KL Sentral',
+        value: 'KL Sentral',
+        description: 'Transit hub and airport rail link',
+      },
+    ];
+    fixture.detectChanges();
+
+    const viewAllButton = fixture.nativeElement.querySelector('.service-card .section-title button') as HTMLButtonElement;
+    const serviceRow = fixture.nativeElement.querySelector('.service-row') as HTMLButtonElement;
+    const manageButton = fixture.nativeElement.querySelector('.recent-card .section-title button') as HTMLButtonElement;
+    const recentButton = fixture.nativeElement.querySelector('.recent-row > button:first-child') as HTMLButtonElement;
+
+    expect(viewAllButton.getAttribute('aria-label')).toBe('Show all service updates');
+    expect(serviceRow.getAttribute('aria-label')).toBe('Open service update: MRT Kajang. Kajang to Sungai Buloh. Normal.');
+    expect(manageButton.getAttribute('aria-label')).toBe('Manage recent locations');
+    expect(recentButton.getAttribute('aria-label')).toBe('Use recent location: KL Sentral. Transit hub and airport rail link.');
+
+    manageButton.click();
+    fixture.detectChanges();
+
+    expect(manageButton.getAttribute('aria-label')).toBe('Finish managing recent locations');
+  });
+
+  it('renders localized route mode labels in results, dialogs, and journey feedback', () => {
+    accessibilityPreferencesService.setLanguage.and.returnValue({
+      ...preferences,
+      language: 'BM',
+    });
+
+    component.updateLanguage('BM');
+    component.view = 'results';
+    component.from = 'KL Sentral';
+    component.to = 'Pasar Seni';
+    component.routes = [createRoute('Bus')];
+    component.selectedRoute = createRoute('Bus');
+    fixture.detectChanges();
+
+    const routeMode = fixture.nativeElement.querySelector('.route-name b') as HTMLElement;
+    const routeDialogTitle = fixture.nativeElement.querySelector('.route-sheet h2') as HTMLElement;
+
+    expect(routeMode.textContent?.trim()).toBe('Bas');
+    expect(routeDialogTitle.textContent?.trim()).toBe('Bas');
+    expect(component.routeDialogAriaLabel()).toBe('Bas butiran laluan');
+
+    appStateService.startJourney.and.returnValue({
+      id: 'journey-1',
+      from: 'KL Sentral',
+      to: 'Pasar Seni',
+      mode: 'Bus',
+      detail: 'Bus route',
+      depart: '10:00 AM',
+      arrive: '10:30 AM',
+      duration: '30 min',
+      fare: 'RM2.00',
+      walk: '220 m',
+      isAccessible: true,
+      travelDate: '2026-07-01',
+      travelTime: '09:15',
+      startedAt: '2026-07-01T09:15:00.000Z',
+      completedAt: null,
+      points: 20,
+    });
+
+    component.startJourney();
+
+    expect(component.toast).toBe('Bas perjalanan dimulakan');
+  });
+
+  it('renders transport-mode icons that match the selected route type', () => {
+    expect(component.modeIconName('MRT')).toBe('train-outline');
+    expect(component.modeIconName('Bus')).toBe('bus-outline');
+    expect(component.modeIconName('Walk')).toBe('walk-outline');
+  });
+
+  it('uses the active transport context for the results summary icon', () => {
+    component.activeMode = 'Bus';
+    expect(component.resultsSummaryIconName()).toBe('bus-outline');
+
+    component.activeMode = 'Walk';
+    component.routes = [createRoute('Walk')];
+    expect(component.resultsSummaryIconName()).toBe('walk-outline');
   });
 
   it('shows the empty-state transport status message when no provider data exists', () => {
@@ -286,6 +426,60 @@ describe('Tab2Page', () => {
     expect(parseFloat(getComputedStyle(recentAction).minHeight)).toBeGreaterThanOrEqual(40);
   });
 
+  it('keeps planner and result text containers shrinkable for compact layouts', () => {
+    component.serviceStatuses = [
+      {
+        line: 'MRT Putrajaya',
+        route: 'Sentul Timur to Putrajaya Sentral with accessibility support updates',
+        state: 'Partial disruption',
+        color: '#0754cc',
+      },
+    ];
+    component.recentLocations = [
+      {
+        label: 'Terminal Bersepadu Selatan',
+        value: 'Terminal Bersepadu Selatan',
+        description: 'Interchange for coach, rail, and accessible onward connections',
+      },
+    ];
+    fixture.detectChanges();
+
+    const serviceContent = fixture.nativeElement.querySelector('.service-row > div') as HTMLElement;
+    const serviceCopy = fixture.nativeElement.querySelector('.service-row small') as HTMLElement;
+    const recentAction = fixture.nativeElement.querySelector('.recent-row > button:first-child') as HTMLElement;
+
+    expect(getComputedStyle(serviceContent).minWidth).toBe('0px');
+    expect(getComputedStyle(serviceCopy).overflowWrap).toBe('anywhere');
+    expect(getComputedStyle(recentAction).minWidth).toBe('0px');
+
+    component.view = 'results';
+    component.from = 'Terminal Bersepadu Selatan';
+    component.to = 'Persiaran KLCC Convention Centre';
+    component.routes = [
+      {
+        ...createRoute('MRT'),
+        detail: 'Putrajaya Line via interchange for Bukit Bintang and KLCC accessible platforms',
+      },
+    ];
+    fixture.detectChanges();
+
+    const routeSummaryContent = fixture.nativeElement.querySelector('.route-summary > div') as HTMLElement;
+    const routeSummaryCopy = fixture.nativeElement.querySelector('.route-summary small') as HTMLElement;
+    const sortRow = fixture.nativeElement.querySelector('.sort-row') as HTMLElement;
+    const routeNameContent = fixture.nativeElement.querySelector('.route-name > div') as HTMLElement;
+    const routeMetaItem = fixture.nativeElement.querySelector('.route-meta > span') as HTMLElement;
+    const routeMetaLabel = fixture.nativeElement.querySelector('.route-meta small') as HTMLElement;
+    const infoNoteContent = fixture.nativeElement.querySelector('.info-note > span') as HTMLElement;
+
+    expect(getComputedStyle(routeSummaryContent).minWidth).toBe('0px');
+    expect(getComputedStyle(routeSummaryCopy).overflowWrap).toBe('anywhere');
+    expect(getComputedStyle(sortRow).flexWrap).toBe('wrap');
+    expect(getComputedStyle(routeNameContent).minWidth).toBe('0px');
+    expect(getComputedStyle(routeMetaItem).minWidth).toBe('0px');
+    expect(getComputedStyle(routeMetaLabel).overflowWrap).toBe('anywhere');
+    expect(getComputedStyle(infoNoteContent).minWidth).toBe('0px');
+  });
+
   it('renders accessible pressed states for route sort options', () => {
     component.view = 'results';
     fixture.detectChanges();
@@ -328,6 +522,19 @@ describe('Tab2Page', () => {
     expect(swapIcon.getAttribute('aria-hidden')).toBe('true');
     expect(modeIcon.getAttribute('aria-hidden')).toBe('true');
     expect(findRouteIcon.getAttribute('aria-hidden')).toBe('true');
+
+    component.recentLocations = [
+      {
+        label: 'KL Sentral',
+        value: 'KL Sentral',
+        description: 'Transit hub',
+      },
+    ];
+    component.managingRecentLocations = true;
+    fixture.detectChanges();
+
+    const recentRemoveIcon = fixture.nativeElement.querySelector('.recent-remove ion-icon') as HTMLElement;
+    expect(recentRemoveIcon.getAttribute('aria-hidden')).toBe('true');
 
     component.view = 'results';
     component.routes = [createRoute('MRT')];

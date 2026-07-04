@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
@@ -14,6 +14,8 @@ import {
 } from '../services/navigation.service';
 import { AppStateService } from '../services/app-state.service';
 import { ManagedTimeouts } from '../shared/utils/managed-timeouts';
+import { getTransportModeIconName } from '../shared/utils/transport-mode-icon';
+import { getTransportModeLabel } from '../shared/utils/transport-mode-label';
 
 type LocalizedText = Record<AppLanguage, string>;
 
@@ -30,38 +32,56 @@ const NAVIGATION_COPY = {
   travelDate: { EN: 'Travel date', BM: 'Tarikh perjalanan' },
   departureTime: { EN: 'Departure time', BM: 'Masa berlepas' },
   transportMode: { EN: 'Transport mode', BM: 'Mod pengangkutan' },
+  transportModeAria: { EN: 'Transport mode options', BM: 'Pilihan mod pengangkutan' },
+  transportModePrefix: { EN: 'Select transport mode', BM: 'Pilih mod pengangkutan' },
   accessibleRoutesNote: { EN: 'Accessible routes are prioritised from your saved preferences.', BM: 'Laluan mesra akses diutamakan berdasarkan pilihan tersimpan anda.' },
   findRoute: { EN: 'Find route', BM: 'Cari laluan' },
   serviceStatus: { EN: 'Service status', BM: 'Status perkhidmatan' },
   viewAll: { EN: 'View all', BM: 'Lihat semua' },
+  viewAllServiceStatuses: { EN: 'Show all service updates', BM: 'Tunjukkan semua kemas kini perkhidmatan' },
+  openServiceStatusPrefix: { EN: 'Open service update', BM: 'Buka kemas kini perkhidmatan' },
   transitMap: { EN: 'Transit map', BM: 'Peta transit' },
+  transitMapAlt: { EN: 'Kuala Lumpur transit map', BM: 'Peta transit Kuala Lumpur' },
   wiraTip: { EN: 'Wira Tip', BM: 'Tip Wira' },
   greenRoute: { EN: 'Green route: +20 points', BM: 'Laluan hijau: +20 mata' },
+  wiraMascotAlt: { EN: 'Wira travel guide mascot', BM: 'Maskot panduan perjalanan Wira' },
   recentLocations: { EN: 'Recent locations', BM: 'Lokasi terkini' },
   manage: { EN: 'Manage', BM: 'Urus' },
   done: { EN: 'Done', BM: 'Selesai' },
+  manageRecentLocations: { EN: 'Manage recent locations', BM: 'Urus lokasi terkini' },
+  finishManagingRecentLocations: { EN: 'Finish managing recent locations', BM: 'Selesai mengurus lokasi terkini' },
+  useRecentLocationPrefix: { EN: 'Use recent location', BM: 'Guna lokasi terkini' },
+  removeRecentLocationPrefix: { EN: 'Remove recent location', BM: 'Buang lokasi terkini' },
   noRecentLocations: { EN: 'No recent locations saved yet.', BM: 'Belum ada lokasi terkini yang disimpan.' },
   journeyOptions: { EN: 'Journey options', BM: 'Pilihan perjalanan' },
   journeyOptionsCopy: { EN: 'Choose the route that suits you.', BM: 'Pilih laluan yang sesuai untuk anda.' },
+  backToPlanner: { EN: 'Back to journey planner', BM: 'Kembali ke perancang perjalanan' },
   checkingRoutes: { EN: 'Checking route options', BM: 'Menyemak pilihan laluan' },
   sortFastest: { EN: 'Fastest', BM: 'Terpantas' },
   sortLessWalking: { EN: 'Less walking', BM: 'Kurang berjalan' },
   sortAccessible: { EN: 'Accessible', BM: 'Mesra akses' },
+  sortRoutesAria: { EN: 'Route sorting options', BM: 'Pilihan susunan laluan' },
+  sortRoutesPrefix: { EN: 'Sort routes by', BM: 'Susun laluan mengikut' },
   sortAccessibleNote: { EN: 'Accessibility preference is active. Pick another filter any time if you want a different route mix.', BM: 'Pilihan kebolehcapaian sedang aktif. Pilih penapis lain pada bila-bila masa jika anda mahu gabungan laluan yang berbeza.' },
   loadingTitle: { EN: 'Preparing live route suggestions...', BM: 'Menyediakan cadangan laluan semasa...' },
   loadingCopy: { EN: 'Checking the best public-transport options for this trip.', BM: 'Menyemak pilihan pengangkutan awam terbaik untuk perjalanan ini.' },
   noRoutesTitle: { EN: 'No live routes yet', BM: 'Belum ada laluan semasa' },
   noRoutesCopy: { EN: 'Connect Firestore route and ETA data to show transport options here.', BM: 'Sambungkan data laluan dan ETA Firestore untuk memaparkan pilihan pengangkutan di sini.' },
-  noServiceStatuses: { EN: 'No service updates yet.', BM: 'Belum ada kemas kini perkhidmatan.' },
+  noServiceStatuses: {
+    EN: 'Service updates will appear here when your Firestore transport-status provider is connected.',
+    BM: 'Kemas kini perkhidmatan akan dipaparkan di sini apabila penyedia status pengangkutan Firestore anda disambungkan.',
+  },
   walk: { EN: 'Walk', BM: 'Jalan kaki' },
   fare: { EN: 'Fare', BM: 'Tambang' },
   transfers: { EN: 'Transfers', BM: 'Pertukaran' },
   accessible: { EN: 'Accessible', BM: 'Mesra akses' },
   yes: { EN: 'Yes', BM: 'Ya' },
   limited: { EN: 'Limited', BM: 'Terhad' },
+  viewRouteDetailsPrefix: { EN: 'View details for', BM: 'Lihat butiran untuk' },
   routeInfoTitle: { EN: 'Service & route information', BM: 'Maklumat perkhidmatan & laluan' },
   routeInfoCopy: { EN: 'Times, fares and service availability may change.', BM: 'Masa, tambang, dan ketersediaan perkhidmatan boleh berubah.' },
   routeDetails: { EN: 'ROUTE DETAILS', BM: 'BUTIRAN LALUAN' },
+  closeRouteDetails: { EN: 'Close route details', BM: 'Tutup butiran laluan' },
   departure: { EN: 'Departure', BM: 'Berlepas' },
   arrival: { EN: 'Arrival', BM: 'Tiba' },
   duration: { EN: 'Duration', BM: 'Tempoh' },
@@ -94,6 +114,7 @@ export class Tab2Page implements OnDestroy {
   private routePlanSubscription?: Subscription;
   private localizedDataSubscription = new Subscription();
   private readonly uiTimeouts = new ManagedTimeouts();
+  @ViewChild('routeSheet') private routeSheetRef?: ElementRef<HTMLElement>;
   readonly copy = NAVIGATION_COPY;
   view: 'planner' | 'results' = 'planner';
   from = '';
@@ -115,6 +136,7 @@ export class Tab2Page implements OnDestroy {
   preferAccessibleRoutes = false;
   managingRecentLocations = false;
   private hasManualSortSelection = false;
+  private previousFocusedElement: HTMLElement | null = null;
 
   constructor() {
     this.applyAccessibilityPreferences(this.accessibilityPreferencesService.getPreferences());
@@ -192,14 +214,19 @@ export class Tab2Page implements OnDestroy {
   }
 
   modeLabel(mode: string): string {
-    switch (mode) {
-      case 'Bus':
-        return this.language === 'EN' ? 'Bus' : 'Bas';
-      case 'Walk':
-        return this.language === 'EN' ? 'Walk' : 'Jalan kaki';
-      default:
-        return mode;
-    }
+    return getTransportModeLabel(this.language, mode);
+  }
+
+  modeIconName(mode: string): string {
+    return getTransportModeIconName(mode);
+  }
+
+  resultsSummaryIconName(): string {
+    return this.modeIconName(this.activeMode || this.routes[0]?.mode || '');
+  }
+
+  resultsSummaryModeLabel(): string {
+    return this.modeLabel(this.activeMode || this.routes[0]?.mode || '');
   }
 
   sortLabel(sort: string): string {
@@ -212,6 +239,40 @@ export class Tab2Page implements OnDestroy {
     }
 
     return this.t(this.copy.sortFastest);
+  }
+
+  modeButtonAriaLabel(mode: string): string {
+    return `${this.t(this.copy.transportModePrefix)} ${this.modeLabel(mode)}`;
+  }
+
+  sortButtonAriaLabel(sort: string): string {
+    return `${this.t(this.copy.sortRoutesPrefix)} ${this.sortLabel(sort)}`;
+  }
+
+  serviceStatusOverviewAriaLabel(): string {
+    return this.t(this.copy.viewAllServiceStatuses);
+  }
+
+  serviceStatusAriaLabel(status: ServiceStatus): string {
+    return `${this.t(this.copy.openServiceStatusPrefix)}: ${status.line}. ${status.route}. ${status.state}.`;
+  }
+
+  manageRecentLocationsAriaLabel(): string {
+    return this.managingRecentLocations
+      ? this.t(this.copy.finishManagingRecentLocations)
+      : this.t(this.copy.manageRecentLocations);
+  }
+
+  recentLocationAriaLabel(location: RecentLocation): string {
+    return `${this.t(this.copy.useRecentLocationPrefix)}: ${location.label}. ${location.description}.`;
+  }
+
+  removeRecentLocationAriaLabel(location: RecentLocation): string {
+    return `${this.t(this.copy.removeRecentLocationPrefix)}: ${location.label}`;
+  }
+
+  routeDetailsAriaLabel(route: RouteOption): string {
+    return `${this.t(this.copy.viewRouteDetailsPrefix)} ${this.modeLabel(route.mode)}`;
   }
 
   journeyDepartureSummary(): string {
@@ -233,7 +294,7 @@ export class Tab2Page implements OnDestroy {
     const primaryRoute = this.routes[0];
 
     if (primaryRoute) {
-      return `${primaryRoute.arrive} · ${this.modeLabel(primaryRoute.mode)}`;
+      return `${primaryRoute.arrive} · ${this.resultsSummaryModeLabel()}`;
     }
 
     if (this.isLoadingRoutes) {
@@ -260,6 +321,11 @@ export class Tab2Page implements OnDestroy {
 
   openServiceStatus(status?: ServiceStatus): void {
     if (!status) {
+      if (this.serviceStatuses.length === 0) {
+        this.notify(this.t(this.copy.noServiceStatuses));
+        return;
+      }
+
       this.notify(this.t(this.copy.allLinesShown));
       return;
     }
@@ -268,11 +334,18 @@ export class Tab2Page implements OnDestroy {
   }
 
   openRouteDetails(route: RouteOption): void {
+    this.previousFocusedElement = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     this.selectedRoute = route;
+    this.uiTimeouts.schedule('route-sheet-focus', () => this.routeSheetRef?.nativeElement.focus(), 0);
   }
 
   closeRouteDetails(): void {
     this.selectedRoute = null;
+    const previousFocusedElement = this.previousFocusedElement;
+    this.previousFocusedElement = null;
+    this.uiTimeouts.schedule('route-sheet-focus-restore', () => previousFocusedElement?.focus(), 0);
   }
 
   startJourney(): void {
@@ -286,9 +359,29 @@ export class Tab2Page implements OnDestroy {
       travelDate: this.plannerDate,
       travelTime: this.plannerTime,
     });
-    this.selectedRoute = null;
-    this.notify(`${journey.mode} ${this.t(this.copy.journeyStarted)}`);
+    this.closeRouteDetails();
+    this.notify(`${this.modeLabel(journey.mode)} ${this.t(this.copy.journeyStarted)}`);
     this.uiTimeouts.schedule('start-journey-nav', () => void this.router.navigate(['/tabs/tab1']), 500);
+  }
+
+  routeDialogAriaLabel(): string {
+    if (!this.selectedRoute) {
+      return this.t(this.copy.routeInfoTitle);
+    }
+
+    return `${this.modeLabel(this.selectedRoute.mode)} ${this.t(this.copy.routeDetails).toLowerCase()}`;
+  }
+
+  handleRouteSheetKeydown(event: KeyboardEvent, sheet: HTMLElement): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeRouteDetails();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      this.trapRouteSheetFocus(event, sheet);
+    }
   }
 
   openNotifications(): void {
@@ -370,5 +463,32 @@ export class Tab2Page implements OnDestroy {
     const dateTime = new Date(`${this.plannerDate}T${this.plannerTime}`);
 
     return Number.isNaN(dateTime.getTime()) ? null : dateTime;
+  }
+
+  private trapRouteSheetFocus(event: KeyboardEvent, sheet: HTMLElement): void {
+    const focusableElements = Array.from(sheet.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    )).filter((element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true');
+
+    if (focusableElements.length === 0) {
+      event.preventDefault();
+      sheet.focus();
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    const activeElement = document.activeElement;
+
+    if (event.shiftKey && activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
   }
 }

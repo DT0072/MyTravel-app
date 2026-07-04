@@ -1,5 +1,6 @@
 .profile-section-screen {
   padding-inline: var(--mt-topbar-inset);
+  padding-bottom: max(120px, calc(var(--mt-floating-tabbar-clearance) + 16px));
 }
 
 .section-summary {
@@ -83,4 +84,38 @@
 
 .section-empty p {
   margin: 8px 0 0;
+}
+
+@media (min-width: 840px) and (max-height: 820px) {
+  .profile-section-screen {
+    padding-bottom: max(124px, calc(var(--mt-floating-tabbar-clearance) + 20px));
+  }
+
+  .section-summary {
+    margin-top: 10px;
+    padding: 14px;
+  }
+
+  .section-summary p {
+    margin-bottom: 12px;
+  }
+
+  .section-summary .mt-primary {
+    min-height: 32px;
+  }
+
+  .profile-section-screen .mt-page-heading {
+    padding-block: 16px 10px;
+  }
+
+  .section-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 10px;
+  }
+
+  .section-list .section-item:last-child:nth-child(odd),
+  .section-list .section-empty {
+    grid-column: 1 / -1;
+  }
 }

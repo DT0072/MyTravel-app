@@ -68,7 +68,7 @@ describe('travel-progress', () => {
     };
   }
 
-  it('builds shared passport and challenge progress from saved app state', () => {
+  it('keeps passport and challenge progress empty until provider-backed data is connected', () => {
     const progress = buildTravelProgress(createState());
     const passportSummary = buildPassportSummary(progress);
     const challengeProgress = buildChallengeProgress(progress, passportSummary.collectedCount);
@@ -81,11 +81,11 @@ describe('travel-progress', () => {
       savedNoticeCount: 1,
     });
     expect(passportSummary).toEqual({
-      collectedCount: 4,
-      totalCount: 4,
+      collectedCount: 0,
+      totalCount: 0,
     });
-    expect(challengeProgress.completedSteps).toBe(5);
-    expect(challengeProgress.totalSteps).toBe(7);
-    expect(challengeProgress.passportProgress).toBe(2);
+    expect(challengeProgress.completedSteps).toBe(0);
+    expect(challengeProgress.totalSteps).toBe(0);
+    expect(challengeProgress.passportProgress).toBe(0);
   });
 });

@@ -9,7 +9,7 @@
 
     <div class="sub-heading">
       <button class="mt-back" type="button" [attr.aria-label]="t(backToProfileLabel)" (click)="goBack()">
-        <ion-icon name="arrow-back"></ion-icon>
+        <ion-icon aria-hidden="true" name="arrow-back"></ion-icon>
       </button>
       <h1>{{ content.title }}</h1>
     </div>
@@ -18,16 +18,16 @@
       <small>{{ content.summaryLabel }}</small>
       <strong>{{ content.summaryValue }}</strong>
       <p>{{ content.summaryCopy }}</p>
-      <button class="mt-primary" type="button" (click)="handlePrimaryAction()">{{ content.primaryAction }}</button>
+      <button class="mt-primary" type="button" [attr.aria-label]="primaryActionAriaLabel()" (click)="handlePrimaryAction()">{{ content.primaryAction }}</button>
     </section>
 
     <div class="mt-page-heading">
-      <h1>{{ content.title }}</h1>
+      <h2>{{ content.title }}</h2>
       <p>{{ content.description }}</p>
     </div>
 
     <section class="section-list">
-      <button class="mt-card section-item" type="button" *ngFor="let item of content.items" (click)="handleItemClick(item)">
+      <button class="mt-card section-item" type="button" *ngFor="let item of content.items" [attr.aria-label]="sectionItemAriaLabel(item)" (click)="handleItemClick(item)">
         <div>
           <h2>{{ item.title }}</h2>
           <p>{{ item.subtitle }}</p>

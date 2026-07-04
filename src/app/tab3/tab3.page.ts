@@ -32,10 +32,14 @@ const MAX_OFFLINE_IMAGE_FILE_SIZE_BYTES = 250 * 1024;
 const COMMUNITY_COPY = {
   pageTitle: { EN: 'Community', BM: 'Komuniti' },
   pageSubtitle: { EN: 'Community-shared and verified information.', BM: 'Maklumat yang dikongsi dan disahkan oleh komuniti.' },
+  communityTabsAria: { EN: 'Community sections', BM: 'Bahagian komuniti' },
   tipsTab: { EN: 'Travel Tips', BM: 'Tip Perjalanan' },
   verificationTab: { EN: 'Verifications', BM: 'Pengesahan' },
   allStates: { EN: 'All states', BM: 'Semua negeri' },
   allCategories: { EN: 'All categories', BM: 'Semua kategori' },
+  filterStateAria: { EN: 'Filter tips by state', BM: 'Tapis tip mengikut negeri' },
+  filterCategoryAria: { EN: 'Filter tips by category', BM: 'Tapis tip mengikut kategori' },
+  sortPostsAria: { EN: 'Sort community tips', BM: 'Susun tip komuniti' },
   categoryLabel: { EN: 'Category', BM: 'Kategori' },
   categoryHeritage: { EN: 'Heritage', BM: 'Warisan' },
   categoryNature: { EN: 'Nature', BM: 'Semula Jadi' },
@@ -49,18 +53,41 @@ const COMMUNITY_COPY = {
   helpful: { EN: 'Helpful', BM: 'Membantu' },
   notHelpful: { EN: 'Not helpful', BM: 'Tidak membantu' },
   report: { EN: 'Report', BM: 'Laporkan' },
+  helpfulPostAriaPrefix: { EN: 'Mark tip as helpful', BM: 'Tandakan tip sebagai membantu' },
+  notHelpfulPostAriaPrefix: { EN: 'Mark tip as not helpful', BM: 'Tandakan tip sebagai tidak membantu' },
+  reportPostAriaPrefix: { EN: 'Report travel tip', BM: 'Laporkan tip perjalanan' },
+  localSubmissionAuthor: { EN: 'Local submission', BM: 'Kiriman setempat' },
+  localSubmissionInitials: { EN: 'LS', BM: 'KS' },
   addTip: { EN: '+ Add tip', BM: '+ Tambah tip' },
   missionTitle: { EN: 'Manja Community Mission', BM: 'Misi Komuniti Manja' },
-  missionCopy: { EN: 'Share 2 useful verified tips', BM: 'Kongsi 2 tip berguna yang disahkan' },
+  missionCopy: { EN: '0 of 2 local community updates submitted.', BM: '0 daripada 2 kemas kini komuniti setempat telah dihantar.' },
+  missionProgressCopy: { EN: '{count} of 2 local community updates submitted.', BM: '{count} daripada 2 kemas kini komuniti setempat telah dihantar.' },
+  missionCompleteCopy: { EN: '2 of 2 local community updates completed.', BM: '2 daripada 2 kemas kini komuniti setempat telah selesai.' },
+  missionContribute: { EN: 'Contribute', BM: 'Sumbang' },
+  missionPendingTitle: { EN: 'Verification provider pending', BM: 'Penyedia pengesahan belum disambungkan' },
+  missionPendingCopy: {
+    EN: 'Verification tasks will appear here when your Firestore verification provider is connected.',
+    BM: 'Tugasan pengesahan akan dipaparkan di sini apabila penyedia pengesahan Firestore anda disambungkan.',
+  },
   verificationNearby: { EN: 'VERIFICATION NEAR YOU', BM: 'PENGESAHAN BERDEKATAN' },
   verificationPreviewCopy: { EN: 'Confirm available details and earn Eco-Points.', BM: 'Sahkan butiran tersedia dan raih Mata Eko.' },
   noPostsTitle: { EN: 'No community tips yet', BM: 'Belum ada tip komuniti' },
-  noPostsCopy: { EN: 'More community-shared travel guidance will appear soon.', BM: 'Lebih banyak panduan perjalanan yang dikongsi komuniti akan dipaparkan tidak lama lagi.' },
+  noPostsCopy: {
+    EN: 'Community tips will appear here after local submissions or when your Firestore community provider is connected.',
+    BM: 'Tip komuniti akan dipaparkan di sini selepas kiriman setempat atau apabila penyedia komuniti Firestore anda disambungkan.',
+  },
   noVerificationTitle: { EN: 'No verification tasks yet', BM: 'Belum ada tugasan pengesahan' },
-  noVerificationCopy: { EN: 'More nearby verification checkpoints will appear soon.', BM: 'Lebih banyak pusat semakan berdekatan akan dipaparkan tidak lama lagi.' },
+  noVerificationCopy: {
+    EN: 'Nearby verification checkpoints will appear here when your Firestore verification provider is connected.',
+    BM: 'Pusat semakan pengesahan berdekatan akan dipaparkan di sini apabila penyedia pengesahan Firestore anda disambungkan.',
+  },
   noNoticesTitle: { EN: 'No travel notices yet', BM: 'Belum ada notis perjalanan' },
-  noNoticesCopy: { EN: 'Current travel advisories will appear here when available.', BM: 'Nasihat perjalanan semasa akan dipaparkan di sini apabila tersedia.' },
+  noNoticesCopy: {
+    EN: 'Travel notices will appear here when your Firestore notices provider is connected.',
+    BM: 'Notis perjalanan akan dipaparkan di sini apabila penyedia notis Firestore anda disambungkan.',
+  },
   start: { EN: 'Start', BM: 'Mula' },
+  viewStatus: { EN: 'View status', BM: 'Lihat status' },
   addTravelTip: { EN: 'Add travel tip', BM: 'Tambah tip perjalanan' },
   backToCommunity: { EN: 'Back to community', BM: 'Kembali ke komuniti' },
   stepDetails: { EN: 'Details', BM: 'Butiran' },
@@ -73,6 +100,25 @@ const COMMUNITY_COPY = {
   yourTipPlaceholder: { EN: 'Operating hours, ticket prices, facilities, directions, unique features...', BM: 'Waktu operasi, harga tiket, kemudahan, arah, ciri istimewa...' },
   changePhoto: { EN: 'Change photo', BM: 'Tukar foto' },
   addPhoto: { EN: 'Add photo', BM: 'Tambah foto' },
+  photoGuideTitle: { EN: 'Add your own photo', BM: 'Tambah foto anda sendiri' },
+  photoGuideCopy: {
+    EN: 'Use a current photo from your visit. Sample photos are not included here.',
+    BM: 'Gunakan foto semasa daripada lawatan anda. Foto contoh tidak disertakan di sini.',
+  },
+  photoPreviewEmptyTitle: { EN: 'No photo selected', BM: 'Belum pilih foto' },
+  photoPreviewEmptyCopy: {
+    EN: 'Your selected image preview will appear here.',
+    BM: 'Pratonton imej yang dipilih akan dipaparkan di sini.',
+  },
+  selectedPhotoAlt: { EN: 'Selected travel photo preview', BM: 'Pratonton foto perjalanan yang dipilih' },
+  uploadPhotoAria: { EN: 'Choose a travel photo', BM: 'Pilih foto perjalanan' },
+  noPostPhotoTitle: { EN: 'No photo uploaded', BM: 'Tiada foto dimuat naik' },
+  noPostPhotoCopy: {
+    EN: 'Submitted without a travel photo.',
+    BM: 'Dihantar tanpa foto perjalanan.',
+  },
+  manjaMascotAlt: { EN: 'Manja travel companion mascot', BM: 'Maskot teman perjalanan Manja' },
+  wiraMascotAlt: { EN: 'Wira travel guide mascot', BM: 'Maskot panduan perjalanan Wira' },
   accessible: { EN: 'Accessible', BM: 'Mesra akses' },
   accessibleCopy: { EN: 'Wheelchair access, lifts and ramps available', BM: 'Akses kerusi roda, lif dan tanjakan tersedia' },
   hearingAccessible: { EN: 'Hearing accessible', BM: 'Mesra pendengaran' },
@@ -85,6 +131,8 @@ const COMMUNITY_COPY = {
   verifiedTransitHub: { EN: 'Verified transit hub', BM: 'Hab transit disahkan' },
   verificationQuestion: { EN: 'Are the operating hours still\n6:00 AM – 11:30 PM?', BM: 'Adakah waktu operasi masih\n6:00 PAGI – 11:30 MALAM?' },
   verificationLastUpdated: { EN: 'Last updated on 1 June 2026.', BM: 'Kali terakhir dikemas kini pada 1 Jun 2026.' },
+  verificationAnswerGroupAria: { EN: 'Verification answer options', BM: 'Pilihan jawapan pengesahan' },
+  verificationAnswerPrefix: { EN: 'Select verification answer', BM: 'Pilih jawapan pengesahan' },
   yes: { EN: 'Yes', BM: 'Ya' },
   no: { EN: 'No', BM: 'Tidak' },
   wiraReviewing: { EN: 'Wira is reviewing with you', BM: 'Wira sedang menyemak bersama anda' },
@@ -92,6 +140,7 @@ const COMMUNITY_COPY = {
   points: { EN: 'points', BM: 'mata' },
   submitVerification: { EN: 'Submit verification', BM: 'Hantar pengesahan' },
   travelNotices: { EN: 'Travel Notices', BM: 'Notis Perjalanan' },
+  noticeFiltersAria: { EN: 'Travel notice filters', BM: 'Penapis notis perjalanan' },
   backToProfile: { EN: 'Back to community', BM: 'Kembali ke komuniti' },
   critical: { EN: 'Critical', BM: 'Kritikal' },
   disruption: { EN: 'Disruption', BM: 'Gangguan' },
@@ -103,6 +152,10 @@ const COMMUNITY_COPY = {
   saveNotice: { EN: '☆ Save', BM: '☆ Simpan' },
   savedNotice: { EN: '★ Saved', BM: '★ Disimpan' },
   share: { EN: 'Share', BM: 'Kongsi' },
+  noticeFilterAriaPrefix: { EN: 'Filter notices by', BM: 'Tapis notis mengikut' },
+  saveNoticeAriaPrefix: { EN: 'Save travel notice', BM: 'Simpan notis perjalanan' },
+  savedNoticeAriaPrefix: { EN: 'Saved travel notice', BM: 'Notis perjalanan disimpan' },
+  shareNoticeAriaPrefix: { EN: 'Share travel notice', BM: 'Kongsi notis perjalanan' },
   markedHelpful: { EN: 'Marked as helpful', BM: 'Ditandakan sebagai membantu' },
   feedbackRecorded: { EN: 'Feedback recorded', BM: 'Maklum balas direkodkan' },
   reportOpened: { EN: 'Report options opened', BM: 'Pilihan laporan dibuka' },
@@ -135,7 +188,7 @@ interface CommunityPost {
   place: LocalizedText;
   copy: LocalizedText;
   points: number;
-  image: string;
+  image: string | null;
   date: LocalizedText;
   createdAt: string;
   helpfulCount: number;
@@ -153,105 +206,6 @@ interface CommunityNotice {
   category: Exclude<NoticeFilter, 'All'>;
   saved: boolean;
 }
-
-const SEEDED_POSTS: Omit<CommunityPost, 'reaction'>[] = [
-  {
-    id: 'seeded-george-town',
-    state: 'Penang',
-    author: 'Aisyah',
-    initials: 'AY',
-    place: {
-      EN: 'George Town Heritage Walk',
-      BM: 'Jalan Warisan George Town',
-    },
-    copy: {
-      EN: 'Start early before 9 AM for cooler streets, easier trishaw pickups, and shorter queues at the clan jetties.',
-      BM: 'Mulakan awal sebelum 9 pagi untuk jalan yang lebih nyaman, mudah mendapatkan beca, dan barisan lebih pendek di jeti warisan.',
-    },
-    category: 'Heritage',
-    points: 20,
-    image: 'assets/mytravel/george-town.png',
-    date: {
-      EN: '28 Jun 2026',
-      BM: '28 Jun 2026',
-    },
-    createdAt: '2026-06-28T09:30:00.000Z',
-    helpfulCount: 18,
-    status: 'Approved',
-  },
-  {
-    id: 'seeded-raban-lake',
-    state: 'Sarawak',
-    author: 'Daniel',
-    initials: 'DL',
-    place: {
-      EN: 'Tasik Raban boardwalk access',
-      BM: 'Akses pelantar Tasik Raban',
-    },
-    copy: {
-      EN: 'The lakeside route is smoother from the visitor centre entrance, with shaded rest stops every few hundred metres.',
-      BM: 'Laluan tepi tasik lebih lancar dari pintu masuk pusat pelawat, dengan tempat rehat berbumbung setiap beberapa ratus meter.',
-    },
-    category: 'Nature',
-    points: 20,
-    image: 'assets/mytravel/raban-lake.png',
-    date: {
-      EN: '26 Jun 2026',
-      BM: '26 Jun 2026',
-    },
-    createdAt: '2026-06-26T08:00:00.000Z',
-    helpfulCount: 11,
-    status: 'Approved',
-  },
-];
-
-const SEEDED_NOTICES: Omit<CommunityNotice, 'saved'>[] = [
-  {
-    id: 'notice-kelana-jaya-delay',
-    level: 'CRITICAL',
-    color: '#cf3d2e',
-    title: {
-      EN: 'Kelana Jaya Line delays between KLCC and Ampang Park',
-      BM: 'Kelewatan Laluan Kelana Jaya antara KLCC dan Ampang Park',
-    },
-    place: {
-      EN: 'Expect 15 to 20 minute delays during evening peak service.',
-      BM: 'Jangkakan kelewatan 15 hingga 20 minit semasa perkhidmatan puncak petang.',
-    },
-    time: '5:40 PM',
-    category: 'Transit',
-  },
-  {
-    id: 'notice-melaka-heat',
-    level: 'ADVISORY',
-    color: '#e39b22',
-    title: {
-      EN: 'Melaka heritage zone heat advisory',
-      BM: 'Nasihat cuaca panas zon warisan Melaka',
-    },
-    place: {
-      EN: 'Bring water and plan indoor museum stops between 12 PM and 3 PM.',
-      BM: 'Bawa air dan rancang hentian muzium dalaman antara 12 tengah hari hingga 3 petang.',
-    },
-    time: '11:15 AM',
-    category: 'Weather',
-  },
-  {
-    id: 'notice-sabah-boardwalk',
-    level: 'DISRUPTION',
-    color: '#0d7a69',
-    title: {
-      EN: 'Temporary closure at Tanjung Aru boardwalk entrance',
-      BM: 'Penutupan sementara di pintu masuk pelantar Tanjung Aru',
-    },
-    place: {
-      EN: 'Use the southern accessible ramp while resurfacing works continue.',
-      BM: 'Gunakan tanjakan mesra akses di bahagian selatan sementara kerja baik pulih diteruskan.',
-    },
-    time: '2:05 PM',
-    category: 'Destinations',
-  },
-];
 
 @Component({
   selector: 'app-tab3',
@@ -305,6 +259,8 @@ export class Tab3Page implements OnDestroy {
   posts: CommunityPost[] = [];
   notices: CommunityNotice[] = [];
   verificationTask: VerificationTaskDefinition | null = null;
+  communityMissionCompletedCount = 0;
+  readonly communityMissionTargetCount = 2;
 
   constructor() {
     this.language = this.accessibilityPreferencesService.getPreferences().language;
@@ -365,9 +321,56 @@ export class Tab3Page implements OnDestroy {
     this.communityTab = tab;
   }
 
+  communityTabTabIndex(tab: CommunityTab): number {
+    return this.communityTab === tab ? 0 : -1;
+  }
+
+  onCommunityTabKeydown(event: KeyboardEvent, tab: CommunityTab): void {
+    const tabOrder: CommunityTab[] = ['tips', 'verification'];
+    const currentIndex = tabOrder.indexOf(tab);
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      event.preventDefault();
+      const direction = event.key === 'ArrowRight' ? 1 : -1;
+      const nextIndex = (currentIndex + direction + tabOrder.length) % tabOrder.length;
+      const nextTab = tabOrder[nextIndex];
+      this.setCommunityTab(nextTab);
+      this.focusCommunityTab(nextTab);
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      this.setCommunityTab('tips');
+      this.focusCommunityTab('tips');
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      this.setCommunityTab('verification');
+      this.focusCommunityTab('verification');
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.setCommunityTab(tab);
+    }
+  }
+
   openAddTip(): void {
     this.view = 'add';
     this.syncRouteState('add');
+  }
+
+  openCommunityMission(): void {
+    if (this.verificationTask) {
+      this.startVerification();
+      return;
+    }
+
+    this.openAddTip();
   }
 
   startVerification(): void {
@@ -514,6 +517,89 @@ export class Tab3Page implements OnDestroy {
     return `♧ +${post.points} ${this.t(this.copy.ecoPoints)}${pendingLabel}`;
   }
 
+  helpfulPostAriaLabel(post: CommunityPost): string {
+    return `${this.t(this.copy.helpfulPostAriaPrefix)}: ${this.t(post.place)}`;
+  }
+
+  notHelpfulPostAriaLabel(post: CommunityPost): string {
+    return `${this.t(this.copy.notHelpfulPostAriaPrefix)}: ${this.t(post.place)}`;
+  }
+
+  reportPostAriaLabel(post: CommunityPost): string {
+    return `${this.t(this.copy.reportPostAriaPrefix)}: ${this.t(post.place)}`;
+  }
+
+  verificationAnswerAriaLabel(answer: 'yes' | 'no'): string {
+    const label = answer === 'yes'
+      ? this.t(this.copy.yes)
+      : this.t(this.copy.no);
+
+    return `${this.t(this.copy.verificationAnswerPrefix)} ${label}`;
+  }
+
+  postHasImage(post: CommunityPost): boolean {
+    return Boolean(post.image);
+  }
+
+  noticeFilterAriaLabel(filter: NoticeFilter): string {
+    return `${this.t(this.copy.noticeFilterAriaPrefix)} ${this.noticeCategoryLabel(filter)}`;
+  }
+
+  saveNoticeAriaLabel(notice: CommunityNotice): string {
+    const prefix = notice.saved
+      ? this.t(this.copy.savedNoticeAriaPrefix)
+      : this.t(this.copy.saveNoticeAriaPrefix);
+    return `${prefix}: ${this.t(notice.title)}`;
+  }
+
+  shareNoticeAriaLabel(notice: CommunityNotice): string {
+    return `${this.t(this.copy.shareNoticeAriaPrefix)}: ${this.t(notice.title)}`;
+  }
+
+  get verificationMissionTitleLabel(): string {
+    return this.t(this.copy.missionTitle);
+  }
+
+  get verificationMissionCopyLabel(): string {
+    if (this.communityMissionCompletedCount >= this.communityMissionTargetCount) {
+      return this.t(this.copy.missionCompleteCopy);
+    }
+
+    return this.t(this.copy.missionProgressCopy).replace(
+      '{count}',
+      String(this.communityMissionCompletedCount),
+    );
+  }
+
+  get verificationMissionActionLabel(): string {
+    if (this.verificationTask) {
+      return this.t(this.copy.start);
+    }
+
+    return this.communityMissionCompletedCount >= this.communityMissionTargetCount
+      ? this.t(this.copy.viewStatus)
+      : this.t(this.copy.missionContribute);
+  }
+
+  get verificationMissionWidth(): string {
+    return this.progressWidth(
+      this.communityMissionCompletedCount,
+      this.communityMissionTargetCount,
+    );
+  }
+
+  postAuthorLabel(post: CommunityPost): string {
+    return this.isProviderBackedIdentity(post.author, post.initials)
+      ? post.author
+      : this.t(this.copy.localSubmissionAuthor);
+  }
+
+  postAuthorInitials(post: CommunityPost): string {
+    return this.isProviderBackedIdentity(post.author, post.initials)
+      ? post.initials
+      : this.t(this.copy.localSubmissionInitials);
+  }
+
   categoryLabel(category: string): string {
     switch (category) {
       case 'Nature':
@@ -575,27 +661,32 @@ export class Tab3Page implements OnDestroy {
     const state = this.appStateService.getSnapshot();
     const reactions = this.reactionMap(state.postReactions);
     const savedTips = state.communityTips.map((tip) => this.mapSavedTip(tip, reactions));
-    this.posts = [
-      ...savedTips,
-      ...this.buildSeededPosts(reactions),
-    ];
+    this.posts = savedTips;
     this.tipDraft = state.tipDraft ? { ...state.tipDraft } : this.appStateService.getEmptyTipDraft();
     this.selectedPhotoName = this.tipDraft.imageName ?? '';
     this.selectedPhotoPreview = this.tipDraft.imagePreview ?? '';
     this.savedNoticeCount = state.savedNoticeIds.length;
-    const savedNoticeIds = new Set(state.savedNoticeIds);
-    this.notices = SEEDED_NOTICES.map((notice) => ({
-      ...notice,
-      saved: savedNoticeIds.has(notice.id),
-    }));
+    this.notices = [];
     this.verificationTask = getNextVerificationTask(state.completedVerificationIds);
+    this.communityMissionCompletedCount = Math.min(
+      state.contributions.filter((contribution) => contribution.type === 'Travel tip' || contribution.type === 'Verification').length,
+      this.communityMissionTargetCount,
+    );
   }
 
-  private buildSeededPosts(reactions: Map<string, CommunityPost['reaction']>): CommunityPost[] {
-    return SEEDED_POSTS.map((post) => ({
-      ...post,
-      reaction: reactions.get(post.id) ?? null,
-    }));
+  private focusCommunityTab(tab: CommunityTab): void {
+    const tabId = tab === 'tips'
+      ? 'community-tab-tips'
+      : 'community-tab-verification';
+    document.getElementById(tabId)?.focus();
+  }
+
+  private progressWidth(current: number, target: number): string {
+    if (target <= 0) {
+      return '0%';
+    }
+
+    return `${Math.round((Math.min(current, target) / target) * 100)}%`;
   }
 
   private reactionMap(
@@ -617,13 +708,24 @@ export class Tab3Page implements OnDestroy {
       place: this.localizeUserText(tip.location),
       copy: this.localizeUserText(tip.tip),
       points: 20,
-      image: tip.imagePreview || 'assets/home_1.png',
+      image: tip.imagePreview || null,
       date: this.formatDate(tip.createdAt),
       createdAt: tip.createdAt,
       helpfulCount: 0,
       status: tip.status,
       reaction: reactions.get(tip.id) ?? null,
     };
+  }
+
+  private isProviderBackedIdentity(author: string, initials: string): boolean {
+    const normalizedAuthor = author.trim();
+    const normalizedInitials = initials.trim();
+
+    if (!normalizedAuthor || !normalizedInitials) {
+      return false;
+    }
+
+    return !(normalizedAuthor === 'Traveler' && normalizedInitials === 'TR');
   }
 
   private localizeUserText(value: string): LocalizedText {

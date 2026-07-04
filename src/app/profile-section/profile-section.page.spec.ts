@@ -104,8 +104,47 @@ describe('ProfileSectionPage', () => {
     expect(component.content.title).toBe('Tetapan');
     expect(component.content.summaryValue).toBe('5');
     expect(component.content.summaryCopy).toContain('Bahasa Melayu (BM) dipilih');
+    expect(component.content.items[1].meta).toBe('Belum ada notis tersimpan. Buka notis Komuniti apabila tersedia.');
     expect(component.content.items[2].subtitle).toContain('3 bantuan aktif');
     expect(component.content.items[2].meta).toBe('Saiz teks: Besar');
+  });
+
+  it('renders destination-aware aria labels for the settings actions', () => {
+    fixture.detectChanges();
+
+    const primaryAction = fixture.nativeElement.querySelector('.section-summary .mt-primary') as HTMLButtonElement;
+    const sectionItems = Array.from(
+      fixture.nativeElement.querySelectorAll('.section-list .section-item'),
+    ) as HTMLButtonElement[];
+
+    expect(primaryAction.getAttribute('aria-label')).toBe('Buka kebolehcapaian. Membuka kawalan kebolehcapaian.');
+    expect(sectionItems[0].getAttribute('aria-label')).toBe(
+      'Bahasa dan rantau. Bahasa Melayu (BM) · Malaysia. Tukar bahasa kandungan dan lokaliti. Membuka ringkasan profil anda.',
+    );
+    expect(sectionItems[2].getAttribute('aria-label')).toBe(
+      'Kebolehcapaian dan sokongan laluan. 3 bantuan aktif · Laluan mesra akses tidak aktif. Saiz teks: Besar. Membuka kawalan kebolehcapaian.',
+    );
+  });
+
+  it('keeps a single top-level heading on the profile section page', () => {
+    fixture.detectChanges();
+
+    const pageHeadings = Array.from(
+      fixture.nativeElement.querySelectorAll('h1'),
+    ) as HTMLElement[];
+    const sectionHeading = fixture.nativeElement.querySelector('.mt-page-heading h2') as HTMLElement;
+
+    expect(pageHeadings.length).toBe(1);
+    expect(pageHeadings[0].textContent?.trim()).toBe('Tetapan');
+    expect(sectionHeading.textContent?.trim()).toBe('Tetapan');
+  });
+
+  it('marks the back icon as decorative because the button already carries the label', () => {
+    fixture.detectChanges();
+
+    const backIcon = fixture.nativeElement.querySelector('.sub-heading .mt-back ion-icon') as HTMLElement;
+
+    expect(backIcon.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('refreshes content when the app language changes', () => {
@@ -166,8 +205,9 @@ describe('ProfileSectionPage', () => {
     expect(component.content.summaryValue).toBe('2');
     expect(component.content.summaryCopy).toContain('2 saved notices');
     expect(component.content.primaryAction).toBe('Open notice board');
-    expect(component.content.items[0].title).toBe('Kelana Jaya Line delay alert');
-    expect(component.content.items[1].meta).toBe('Weather advisory');
+    expect(component.content.items[0].title).toBe('Saved travel notice');
+    expect(component.content.items[0].subtitle).toBe('This saved notice will show provider-backed details after Firestore notices are connected.');
+    expect(component.content.items[1].meta).toBe('notice-melaka-heat');
     expect(component.content.items[0].action).toBe('notices');
   });
 
@@ -215,6 +255,37 @@ describe('ProfileSectionPage', () => {
     expect(component.content.items[1].meta).toBe('1 saved notice ready in Community');
     expect(component.content.items[1].action).toBe('notices');
     expect(component.content.items[2].action).toBe('accessibility');
+  });
+
+  it('renders destination-aware aria labels for help shortcuts', () => {
+    routeStub.snapshot.data.section = 'help';
+    setPreferences({ ...preferences, language: 'EN' });
+
+    fixture = TestBed.createComponent(ProfileSectionPage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const primaryAction = fixture.nativeElement.querySelector('.section-summary .mt-primary') as HTMLButtonElement;
+    const sectionItems = Array.from(
+      fixture.nativeElement.querySelectorAll('.section-list .section-item'),
+    ) as HTMLButtonElement[];
+
+    expect(primaryAction.getAttribute('aria-label')).toBe('Open community guides. Opens the Community board.');
+    expect(sectionItems[1].getAttribute('aria-label')).toBe(
+      'Travel notices and tips. Check saved notices, community updates, and nearby verification tasks in one place. No saved notices yet. Open Community notices when they are available. Opens saved travel notices in Community.',
+    );
+  });
+
+  it('renders a zero-state notice guide when no saved notices exist', () => {
+    routeStub.snapshot.data.section = 'help';
+    setPreferences({ ...preferences, language: 'EN' });
+
+    fixture = TestBed.createComponent(ProfileSectionPage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.content.items[1].meta).toBe('No saved notices yet. Open Community notices when they are available.');
+    expect(component.content.items[1].action).toBe('notices');
   });
 
   it('opens the notice board deep link from saved destinations actions', () => {

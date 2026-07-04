@@ -9,20 +9,17 @@ describe('NavigationService', () => {
     service = new NavigationService();
   });
 
-  it('returns localized service statuses and recent locations', async () => {
+  it('returns empty service statuses and an empty recent-locations list by default', async () => {
     const [statuses, recentLocations] = await Promise.all([
       firstValueFrom(service.getServiceStatuses('BM')),
       firstValueFrom(service.getRecentLocations('BM')),
     ]);
 
-    expect(statuses.length).toBeGreaterThan(0);
-    expect(statuses[0].route).toContain('ke');
-    expect(statuses[0].state).toBe('Beroperasi seperti biasa');
-    expect(recentLocations.length).toBeGreaterThan(0);
-    expect(recentLocations[0].description).toContain('lapangan terbang');
+    expect(statuses).toEqual([]);
+    expect(recentLocations).toEqual([]);
   });
 
-  it('localizes custom recent locations with seeded matches and generic fallbacks', async () => {
+  it('localizes custom recent locations with generic fallback descriptions', async () => {
     const recentLocations = await firstValueFrom(
       service.getRecentLocations('EN', ['Merdeka 118', 'Batu Caves']),
     );
@@ -30,7 +27,7 @@ describe('NavigationService', () => {
     expect(recentLocations).toEqual([
       jasmine.objectContaining({
         label: 'Merdeka 118',
-        description: 'Landmark district near MRT and LRT',
+        description: 'Your recent route search',
       }),
       jasmine.objectContaining({
         label: 'Batu Caves',
@@ -63,25 +60,7 @@ describe('NavigationService', () => {
     expect(duplicateRoutes).toEqual([]);
   });
 
-  it('prioritizes accessible routes when requested', async () => {
-    const routes = await firstValueFrom(service.buildPlan({
-      from: 'KL Sentral',
-      to: 'Merdeka 118',
-      mode: 'Walk',
-      sort: 'Accessible',
-      travelDate: '2026-07-01',
-      travelTime: '09:15',
-    }, 'BM'));
-
-    expect(routes.length).toBe(3);
-    expect(routes[0].isAccessible).toBeTrue();
-    expect(routes[0].transfers).toBeLessThanOrEqual(routes[1].transfers);
-    expect(routes[0].detail).toContain('jambatan');
-    expect(routes[0].fare).toBe('Percuma');
-    expect(routes[0].arrive).toBe('10:03 AM');
-  });
-
-  it('prioritizes shorter durations for fastest sort', async () => {
+  it('returns no route options by default for valid journey requests until a transport provider is connected', async () => {
     const routes = await firstValueFrom(service.buildPlan({
       from: 'Pasar Seni',
       to: 'KLCC',
@@ -91,8 +70,6 @@ describe('NavigationService', () => {
       travelTime: '18:10',
     }));
 
-    expect(routes[0].mode).toBe('Express Bus');
-    expect(routes[0].duration).toBe('29 min');
-    expect(routes[0].arrive).toBe('06:39 PM');
+    expect(routes).toEqual([]);
   });
 });

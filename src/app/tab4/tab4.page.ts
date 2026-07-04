@@ -11,11 +11,6 @@ import {
 } from '../services/accessibility-preferences.service';
 import { AppStateService, PointTransaction } from '../services/app-state.service';
 import { ManagedTimeouts } from '../shared/utils/managed-timeouts';
-import {
-  PASSPORT_STAMP_DEFINITIONS,
-  buildChallengeProgress,
-  buildTravelProgress,
-} from '../shared/utils/travel-progress';
 
 type LocalizedText = Record<AppLanguage, string>;
 type ProfileView = 'profile' | 'points' | 'passport' | 'accessibility' | 'challenges' | 'reward';
@@ -31,18 +26,33 @@ type ProfileMenuItemId =
   | 'help'
   | 'signout';
 
+const REWARD_PROGRESS_TARGET_POINTS = 1000;
+
 const PROFILE_COPY = {
   pageTitle: { EN: 'Profile', BM: 'Profil' },
   pageSubtitle: { EN: 'Manage your account, rewards and digital passport.', BM: 'Urus akaun, ganjaran dan pasport digital anda.' },
-  travelerInitials: { EN: 'TR', BM: 'PG' },
-  travelerName: { EN: 'Traveler', BM: 'Pengembara' },
-  myDigitalVerified: { EN: '◆ MyDigital ID · Verified', BM: '◆ MyDigital ID · Disahkan' },
-  ecoExplorer: { EN: 'Eco-Explorer', BM: 'Peneroka Eko' },
+  profileProviderBadge: { EN: '--', BM: '--' },
+  profileProviderTitle: { EN: 'Profile provider pending', BM: 'Penyedia profil belum disambungkan' },
+  profileProviderCopy: {
+    EN: 'Name and identity details will appear here when your Firestore profile provider is connected.',
+    BM: 'Butiran nama dan identiti akan dipaparkan di sini apabila penyedia profil Firestore anda disambungkan.',
+  },
+  profileProviderStatus: { EN: 'Awaiting profile identity', BM: 'Menunggu identiti profil' },
+  wiraMascotAlt: { EN: 'Wira travel guide mascot', BM: 'Maskot panduan perjalanan Wira' },
+  manjaMascotAlt: { EN: 'Manja travel companion mascot', BM: 'Maskot teman perjalanan Manja' },
+  challengeMascotAltSuffix: { EN: 'challenge mascot', BM: 'maskot cabaran' },
   ecoPoints: { EN: 'Eco-Points', BM: 'Mata Eko' },
   digitalPassport: { EN: 'Digital Passport', BM: 'Pasport Digital' },
   passportFiveOfSixteen: { EN: '5 of 16', BM: '5 daripada 16' },
+  passportProviderPendingLabel: { EN: 'Provider pending', BM: 'Penyedia belum sedia' },
   challengeBannerTitle: { EN: 'VM2026 challenges & rewards', BM: 'Cabaran & ganjaran VM2026' },
   challengeBannerCopy: { EN: 'Complete verified travel, community\nand passport missions.', BM: 'Lengkapkan misi perjalanan, komuniti\ndan pasport yang disahkan.' },
+  challengeBannerTitlePending: { EN: 'Rewards provider pending', BM: 'Penyedia ganjaran belum disambungkan' },
+  challengeBannerCopyPending: {
+    EN: 'Challenge and reward details will appear here when your Firestore rewards provider is connected.',
+    BM: 'Butiran cabaran dan ganjaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.',
+  },
+  openPrefix: { EN: 'Open', BM: 'Buka' },
   accountSettings: { EN: 'Account & settings', BM: 'Akaun & tetapan' },
   menuContributions: { EN: 'My contributions', BM: 'Sumbangan saya' },
   menuContributionsCopy: { EN: 'Tips, verifications & shared information', BM: 'Tip, pengesahan & maklumat yang dikongsi' },
@@ -64,15 +74,20 @@ const PROFILE_COPY = {
   accessibilityLanguageTitle: { EN: 'Accessibility & Language', BM: 'Kebolehcapaian & Bahasa' },
   challengesTitle: { EN: 'MyTravel Challenges', BM: 'Cabaran MyTravel' },
   rewardTitle: { EN: 'VM2026 Reward', BM: 'Ganjaran VM2026' },
+  rewardStatusTitle: { EN: 'Rewards status', BM: 'Status ganjaran' },
   backToProfile: { EN: 'Back to profile', BM: 'Kembali ke profil' },
   currentBalance: { EN: 'Current balance', BM: 'Baki semasa' },
   pointsLabel: { EN: 'points', BM: 'mata' },
   balanceCardCopy: { EN: '♧ Thank you!\nYour points support sustainable tourism in Malaysia.', BM: '♧ Terima kasih!\nMata anda menyokong pelancongan lestari di Malaysia.' },
   seasonTitle: { EN: 'VM2026 Challenge Season', BM: 'Musim Cabaran VM2026' },
+  seasonTitlePending: { EN: 'Rewards provider pending', BM: 'Penyedia ganjaran belum disambungkan' },
   viewAllMissions: { EN: 'View all missions', BM: 'Lihat semua misi' },
+  viewStatus: { EN: 'View status', BM: 'Lihat status' },
   filterAll: { EN: 'All', BM: 'Semua' },
   filterEarned: { EN: 'Earned', BM: 'Diperoleh' },
   filterPending: { EN: 'Pending', BM: 'Menunggu' },
+  transactionFiltersAria: { EN: 'Point transaction filters', BM: 'Penapis transaksi mata' },
+  transactionFilterPrefix: { EN: 'Filter transactions by', BM: 'Tapis transaksi mengikut' },
   transactionHistory: { EN: 'Transaction history', BM: 'Sejarah transaksi' },
   noTransactions: { EN: 'No {filter} transactions yet.', BM: 'Belum ada transaksi {filter}.' },
   howToEarn: { EN: 'How to earn points', BM: 'Cara mendapatkan mata' },
@@ -88,23 +103,56 @@ const PROFILE_COPY = {
   passportAll: { EN: 'All', BM: 'Semua' },
   passportStates: { EN: 'States', BM: 'Negeri' },
   passportFederal: { EN: 'Federal Territories', BM: 'Wilayah Persekutuan' },
+  passportFiltersAria: { EN: 'Passport region filters', BM: 'Penapis wilayah pasport' },
+  passportFilterPrefix: { EN: 'Filter passport stamps by', BM: 'Tapis cop pasport mengikut' },
+  passportStampPrefix: { EN: 'Passport stamp', BM: 'Cop pasport' },
+  passportStampSelectedState: { EN: 'selected', BM: 'dipilih' },
+  passportStampLockedState: { EN: 'locked', BM: 'dikunci' },
+  passportStampUnlockedState: { EN: 'unlocked', BM: 'dibuka' },
   passportAllDestinations: { EN: 'All destinations (16)', BM: 'Semua destinasi (16)' },
   passportStateDestinations: { EN: 'States (13)', BM: 'Negeri (13)' },
   passportFederalDestinations: { EN: 'Federal Territories (3)', BM: 'Wilayah Persekutuan (3)' },
   noPassportData: { EN: 'No passport stamps yet.', BM: 'Belum ada cop pasport.' },
-  noPassportCopy: { EN: 'Offline passport highlights will stay available here while you build more travel stamps.', BM: 'Sorotan pasport luar talian akan kekal tersedia di sini semasa anda membina lebih banyak cop perjalanan.' },
+  noPassportCopy: {
+    EN: 'Passport stamps will appear here when your Firestore passport provider is connected.',
+    BM: 'Cop pasport akan dipaparkan di sini apabila penyedia pasport Firestore anda disambungkan.',
+  },
+  noPassportCopyWithActivity: {
+    EN: 'You already have {count} completed local journeys. Passport stamps will appear here when your Firestore passport provider is connected.',
+    BM: 'Anda sudah mempunyai {count} perjalanan setempat yang selesai. Cop pasport akan dipaparkan di sini apabila penyedia pasport Firestore anda disambungkan.',
+  },
   noChallengeData: { EN: 'No active missions yet.', BM: 'Belum ada misi aktif.' },
-  noChallengeCopy: { EN: 'Season missions are prepared locally and will refresh as your travel activity grows.', BM: 'Misi musim disediakan secara tempatan dan akan dikemas kini apabila aktiviti perjalanan anda bertambah.' },
+  noChallengeCopy: {
+    EN: 'Challenge missions will appear here when your Firestore rewards provider is connected.',
+    BM: 'Misi cabaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.',
+  },
+  noChallengeCopyWithPoints: {
+    EN: 'You already have {points} local Eco-Points. Challenge missions will appear here when your Firestore rewards provider is connected.',
+    BM: 'Anda sudah mempunyai {points} Mata Eko setempat. Misi cabaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.',
+  },
+  noRewardData: { EN: 'No reward progress yet.', BM: 'Belum ada kemajuan ganjaran.' },
+  noRewardCopy: {
+    EN: 'Reward details will appear here when your Firestore rewards provider is connected.',
+    BM: 'Butiran ganjaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.',
+  },
+  noRewardCopyWithPoints: {
+    EN: 'You already have {points} of {target} local Eco-Points recorded. Reward details will appear here when your Firestore rewards provider is connected.',
+    BM: 'Anda sudah mempunyai {points} daripada {target} Mata Eko setempat direkodkan. Butiran ganjaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.',
+  },
   manjaGuide: { EN: 'Manja Guide', BM: 'Panduan Manja' },
   manjaGuideCopy: { EN: 'Verified stamps unlock regional badges and rewards.', BM: 'Cop yang disahkan membuka lencana dan ganjaran serantau.' },
   appLanguage: { EN: 'App language', BM: 'Bahasa aplikasi' },
+  appLanguageOptionsAria: { EN: 'App language options', BM: 'Pilihan bahasa aplikasi' },
   malay: { EN: 'Malay (BM)', BM: 'Bahasa Melayu (BM)' },
   english: { EN: 'English (EN)', BM: 'Bahasa Inggeris (EN)' },
   textSize: { EN: 'Text size', BM: 'Saiz teks' },
+  textSizePrefix: { EN: 'Set text size to', BM: 'Tetapkan saiz teks kepada' },
+  languagePrefix: { EN: 'Switch app language to', BM: 'Tukar bahasa aplikasi kepada' },
   textStandard: { EN: 'Standard', BM: 'Standard' },
   textLarge: { EN: 'Large', BM: 'Besar' },
   textExtraLarge: { EN: 'Extra large', BM: 'Sangat besar' },
   accessibilitySettings: { EN: 'Accessibility settings', BM: 'Tetapan kebolehcapaian' },
+  accessibilityTogglePrefix: { EN: 'Toggle', BM: 'Togol' },
   highContrast: { EN: 'High contrast', BM: 'Kontras tinggi' },
   highContrastCopy: { EN: 'Increase color contrast for readability.', BM: 'Tingkatkan kontras warna untuk kebolehbacaan.' },
   reduceMotion: { EN: 'Reduce motion', BM: 'Kurangkan pergerakan' },
@@ -122,11 +170,30 @@ const PROFILE_COPY = {
   previewCopy: { EN: 'Easily plan journeys using public transport across Malaysia.', BM: 'Rancang perjalanan dengan mudah menggunakan pengangkutan awam di seluruh Malaysia.' },
   savedPreferenceEffects: { EN: 'Saved preference effects', BM: 'Kesan pilihan tersimpan' },
   savedPreferenceEffectsCopy: { EN: 'High contrast, reduced motion, underline support, and accessible-route defaults apply across the app when enabled.', BM: 'Kontras tinggi, gerakan dikurangkan, sokongan garis bawah dan laluan mesra akses digunakan di seluruh aplikasi apabila diaktifkan.' },
+  accessibilityStatusDefaultTitle: { EN: 'Default preferences active', BM: 'Pilihan lalai sedang digunakan' },
+  accessibilityStatusDefaultCopy: {
+    EN: 'This device is currently using the default accessibility preferences.',
+    BM: 'Peranti ini sedang menggunakan pilihan kebolehcapaian lalai.',
+  },
+  accessibilityStatusSavedTitle: { EN: 'Custom preferences active', BM: 'Pilihan tersuai sedang digunakan' },
+  accessibilityStatusSavedCopy: {
+    EN: 'Your saved accessibility preferences are active. Reset to return to the app defaults.',
+    BM: 'Pilihan kebolehcapaian tersimpan anda sedang digunakan. Tetapkan semula untuk kembali ke lalai aplikasi.',
+  },
+  accessibilityStatusUnsavedTitle: { EN: 'Changes ready to save', BM: 'Perubahan sedia untuk disimpan' },
+  accessibilityStatusUnsavedCopy: {
+    EN: 'Save to apply your latest accessibility updates across the app.',
+    BM: 'Simpan untuk menggunakan kemas kini kebolehcapaian terkini anda di seluruh aplikasi.',
+  },
   saveSettings: { EN: 'Save settings', BM: 'Simpan tetapan' },
   resetDefaults: { EN: 'Reset to defaults', BM: 'Tetapkan semula ke lalai' },
   challengeHeroTitle: { EN: 'Explore Malaysia.\nCreate positive impact.', BM: 'Terokai Malaysia.\nCipta impak positif.' },
+  challengeHeroPendingTitle: { EN: 'Rewards provider pending', BM: 'Penyedia ganjaran belum disambungkan' },
   seasonProgress: { EN: 'Season progress', BM: 'Kemajuan musim' },
+  seasonProgressPending: { EN: 'Waiting for rewards data', BM: 'Menunggu data ganjaran' },
+  localPointsProgress: { EN: 'Local points progress', BM: 'Kemajuan mata setempat' },
   activeMissions: { EN: 'Active missions', BM: 'Misi aktif' },
+  activeMissionsPending: { EN: 'Rewards status', BM: 'Status ganjaran' },
   missionHeritage: { EN: 'Heritage by public transport', BM: 'Warisan dengan pengangkutan awam' },
   missionHeritageCopy: { EN: 'Visit 3 heritage sites using MRT, LRT, KTM or bus.', BM: 'Lawati 3 lokasi warisan menggunakan MRT, LRT, KTM atau bas.' },
   missionCommunity: { EN: 'Community supports community', BM: 'Komuniti menyokong komuniti' },
@@ -224,6 +291,17 @@ interface UnlockStep {
   description: LocalizedText;
 }
 
+interface ProviderCollection<T> {
+  connected: boolean;
+  items: T[];
+}
+
+interface RewardsProgressData {
+  connected: boolean;
+  missions: ChallengeMission[];
+  unlockSteps: UnlockStep[];
+}
+
 @Component({
   selector: 'app-tab4',
   templateUrl: 'tab4.page.html',
@@ -231,13 +309,13 @@ interface UnlockStep {
   standalone: false,
 })
 export class Tab4Page implements OnDestroy {
-  private readonly challengeSeasonTarget = 1000;
   private readonly accessibilityPreferencesService = inject(AccessibilityPreferencesService);
   private readonly appStateService = inject(AppStateService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly routeSubscription = new Subscription();
   private readonly uiTimeouts = new ManagedTimeouts();
+  private readonly defaultAccessibilityPreferences = createDefaultAccessibilityPreferences();
   readonly copy = PROFILE_COPY;
   readonly textSizes: TextSize[] = ['Standard', 'Large', 'Extra large'];
   readonly accessibilityOptions: AccessibilityOption[] = [
@@ -260,11 +338,9 @@ export class Tab4Page implements OnDestroy {
   ];
   stamps: ProfileStamp[] = [];
   challengeMissions: ChallengeMission[] = [];
-  readonly unlockSteps: UnlockStep[] = [
-    { number: '1', title: this.copy.unlockOne, description: this.copy.unlockOneCopy },
-    { number: '2', title: this.copy.unlockTwo, description: this.copy.unlockTwoCopy },
-    { number: '3', title: this.copy.unlockThree, description: this.copy.unlockThreeCopy },
-  ];
+  unlockSteps: UnlockStep[] = [];
+  passportProviderConnected = false;
+  rewardsProviderConnected = false;
   view: ProfileView = 'profile';
   language: AppLanguage = 'EN';
   selectedAppLanguage: AppLanguage = 'EN';
@@ -281,6 +357,7 @@ export class Tab4Page implements OnDestroy {
   journeyHistoryCount = 0;
   journeyHistoryPoints = 0;
   savedNoticeCount = 0;
+  private appliedAccessibilityPreferences = this.cloneAccessibilityPreferences(this.defaultAccessibilityPreferences);
 
   get filteredTransactions(): ProfileTransaction[] {
     if (this.transactionFilter === 'All') {
@@ -322,8 +399,96 @@ export class Tab4Page implements OnDestroy {
     return `${Math.round((this.passportCollectedCount / this.passportTotalCount) * 100)}%`;
   }
 
+  get passportStatusLabel(): string {
+    if (!this.passportProviderConnected || this.passportTotalCount === 0) {
+      return this.t(this.copy.passportProviderPendingLabel);
+    }
+
+    return `${this.passportCollectedCount}/${this.passportTotalCount}`;
+  }
+
   get seasonProgressWidth(): string {
-    return this.progressWidth(this.ecoPoints, this.challengeSeasonTarget);
+    return this.progressWidth(this.ecoPoints, REWARD_PROGRESS_TARGET_POINTS);
+  }
+
+  get challengeBannerTitleLabel(): string {
+    return this.rewardsProviderConnected
+      ? this.t(this.copy.challengeBannerTitle)
+      : this.t(this.copy.challengeBannerTitlePending);
+  }
+
+  get challengeBannerCopyLabel(): string {
+    return this.rewardsProviderConnected
+      ? this.t(this.copy.challengeBannerCopy)
+      : this.t(this.copy.challengeBannerCopyPending);
+  }
+
+  get seasonCardTitleLabel(): string {
+    return this.rewardsProviderConnected
+      ? this.t(this.copy.seasonTitle)
+      : this.t(this.copy.seasonTitlePending);
+  }
+
+  get seasonCardActionLabel(): string {
+    return this.rewardsProviderConnected
+      ? this.t(this.copy.viewAllMissions)
+      : this.t(this.copy.viewStatus);
+  }
+
+  get challengeHeroTitleLabel(): string {
+    return this.rewardsProviderConnected
+      ? this.t(this.copy.challengeHeroTitle)
+      : this.t(this.copy.challengeHeroPendingTitle);
+  }
+
+  get challengeHeroStatusLabel(): string {
+    return this.rewardsProviderConnected
+      ? this.t(this.copy.seasonProgress)
+      : this.ecoPoints > 0
+        ? this.t(this.copy.localPointsProgress)
+        : this.t(this.copy.seasonProgressPending);
+  }
+
+  get challengeSectionLabel(): string {
+    return this.rewardsProviderConnected
+      ? this.t(this.copy.activeMissions)
+      : this.t(this.copy.activeMissionsPending);
+  }
+
+  get passportEmptyStateCopyLabel(): string {
+    if (this.journeyHistoryCount === 0) {
+      return this.t(this.copy.noPassportCopy);
+    }
+
+    return this.t(this.copy.noPassportCopyWithActivity).replace(
+      '{count}',
+      String(this.journeyHistoryCount),
+    );
+  }
+
+  get challengeEmptyStateCopyLabel(): string {
+    if (this.ecoPoints === 0) {
+      return this.t(this.copy.noChallengeCopy);
+    }
+
+    return this.t(this.copy.noChallengeCopyWithPoints).replace(
+      '{points}',
+      this.ecoPoints.toLocaleString(),
+    );
+  }
+
+  get rewardEmptyStateCopyLabel(): string {
+    if (this.ecoPoints === 0) {
+      return this.t(this.copy.noRewardCopy);
+    }
+
+    return this.t(this.copy.noRewardCopyWithPoints)
+      .replace('{points}', this.ecoPoints.toLocaleString())
+      .replace('{target}', REWARD_PROGRESS_TARGET_POINTS.toLocaleString());
+  }
+
+  get rewardProgressSummaryLabel(): string {
+    return `${this.ecoPoints.toLocaleString()}/${REWARD_PROGRESS_TARGET_POINTS.toLocaleString()} ${this.t(this.copy.pointsLabel)}`;
   }
 
   get viewTitle(): string {
@@ -337,7 +502,9 @@ export class Tab4Page implements OnDestroy {
       case 'challenges':
         return this.t(this.copy.challengesTitle);
       case 'reward':
-        return this.t(this.copy.rewardTitle);
+        return this.rewardsProviderConnected
+          ? this.t(this.copy.rewardTitle)
+          : this.t(this.copy.rewardStatusTitle);
       default:
         return this.t(this.copy.pageTitle);
     }
@@ -352,6 +519,50 @@ export class Tab4Page implements OnDestroy {
       default:
         return `${this.t(this.copy.passportAll)} (${this.passportTotalCount})`;
     }
+  }
+
+  get hasPendingAccessibilityChanges(): boolean {
+    return !this.accessibilityPreferencesEqual(this.buildAccessibilityPreferences(), this.appliedAccessibilityPreferences);
+  }
+
+  get canResetAccessibilitySettings(): boolean {
+    return !this.accessibilityPreferencesEqual(this.buildAccessibilityPreferences(), this.defaultAccessibilityPreferences);
+  }
+
+  get accessibilityStatusTitleLabel(): string {
+    if (this.hasPendingAccessibilityChanges) {
+      return this.t(this.copy.accessibilityStatusUnsavedTitle);
+    }
+
+    if (this.canResetAccessibilitySettings) {
+      return this.t(this.copy.accessibilityStatusSavedTitle);
+    }
+
+    return this.t(this.copy.accessibilityStatusDefaultTitle);
+  }
+
+  get accessibilityStatusCopyLabel(): string {
+    if (this.hasPendingAccessibilityChanges) {
+      return this.t(this.copy.accessibilityStatusUnsavedCopy);
+    }
+
+    if (this.canResetAccessibilitySettings) {
+      return this.t(this.copy.accessibilityStatusSavedCopy);
+    }
+
+    return this.t(this.copy.accessibilityStatusDefaultCopy);
+  }
+
+  get previewCardHeadingLabel(): string {
+    return this.translateFor(this.copy.preview, this.selectedAppLanguage);
+  }
+
+  get previewCardTitleLabel(): string {
+    return this.translateFor(this.copy.previewTitle, this.selectedAppLanguage);
+  }
+
+  get previewCardCopyLabel(): string {
+    return this.translateFor(this.copy.previewCopy, this.selectedAppLanguage);
   }
 
   constructor() {
@@ -378,7 +589,7 @@ export class Tab4Page implements OnDestroy {
   }
 
   t(text: LocalizedText): string {
-    return text[this.language];
+    return this.translateFor(text, this.language);
   }
 
   open(view: ProfileView): void {
@@ -440,6 +651,23 @@ export class Tab4Page implements OnDestroy {
     }
   }
 
+  profilePointsCardAriaLabel(): string {
+    return `${this.t(this.copy.openPrefix)} ${this.t(this.copy.ecoPoints)}. ${this.ecoPoints} ${this.t(this.copy.pointsLabel)}`;
+  }
+
+  profilePassportCardAriaLabel(): string {
+    return `${this.t(this.copy.openPrefix)} ${this.t(this.copy.digitalPassport)}. ${this.passportStatusLabel}`;
+  }
+
+  profileChallengeBannerAriaLabel(): string {
+    return `${this.t(this.copy.openPrefix)} ${this.singleLineText(this.challengeBannerTitleLabel)}. ${this.singleLineText(this.challengeBannerCopyLabel)}`;
+  }
+
+  profileMenuItemAriaLabel(item: ProfileMenuItem): string {
+    const labelPrefix = item.action === 'signout' ? this.t(item.title) : `${this.t(this.copy.openPrefix)} ${this.t(item.title)}`;
+    return `${labelPrefix}. ${this.singleLineText(this.menuDescription(item))}`;
+  }
+
   selectPassportFilter(filter: PassportFilter): void {
     this.passportFilter = filter;
   }
@@ -449,6 +677,27 @@ export class Tab4Page implements OnDestroy {
     this.showToast(
       (stamp.active ? this.t(this.copy.stampSelected) : this.t(this.copy.stampLocked)).replace('{name}', stamp.name),
     );
+  }
+
+  transactionFilterAriaLabel(filter: TransactionFilter): string {
+    return `${this.t(this.copy.transactionFilterPrefix)} ${this.transactionFilterLabel(filter)}`;
+  }
+
+  passportFilterAriaLabel(filter: PassportFilter): string {
+    return `${this.t(this.copy.passportFilterPrefix)} ${this.passportFilterLabel(filter)}`;
+  }
+
+  passportStampAriaLabel(stamp: ProfileStamp): string {
+    const states = [
+      this.selectedStamp?.name === stamp.name ? this.t(this.copy.passportStampSelectedState) : null,
+      stamp.active ? this.t(this.copy.passportStampUnlockedState) : this.t(this.copy.passportStampLockedState),
+    ].filter((state): state is string => Boolean(state));
+
+    return `${this.t(this.copy.passportStampPrefix)} ${stamp.name}, ${states.join(', ')}`;
+  }
+
+  challengeMissionAlt(mission: ChallengeMission): string {
+    return `${this.t(mission.title)} ${this.t(this.copy.challengeMascotAltSuffix)}`;
   }
 
   textSizeLabel(size: TextSize): string {
@@ -462,6 +711,18 @@ export class Tab4Page implements OnDestroy {
     }
   }
 
+  accessibilityLanguageAriaLabel(language: AppLanguage): string {
+    return `${this.t(this.copy.languagePrefix)} ${this.languageLabel(language)}`;
+  }
+
+  textSizeAriaLabel(size: TextSize): string {
+    return `${this.t(this.copy.textSizePrefix)} ${this.textSizeLabel(size)}`;
+  }
+
+  accessibilityOptionAriaLabel(option: AccessibilityOption): string {
+    return `${this.t(this.copy.accessibilityTogglePrefix)} ${this.t(option.title)}`;
+  }
+
   transactionFilterLabel(filter: TransactionFilter): string {
     switch (filter) {
       case 'Earned':
@@ -473,7 +734,22 @@ export class Tab4Page implements OnDestroy {
     }
   }
 
+  passportFilterLabel(filter: PassportFilter): string {
+    switch (filter) {
+      case 'States':
+        return this.t(this.copy.passportStates);
+      case 'Federal Territories':
+        return this.t(this.copy.passportFederal);
+      default:
+        return this.t(this.copy.passportAll);
+    }
+  }
+
   saveAccessibilitySettings(): void {
+    if (!this.hasPendingAccessibilityChanges) {
+      return;
+    }
+
     const preferences = this.accessibilityPreferencesService.savePreferences(this.buildAccessibilityPreferences());
     this.applyAccessibilityPreferences(preferences);
     this.refreshAppState();
@@ -481,6 +757,10 @@ export class Tab4Page implements OnDestroy {
   }
 
   resetAccessibilitySettings(): void {
+    if (!this.canResetAccessibilitySettings) {
+      return;
+    }
+
     const preferences = this.accessibilityPreferencesService.resetPreferences();
     this.applyAccessibilityPreferences(preferences);
     this.refreshAppState();
@@ -490,6 +770,10 @@ export class Tab4Page implements OnDestroy {
   showToast(message: string): void {
     this.toast = message;
     this.uiTimeouts.schedule('toast', () => this.toast = '', 2200);
+  }
+
+  private singleLineText(text: string): string {
+    return text.replace(/\s+/g, ' ').trim();
   }
 
   private isProfileView(view: string): view is ProfileView {
@@ -509,11 +793,11 @@ export class Tab4Page implements OnDestroy {
     this.selectedAppLanguage = preferences.language;
     this.textSize = preferences.textSize;
     this.settings = { ...preferences.settings };
+    this.appliedAccessibilityPreferences = this.cloneAccessibilityPreferences(preferences);
   }
 
   private refreshAppState(): void {
     const state = this.appStateService.getSnapshot();
-    const progress = buildTravelProgress(state);
     this.ecoPoints = state.ecoPoints;
     this.transactions = state.transactions.map((transaction) => this.mapTransaction(transaction));
     this.approvedContributionCount = state.contributions.filter((contribution) => contribution.status === 'Approved').length;
@@ -521,9 +805,14 @@ export class Tab4Page implements OnDestroy {
     this.journeyHistoryCount = state.journeyHistory.length;
     this.journeyHistoryPoints = state.journeyHistory.reduce((total, journey) => total + journey.points, 0);
     this.savedNoticeCount = state.savedNoticeIds.length;
-    this.stamps = this.buildPassportStamps(progress);
+    const passportData = this.loadPassportData();
+    this.passportProviderConnected = passportData.connected;
+    this.stamps = passportData.items;
     this.syncSelectedStamp();
-    this.challengeMissions = this.buildChallengeMissions(progress, this.passportCollectedCount);
+    const rewardsData = this.loadRewardsProgressData();
+    this.rewardsProviderConnected = rewardsData.connected;
+    this.challengeMissions = rewardsData.missions;
+    this.unlockSteps = rewardsData.unlockSteps;
   }
 
   private countLabel(count: number, singular: LocalizedText, plural: LocalizedText): string {
@@ -539,20 +828,38 @@ export class Tab4Page implements OnDestroy {
     return language === 'BM' ? this.t(this.copy.malay) : this.t(this.copy.english);
   }
 
-  private buildPassportStamps(progress: ReturnType<typeof buildTravelProgress>): ProfileStamp[] {
-    return PASSPORT_STAMP_DEFINITIONS.map((stamp) => {
-      const active = stamp.isUnlocked(progress);
+  private translateFor(text: LocalizedText, language: AppLanguage): string {
+    return text[language];
+  }
 
-      return {
-        name: stamp.name,
-        active,
-        image: active ? stamp.unlockedImage : 'assets/mytravel/stamp-locked.png',
-        heroImage: stamp.heroImage,
-        region: stamp.region,
-        label: stamp.label,
-        description: stamp.description,
-      };
-    });
+  private accessibilityPreferencesEqual(
+    left: AccessibilityPreferences,
+    right: AccessibilityPreferences,
+  ): boolean {
+    return left.language === right.language
+      && left.textSize === right.textSize
+      && left.settings.contrast === right.settings.contrast
+      && left.settings.motion === right.settings.motion
+      && left.settings.underline === right.settings.underline
+      && left.settings.reader === right.settings.reader
+      && left.settings.voice === right.settings.voice
+      && left.settings.wheelchair === right.settings.wheelchair;
+  }
+
+  private cloneAccessibilityPreferences(preferences: AccessibilityPreferences): AccessibilityPreferences {
+    return {
+      language: preferences.language,
+      textSize: preferences.textSize,
+      settings: { ...preferences.settings },
+    };
+  }
+
+  // Firestore-backed progression remains unavailable until a provider is wired in.
+  private loadPassportData(): ProviderCollection<ProfileStamp> {
+    return {
+      connected: false,
+      items: [],
+    };
   }
 
   private syncSelectedStamp(): void {
@@ -563,51 +870,19 @@ export class Tab4Page implements OnDestroy {
     this.selectedStamp = previousSelection ?? this.stamps.find((stamp) => stamp.active) ?? this.stamps[0] ?? null;
   }
 
-  private buildChallengeMissions(progress: ReturnType<typeof buildTravelProgress>, unlockedStampCount: number): ChallengeMission[] {
-    const challengeProgress = buildChallengeProgress(progress, unlockedStampCount);
-
-    return [
-      {
-        title: this.copy.missionHeritage,
-        description: this.copy.missionHeritageCopy,
-        progress: this.progressLabel(challengeProgress.heritageProgress, challengeProgress.heritageTarget),
-        reward: this.pointRewardLabel(120),
-        image: 'assets/mytravel/wira-ui.png',
-        progressWidth: this.progressWidth(challengeProgress.heritageProgress, challengeProgress.heritageTarget),
-      },
-      {
-        title: this.copy.missionCommunity,
-        description: this.copy.missionCommunityCopy,
-        progress: this.progressLabel(challengeProgress.communityProgress, challengeProgress.communityTarget),
-        reward: this.pointRewardLabel(80),
-        image: 'assets/mytravel/manja-ui.png',
-        progressWidth: this.progressWidth(challengeProgress.communityProgress, challengeProgress.communityTarget),
-      },
-      {
-        title: this.copy.missionExplore,
-        description: this.copy.missionExploreCopy,
-        progress: this.progressLabel(challengeProgress.passportProgress, challengeProgress.passportTarget),
-        reward: this.pointRewardLabel(60),
-        image: 'assets/mytravel/manja-ui.png',
-        progressWidth: this.progressWidth(challengeProgress.passportProgress, challengeProgress.passportTarget),
-      },
-    ];
-  }
-
-  private pointRewardLabel(points: number): LocalizedText {
+  private loadRewardsProgressData(): RewardsProgressData {
     return {
-      EN: `+${points} points`,
-      BM: `+${points} mata`,
+      connected: false,
+      missions: [],
+      unlockSteps: [],
     };
   }
 
-  private progressLabel(current: number, target: number): string {
-    return this.language === 'BM'
-      ? `${current} / ${target} selesai`
-      : `${current} / ${target} complete`;
-  }
-
   private progressWidth(current: number, target: number): string {
+    if (target <= 0) {
+      return '0%';
+    }
+
     return `${Math.round((Math.min(current, target) / target) * 100)}%`;
   }
 

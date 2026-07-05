@@ -375,6 +375,21 @@ describe('Tab2Page', () => {
     expect(modeButtons[1].getAttribute('aria-pressed')).toBe('true');
   });
 
+  it('wraps all transport mode options instead of clipping compact layouts', () => {
+    component.modes = ['MRT', 'LRT', 'KTM', 'Bus', 'Walk'];
+    fixture.detectChanges();
+
+    const modeRow = fixture.nativeElement.querySelector('.mode-row') as HTMLElement;
+    const modeButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.mode-row button'),
+    ) as HTMLButtonElement[];
+
+    expect(modeButtons.length).toBe(5);
+    expect(getComputedStyle(modeRow).flexWrap).toBe('wrap');
+    expect(getComputedStyle(modeRow).overflowX).toBe('visible');
+    expect(modeButtons.every((button) => parseFloat(getComputedStyle(button).minHeight) >= 44)).toBeTrue();
+  });
+
   it('keeps navigation planner helper typography above the tiny-text readability floor', () => {
     component.serviceStatuses = [
       {
@@ -395,6 +410,7 @@ describe('Tab2Page', () => {
 
     const plannerLabel = fixture.nativeElement.querySelector('.planner-card label') as HTMLElement;
     const plannerInput = fixture.nativeElement.querySelector('.planner-card label input') as HTMLElement;
+    const swapButton = fixture.nativeElement.querySelector('.swap-button') as HTMLElement;
     const dateCaption = fixture.nativeElement.querySelector('.date-row label span') as HTMLElement;
     const dateInput = fixture.nativeElement.querySelector('.date-row label input') as HTMLElement;
     const modeButton = fixture.nativeElement.querySelector('.mode-row button') as HTMLElement;
@@ -409,21 +425,23 @@ describe('Tab2Page', () => {
 
     expect(parseFloat(getComputedStyle(plannerLabel).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(plannerInput).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(plannerInput).minHeight)).toBeGreaterThanOrEqual(42);
+    expect(parseFloat(getComputedStyle(plannerInput).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(swapButton).width)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(swapButton).height)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(dateCaption).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(dateInput).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(dateInput).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(dateInput).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(modeButton).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(modeButton).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(modeButton).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(sectionTitle).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(sectionAction).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(sectionAction).minHeight)).toBeGreaterThanOrEqual(36);
+    expect(parseFloat(getComputedStyle(sectionAction).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(serviceLabel).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(serviceCopy).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(serviceRow).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(recentLabel).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(recentCopy).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(recentAction).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(recentAction).minHeight)).toBeGreaterThanOrEqual(44);
   });
 
   it('keeps planner and result text containers shrinkable for compact layouts', () => {
@@ -633,9 +651,12 @@ describe('Tab2Page', () => {
     const sortButton = fixture.nativeElement.querySelector('.sort-row button') as HTMLElement;
     const routeLoadingTitle = fixture.nativeElement.querySelector('.route-loading b') as HTMLElement;
     const routeLoadingCopy = fixture.nativeElement.querySelector('.route-loading small') as HTMLElement;
+    const backButton = fixture.nativeElement.querySelector('.results-heading .mt-back') as HTMLElement;
 
+    expect(parseFloat(getComputedStyle(backButton).width)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(backButton).height)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(sortButton).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(sortButton).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(sortButton).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(routeLoadingTitle).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(routeLoadingCopy).fontSize)).toBeGreaterThanOrEqual(10);
 
@@ -660,12 +681,12 @@ describe('Tab2Page', () => {
     expect(parseFloat(getComputedStyle(sheetKicker).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(routeMetaLabel).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(routeMetaValue).fontSize)).toBeGreaterThanOrEqual(11);
-    expect(parseFloat(getComputedStyle(routeMetaAction).width)).toBeGreaterThanOrEqual(40);
-    expect(parseFloat(getComputedStyle(routeMetaAction).height)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(routeMetaAction).width)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(routeMetaAction).height)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(routeDetailMeta).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(routeDetailNoteTitle).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(routeDetailNoteCopy).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(closeSheetButton).width)).toBeGreaterThanOrEqual(40);
-    expect(parseFloat(getComputedStyle(closeSheetButton).height)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(closeSheetButton).width)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(closeSheetButton).height)).toBeGreaterThanOrEqual(44);
   });
 });

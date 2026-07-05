@@ -87,6 +87,16 @@ describe('TabsPage', () => {
     ]);
   });
 
+  it('keeps bottom navigation labels readable and tap targets comfortable', () => {
+    const tabButton = fixture.nativeElement.querySelector('ion-tab-button') as HTMLElement;
+    const tabLabel = fixture.nativeElement.querySelector('ion-tab-button ion-label') as HTMLElement;
+
+    expect(parseFloat(getComputedStyle(tabButton).height)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(tabLabel).fontSize)).toBeGreaterThanOrEqual(11);
+    expect(parseFloat(getComputedStyle(tabLabel).opacity)).toBeGreaterThanOrEqual(0.82);
+    expect(getComputedStyle(tabButton).getPropertyValue('--color').trim()).toBe('#3b4f70');
+  });
+
   it('renders localized tab labels from the saved app language', () => {
     const malayPreferences = {
       ...preferences,

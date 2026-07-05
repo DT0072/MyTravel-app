@@ -218,13 +218,13 @@
   object-fit: contain;
 }
 
-.season-card button,.passport-progress button,.next-reward button,.reward-back{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+.season-card button,.passport-progress button,.next-reward button,.reward-back{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 
 .season-card button {
   margin-top: 7px;
   padding: 7px 13px;
   border: 0;
-  border-radius: 13px;
+  border-radius: 22px;
   color: white;
   background: var(--mt-navy);
 }
@@ -241,14 +241,14 @@
 .segment-row button,
 .passport-tabs button,
 .text-size-row button {
-  min-height: 40px;
+  min-height: 44px;
   height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 8px 10px;
   border: 1px solid var(--mt-line);
-  border-radius: 15px;
+  border-radius: 22px;
   color: var(--mt-navy);
   background: white;
   font-size: calc(11px * var(--mt-text-scale));
@@ -478,7 +478,6 @@
 }
 
 .language-list label {
-  display: block;
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -620,24 +619,29 @@
   line-height: 1.45;
 }
 
-.preview-card.preview-contrast {
-  border-color: rgba(6, 25, 87, 0.24);
-  background: #fff;
-  box-shadow: 0 0 0 1px rgba(6, 25, 87, 0.08), var(--mt-shadow);
-}
-
-.preview-card.preview-contrast > span {
-  background: var(--mt-blue);
-}
-
-.preview-card.preview-contrast p {
-  color: var(--mt-ink);
-}
-
 .preview-card.preview-underline b {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.16em;
+}
+
+.preview-card.preview-contrast {
+  border-color: rgba(6, 25, 87, 0.48);
+  background: #071a56;
+}
+
+.preview-card.preview-contrast > span,
+.preview-card.preview-contrast h2,
+.preview-card.preview-contrast b {
+  color: #fff;
+}
+
+.preview-card.preview-contrast b {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.preview-card.preview-contrast p {
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .preview-card.preview-large h2 {
@@ -754,7 +758,7 @@
 .next-reward button {
   padding: 10px 17px;
   border: 0;
-  border-radius: 17px;
+  border-radius: 22px;
   color: white;
   background: var(--mt-navy);
 }

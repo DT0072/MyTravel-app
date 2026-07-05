@@ -1,5 +1,6 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { IonContent } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import {
   AccessibilityPreferences,
@@ -309,6 +310,8 @@ interface RewardsProgressData {
   standalone: false,
 })
 export class Tab4Page implements OnDestroy {
+  @ViewChild('profileContent') private profileContent?: IonContent;
+
   private readonly accessibilityPreferencesService = inject(AccessibilityPreferencesService);
   private readonly appStateService = inject(AppStateService);
   private readonly router = inject(Router);
@@ -599,7 +602,7 @@ export class Tab4Page implements OnDestroy {
       queryParams: { view: view === 'profile' ? null : view },
       queryParamsHandling: 'merge',
     });
-    window.scrollTo({ top: 0, behavior: this.settings.motion ? 'auto' : 'smooth' });
+    void this.profileContent?.scrollToTop(this.settings.motion ? 0 : 260);
   }
 
   updateLanguage(language: AppLanguage): void {
@@ -666,6 +669,22 @@ export class Tab4Page implements OnDestroy {
   profileMenuItemAriaLabel(item: ProfileMenuItem): string {
     const labelPrefix = item.action === 'signout' ? this.t(item.title) : `${this.t(this.copy.openPrefix)} ${this.t(item.title)}`;
     return `${labelPrefix}. ${this.singleLineText(this.menuDescription(item))}`;
+  }
+
+  seasonCardButtonAriaLabel(): string {
+    return `${this.singleLineText(this.seasonCardActionLabel)}. ${this.singleLineText(this.seasonCardTitleLabel)}.`;
+  }
+
+  passportRewardsButtonAriaLabel(): string {
+    return `${this.t(this.copy.viewRewards)}. ${this.t(this.copy.digitalPassport)}. ${this.passportStatusLabel}.`;
+  }
+
+  nextRewardButtonAriaLabel(): string {
+    return `${this.t(this.copy.viewRewards)}. ${this.t(this.copy.nextRewardTitle)}.`;
+  }
+
+  rewardBackButtonAriaLabel(): string {
+    return `${this.t(this.copy.backToChallenges)}. ${this.singleLineText(this.challengeSectionLabel)}.`;
   }
 
   selectPassportFilter(filter: PassportFilter): void {

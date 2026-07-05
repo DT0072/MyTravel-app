@@ -2,6 +2,22 @@
   display: block;
 }
 
+.mt-language,
+.mt-icon-button {
+  min-width: clamp(44px, calc(44px * var(--mt-text-scale)), 52px);
+  min-height: clamp(44px, calc(44px * var(--mt-text-scale)), 52px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.mt-language {
+  gap: 2px;
+  padding: 0 clamp(8px, calc(8px * var(--mt-text-scale)), 11px);
+  line-height: 1;
+}
+
 .mt-language span.selected,
 .mt-language strong.selected {
   color: var(--mt-blue);

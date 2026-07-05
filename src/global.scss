@@ -19,9 +19,9 @@
   --mt-shadow: 0 8px 22px rgba(5, 24, 65, 0.1);
   --mt-topbar-inset: 24px;
   --mt-topbar-offset: max(24px, calc(env(safe-area-inset-top) + 18px));
-  --mt-floating-tabbar-height: 58px;
+  --mt-floating-tabbar-height: 64px;
   --mt-floating-tabbar-bottom-offset: 12px;
-  --mt-floating-tabbar-shell-padding: 22px;
+  --mt-floating-tabbar-shell-padding: 44px;
   --mt-floating-tabbar-clearance:
     calc(
       var(--mt-floating-tabbar-height)
@@ -70,7 +70,7 @@ ion-tab-button:focus-visible,
 
 ion-content {
   --background: linear-gradient(180deg, #fcfeff 0%, #f1f7ff 52%, #dfedff 100%);
-  --padding-bottom: max(92px, var(--mt-floating-tabbar-clearance));
+  --padding-bottom: max(126px, calc(var(--mt-floating-tabbar-clearance) + 12px));
 }
 
 .mt-screen {
@@ -80,7 +80,7 @@ ion-content {
   padding:
     var(--mt-topbar-offset)
     var(--mt-topbar-inset)
-    max(104px, calc(var(--mt-floating-tabbar-clearance) + 8px));
+    max(138px, calc(var(--mt-floating-tabbar-clearance) + 18px));
   color: var(--mt-ink);
 }
 
@@ -121,14 +121,15 @@ ion-content {
 
 .mt-language,
 .mt-icon-button {
-  min-height: clamp(30px, calc(30px * var(--mt-text-scale)), 38px);
-  border: 1px solid rgba(209, 221, 238, 0.8);
-  background: rgba(255, 255, 255, 0.54);
+  min-width: clamp(44px, calc(44px * var(--mt-text-scale)), 52px);
+  min-height: clamp(44px, calc(44px * var(--mt-text-scale)), 52px);
+  border: 1px solid rgba(115, 139, 171, 0.58);
+  background: rgba(255, 255, 255, 0.84);
   backdrop-filter: blur(18px) saturate(1.25);
   -webkit-backdrop-filter: blur(18px) saturate(1.25);
-  color: var(--mt-muted);
-  border-radius: clamp(15px, calc(15px * var(--mt-text-scale)), 19px);
-  box-shadow: 0 4px 12px rgba(7, 25, 61, 0.08), inset 0 1px rgba(255,255,255,.74);
+  color: var(--mt-navy);
+  border-radius: 999px;
+  box-shadow: 0 8px 18px rgba(7, 25, 61, 0.12), inset 0 1px rgba(255,255,255,.82);
 }
 
 .mt-language {
@@ -142,7 +143,7 @@ ion-content {
 .mt-language strong { color: var(--mt-blue); }
 
 .mt-icon-button {
-  width: clamp(30px, calc(30px * var(--mt-text-scale)), 38px);
+  width: clamp(44px, calc(44px * var(--mt-text-scale)), 52px);
   padding: 0;
   display: grid;
   place-items: center;
@@ -202,8 +203,8 @@ ion-content {
 
 .mt-primary {
   width: 100%;
-  min-height: 34px;
-  border-radius: 18px;
+  min-height: 44px;
+  border-radius: 22px;
   color: #fff;
   background: var(--mt-red);
   font-size: calc(11px * var(--mt-text-scale));
@@ -212,11 +213,11 @@ ion-content {
 }
 
 .mt-secondary {
-  min-height: 34px;
+  min-height: 44px;
   border: 1px solid var(--mt-navy);
   background: white;
   color: var(--mt-navy);
-  border-radius: 18px;
+  border-radius: 22px;
   font-size: calc(11px * var(--mt-text-scale));
   font-weight: 700;
 }
@@ -230,12 +231,15 @@ ion-content {
 
 .mt-back {
   border: 0;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.52);
   color: var(--mt-navy);
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   padding: 0;
+  border-radius: 999px;
   font-size: 22px;
+  display: inline-grid;
+  place-items: center;
 }
 
 .mt-progress {
@@ -330,10 +334,11 @@ ion-tab-bar {
   max-width: 420px !important;
   min-width: 280px !important;
   height: var(--mt-floating-tabbar-height) !important;
+  min-height: var(--mt-floating-tabbar-height) !important;
   border-radius: 38px !important;
   z-index: 99999 !important;
   overflow: visible !important;
-  padding: 0 4px !important;
+  padding: 5px 6px 6px !important;
   background: rgba(242, 242, 247, 0.75) !important;
   backdrop-filter: blur(32px) saturate(200%) brightness(1.04) !important;
   -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.04) !important;
@@ -356,7 +361,7 @@ ion-tab-bar::before {
 ion-tab-button {
   --background: transparent;
   --background-focused: transparent;
-  --color: rgba(60, 60, 67, 0.55);
+  --color: #3b4f70;
   --color-selected: #007aff;
   --ripple-color: transparent;
   position: relative;
@@ -364,13 +369,25 @@ ion-tab-button {
   flex: 1 1 0 !important;
   min-width: 0 !important;
   max-width: none !important;
-  height: 50px !important;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  height: 54px !important;
+  min-height: 54px !important;
   border-radius: 32px !important;
   margin: 4px 2px !important;
   padding: 0 !important;
   cursor: pointer;
   overflow: visible;
   transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+ion-tab-button::part(native) {
+  min-height: 54px;
+  padding: 6px 2px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 ion-tab-button::before {
@@ -411,18 +428,23 @@ ion-tab-button.tab-selected ion-label { opacity: 1 !important; transform: transl
 
 ion-tab-button ion-icon {
   font-size: 22px !important;
-  margin-bottom: 2px !important;
+  flex: 0 0 auto;
+  margin-bottom: 3px !important;
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease, color 0.22s ease !important;
   position: relative;
   z-index: 1;
 }
 
 ion-tab-button ion-label {
-  font-size: 10px !important;
-  font-weight: 600 !important;
+  display: block !important;
+  flex: 0 0 auto;
+  min-height: 14px !important;
+  margin: 0 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
   letter-spacing: 0.01em !important;
-  line-height: 1 !important;
-  opacity: 0.58 !important;
+  line-height: 1.2 !important;
+  opacity: 0.82 !important;
   transform: translateY(2px) !important;
   transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), font-weight 0.22s ease, color 0.22s ease !important;
   position: relative;
@@ -438,23 +460,40 @@ ion-tab-button ion-label {
 
 @media (min-width: 600px) {
   ion-tab-bar { border-radius: 42px !important; width: calc(100% - 48px) !important; max-width: 460px !important; padding: 0 6px !important; }
-  ion-tab-button { height: 54px !important; border-radius: 36px !important; }
+  ion-tab-button { height: 56px !important; min-height: 56px !important; border-radius: 36px !important; }
+  ion-tab-button::part(native) { min-height: 56px; }
   ion-tab-button ion-icon { font-size: 23px !important; }
-  ion-tab-button ion-label { font-size: 10.5px !important; }
+  ion-tab-button ion-label { font-size: 11.5px !important; min-height: 14px !important; }
 }
 
 @media (min-width: 960px) {
   ion-tab-bar { border-radius: 44px !important; width: auto !important; min-width: 420px !important; max-width: 520px !important; padding: 0 10px !important; }
-  ion-tab-button { flex: 0 0 100px !important; height: 56px !important; border-radius: 38px !important; margin: 4px !important; }
+  ion-tab-button { flex: 0 0 100px !important; height: 58px !important; min-height: 58px !important; border-radius: 38px !important; margin: 4px !important; }
+  ion-tab-button::part(native) { min-height: 58px; }
   ion-tab-button ion-icon { font-size: 24px !important; margin-bottom: 3px !important; }
-  ion-tab-button ion-label { font-size: 11px !important; opacity: 0.65 !important; }
+  ion-tab-button ion-label { font-size: 12px !important; min-height: 15px !important; opacity: 0.82 !important; }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
+  ion-content {
+    --padding-bottom: max(112px, calc(var(--mt-floating-tabbar-clearance) + 16px));
+  }
+
+  ion-content::part(scroll) {
+    min-height: calc(100% + var(--mt-floating-tabbar-clearance));
+    padding-bottom: max(112px, calc(var(--mt-floating-tabbar-clearance) + 16px));
+  }
+
+  .mt-screen {
+    min-height: auto;
+    padding-bottom: max(112px, calc(var(--mt-floating-tabbar-clearance) + 16px));
+  }
+
   ion-tab-bar { border-radius: 32px !important; max-width: 340px !important; padding: 0 4px !important; }
-  ion-tab-button { height: 44px !important; border-radius: 28px !important; margin: 3px 2px !important; }
+  ion-tab-button { height: 48px !important; min-height: 48px !important; border-radius: 28px !important; margin: 3px 2px !important; }
+  ion-tab-button::part(native) { min-height: 48px; padding-block: 4px; }
   ion-tab-button ion-icon { font-size: 20px !important; }
-  ion-tab-button ion-label { font-size: 9px !important; }
+  ion-tab-button ion-label { font-size: 11px !important; min-height: 14px !important; }
 }
 
 @keyframes lgTabBarIn {
@@ -525,18 +564,20 @@ input, select, textarea, button { min-width: 0; }
   .post-body { grid-template-columns: minmax(150px, 34%) 1fr !important; }
   .post-body > img { width: 100% !important; }
   .stamp-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+  .profile-screen .settings-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; }
+  .profile-screen .settings-list h2 { grid-column: 1 / -1; }
   .settings-list button { min-height: 44px !important; }
 }
 
 @media (min-width: 840px) {
-  ion-content { --padding-bottom: max(122px, calc(var(--mt-floating-tabbar-clearance) + 8px)); }
+  ion-content { --padding-bottom: max(150px, calc(var(--mt-floating-tabbar-clearance) + 18px)); }
   .home-hero, .home-body { width: min(calc(100% - 48px), 1040px); margin-inline: auto; }
   .mt-screen {
     width: min(calc(100% - 48px), 1040px) !important;
     padding:
       var(--mt-topbar-offset)
       var(--mt-topbar-inset)
-      max(132px, calc(var(--mt-floating-tabbar-clearance) + 12px));
+      max(160px, calc(var(--mt-floating-tabbar-clearance) + 24px));
   }
   .mt-topbar { grid-template-columns: clamp(120px, calc(120px * var(--mt-text-scale)), 148px) 1fr clamp(120px, calc(120px * var(--mt-text-scale)), 148px); align-items: center; }
   .mt-brand { width: clamp(92px, calc(92px * var(--mt-text-scale)), 110px); height: clamp(42px, calc(42px * var(--mt-text-scale)), 50px); }
@@ -556,7 +597,19 @@ input, select, textarea, button { min-width: 0; }
   .post-body h2 { font-size: 16px !important; }
   .post-body p { font-size: 10px !important; }
 
-  .profile-card, .challenge-banner, .settings-list, .balance-card, .season-card, .transaction-card, .earn-card, .passport-progress, .stamp-feature, .guide-card, .preview-card, .challenge-hero, .active-mission, .next-reward, .reward-hero, .unlock-list, .digital-first { max-width: 900px; margin-inline: auto; }
+  .profile-card, .challenge-banner, .settings-list, .balance-card, .season-card, .transaction-card, .earn-card, .passport-progress, .stamp-feature, .guide-card, .language-list, .text-size-row, .accessibility-list, .preview-card, .accessibility-summary, .profile-screen .mt-primary, .reset-button, .challenge-hero, .active-mission, .next-reward, .reward-hero, .unlock-list, .digital-first { max-width: 900px; margin-inline: auto; }
+  .profile-screen .settings-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; }
+  .profile-screen .settings-list h2 { grid-column: 1 / -1; }
+  .profile-screen .preview-card,
+  .profile-screen .accessibility-summary,
+  .profile-screen .mt-primary,
+  .profile-screen .reset-button {
+    margin-inline: auto !important;
+  }
+  .profile-screen .mt-primary,
+  .profile-screen .reset-button {
+    display: block;
+  }
   .stat-grid { max-width: 900px; margin-inline: auto !important; gap: 16px !important; }
   .stamp-grid { grid-template-columns: repeat(8, minmax(0, 1fr)) !important; max-width: 900px; margin-inline: auto; }
   .settings-list button { min-height: 48px !important; }
@@ -565,16 +618,17 @@ input, select, textarea, button { min-width: 0; }
 }
 
 @media (min-width: 840px) and (max-height: 820px) {
-  ion-content { --padding-bottom: max(108px, calc(var(--mt-floating-tabbar-clearance) + 6px)); }
+  ion-content { --padding-bottom: max(144px, calc(var(--mt-floating-tabbar-clearance) + 16px)); }
+  .home-hero { height: clamp(286px, 30vw, 300px) !important; }
   .mt-screen {
-    padding-bottom: max(116px, calc(var(--mt-floating-tabbar-clearance) + 8px));
+    padding-bottom: max(152px, calc(var(--mt-floating-tabbar-clearance) + 20px));
   }
 }
 
 @media (min-width: 1100px) {
   .home-hero, .home-body { width: min(calc(100% - 64px), 1160px); margin-inline: auto; }
   .mt-screen { width: min(calc(100% - 64px), 1160px) !important; }
-  .home-hero { height: clamp(360px, 48vw, 560px) !important; }
+  .home-hero { height: clamp(320px, 34vw, 430px) !important; }
   .home-body { min-height: 520px !important; }
   .quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 }
@@ -585,7 +639,7 @@ input, select, textarea, button { min-width: 0; }
 .community-screen .notice-stats span:nth-child(2) b { color:#ff9000 }
 .community-screen .notice-stats span:nth-child(3) b { color:#0754cc }
 .community-screen .notice-tabs { display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:8px }
-.community-screen .notice-tabs button { min-height:42px;padding:8px 10px;border:1px solid var(--mt-line);border-radius:15px;background:white;color:var(--mt-navy);font-size:calc(11px * var(--mt-text-scale));font-weight:700;line-height:1.25;text-align:center;transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease }
+.community-screen .notice-tabs button { min-height:44px;padding:8px 10px;border:1px solid var(--mt-line);border-radius:18px;background:white;color:var(--mt-navy);font-size:calc(11px * var(--mt-text-scale));font-weight:700;line-height:1.25;text-align:center;transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease }
 .community-screen .notice-tabs button.active { color:white;background:var(--mt-navy) }
 .community-screen .notice-card { position:relative;display:grid;grid-template-columns:35px minmax(0,1fr);gap:9px;align-items:start;padding:12px 10px;margin-bottom:10px;border-left:3px solid }
 .community-screen .notice-card > span { width:34px;height:34px;display:grid;place-items:center;border-radius:50%;color:white;font-weight:800 }
@@ -792,6 +846,34 @@ input, select, textarea, button { min-width: 0; }
 
 .profile-screen .preview-card p {
   font-size: var(--mt-preview-copy-size);
+}
+
+.profile-screen .preview-card.preview-contrast {
+  border-color: rgba(6, 25, 87, 0.48);
+  background: linear-gradient(135deg, #071a56 0%, #0a2c84 100%);
+  box-shadow: 0 0 0 1px rgba(6, 25, 87, 0.18), var(--mt-shadow);
+}
+
+.profile-screen .preview-card.preview-contrast > span {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.profile-screen .preview-card.preview-contrast h2,
+.profile-screen .preview-card.preview-contrast b {
+  color: #fff;
+}
+
+.profile-screen .preview-card.preview-contrast b {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.profile-screen .preview-card.preview-contrast p {
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .profile-screen .preview-card.preview-large {

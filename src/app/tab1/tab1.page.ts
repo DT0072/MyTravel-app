@@ -107,6 +107,11 @@ const HOME_COPY = {
   verificationAwarded: { EN: 'Eco-Points earned. Thank you!', BM: 'Mata Eko diperoleh. Terima kasih!' },
   verificationDuplicate: { EN: 'You already completed this verification.', BM: 'Anda sudah menyelesaikan pengesahan ini.' },
   journeyCompleted: { EN: 'Journey completed.', BM: 'Perjalanan selesai.' },
+  openNavigation: { EN: 'Open Navigation', BM: 'Buka Navigasi' },
+  openProfile: { EN: 'Open Profile', BM: 'Buka Profil' },
+  openCommunity: { EN: 'Open Community', BM: 'Buka Komuniti' },
+  openVerificationPanel: { EN: 'Open MyTravel Verification panel', BM: 'Buka panel Pengesahan MyTravel' },
+  journeyRouteConnector: { EN: 'to', BM: 'ke' },
 } as const;
 
 @Component({
@@ -177,6 +182,50 @@ export class Tab1Page implements OnDestroy {
       ? this.t(this.copy.answerYes)
       : this.t(this.copy.answerNo);
     return `${this.t(this.copy.verificationAnswerPrefix)} ${label}`;
+  }
+
+  destinationPillAriaLabel(): string {
+    return `${this.t(this.copy.destination)}. ${this.t(this.copy.openNavigation)}.`;
+  }
+
+  ecoPointsSummaryAriaLabel(): string {
+    return `${this.ecoPoints.toLocaleString()} ${this.t(this.copy.ecoPoints)}. ${this.t(this.copy.openProfile)}.`;
+  }
+
+  passportSummaryAriaLabel(): string {
+    return `${this.t(this.copy.digitalPassport)}. ${this.sentenceText(this.passportProgressSummary())}. ${this.t(this.copy.openProfile)}.`;
+  }
+
+  quickExploreAriaLabel(): string {
+    return `${this.singleLineText(this.t(this.copy.quickExplore))}. ${this.t(this.copy.openNavigation)}.`;
+  }
+
+  quickVerificationAriaLabel(): string {
+    return `${this.singleLineText(this.t(this.copy.quickVerification))}. ${this.t(this.copy.openVerificationPanel)}.`;
+  }
+
+  quickNoticesAriaLabel(): string {
+    return `${this.singleLineText(this.t(this.copy.quickNotices))}. ${this.t(this.copy.openCommunity)}.`;
+  }
+
+  planJourneyAriaLabel(): string {
+    return `${this.t(this.copy.planJourneyTitle)}. ${this.sentenceText(this.t(this.copy.planJourneyPrompt))}. ${this.t(this.copy.openNavigation)}.`;
+  }
+
+  completeJourneyAriaLabel(): string {
+    if (!this.activeJourney) {
+      return this.t(this.copy.completeJourney);
+    }
+
+    return `${this.t(this.copy.completeJourney)}. ${this.activeJourney.from} ${this.t(this.copy.journeyRouteConnector)} ${this.activeJourney.to}. ${this.activeJourneyModeLabel()}.`;
+  }
+
+  verificationCardAriaLabel(): string {
+    return `${this.t(this.copy.verificationCardTitle)}. ${this.sentenceText(this.verificationCardSummary())}. ${this.sentenceText(this.verificationCardBadge())}. ${this.t(this.copy.openVerificationPanel)}.`;
+  }
+
+  weeklyMissionAriaLabel(): string {
+    return `${this.sentenceText(this.weeklyMissionTitleLabel)}. ${this.sentenceText(this.weeklyMissionSummary())}. ${this.sentenceText(this.weeklyMissionActionLabel)}. ${this.t(this.copy.openProfile)}.`;
   }
 
   notify(message: string): void {
@@ -357,6 +406,14 @@ export class Tab1Page implements OnDestroy {
     // Keep the provider boundary explicit until Firestore-backed events are implemented.
     this.eventsProviderConnected = false;
     this.events = [];
+  }
+
+  private singleLineText(text: string): string {
+    return text.replace(/\s+/g, ' ').trim();
+  }
+
+  private sentenceText(text: string): string {
+    return this.singleLineText(text).replace(/[.!?]+$/, '');
   }
 
   private openSheet(sheet: 'verification' | 'events'): void {

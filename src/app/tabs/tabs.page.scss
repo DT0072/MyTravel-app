@@ -1,8 +1,8 @@
 :host {
   --mt-tabbar-height: 72px;
-  --mt-floating-tabbar-height: 58px;
+  --mt-floating-tabbar-height: 64px;
   --mt-floating-tabbar-bottom-offset: 12px;
-  --mt-floating-tabbar-shell-padding: 22px;
+  --mt-floating-tabbar-shell-padding: 44px;
 }
 
 ion-tab-bar {
@@ -23,25 +23,38 @@ ion-tab-button {
   --background: transparent;
   --background-focused: rgba(7, 84, 204, 0.08);
   --background-focused-opacity: 1;
-  --color: #5a6f8f;
+  --color: #3b4f70;
   --color-selected: #0c2f5e;
-  --padding-top: 8px;
-  --padding-bottom: 8px;
+  --padding-top: 7px;
+  --padding-bottom: 7px;
   --ripple-color: rgba(7, 84, 204, 0.16);
-  min-height: 52px;
+  min-height: 54px;
   margin: 0 2px;
   border-radius: 18px;
   transition: background-color 0.18s ease, transform 0.18s ease, color 0.18s ease;
 }
 
+ion-tab-button::part(native) {
+  min-height: 54px;
+  padding: 7px 2px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 ion-tab-button ion-icon {
   font-size: 1.28rem;
+  flex: 0 0 auto;
 }
 
 ion-tab-button ion-label {
-  margin-top: 4px;
-  font-size: 0.74rem;
-  font-weight: 700;
+  flex: 0 0 auto;
+  min-height: 14px;
+  margin-top: 3px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-weight: 800;
   letter-spacing: 0.01em;
 }
 
@@ -71,12 +84,18 @@ ion-tab-button:focus-visible {
   }
 
   ion-tab-button {
-    min-height: 50px;
+    min-height: 54px;
     margin: 0;
   }
 
+  ion-tab-button::part(native) {
+    min-height: 54px;
+    padding-inline: 1px;
+  }
+
   ion-tab-button ion-label {
-    font-size: 0.68rem;
+    min-height: 14px;
+    font-size: 0.74rem;
   }
 }
 

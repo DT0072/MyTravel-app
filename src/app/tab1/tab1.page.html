@@ -1,6 +1,6 @@
-<ion-content [fullscreen]="true">
+<ion-content class="home-content" [fullscreen]="true">
   <!-- Presents the Discover dashboard and its travel shortcuts. -->
-  <ng-container>
+  <div class="home-scroll-shell">
     <section class="home-hero">
       <img class="hero-image" src="assets/mytravel/timah-tasoh-hero.png" [alt]="t(copy.featuredDestinationAlt)">
       <div class="hero-shade"></div>
@@ -23,7 +23,7 @@
       </div>
 
       <img class="hero-wira" src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)">
-      <button class="destination-pill" type="button" (click)="go('/tabs/tab2')">
+      <button class="destination-pill" type="button" [attr.aria-label]="destinationPillAriaLabel()" (click)="go('/tabs/tab2')">
         <span><ion-icon aria-hidden="true" name="location"></ion-icon></span> {{ t(copy.destination) }}
       </button>
       <div class="carousel-dots" aria-hidden="true"><i></i><i></i><i></i><i class="active"></i><i></i></div>
@@ -31,11 +31,11 @@
 
     <main class="home-body">
       <section class="travel-summary mt-reveal">
-        <button type="button" (click)="go('/tabs/tab4')">
+        <button type="button" [attr.aria-label]="ecoPointsSummaryAriaLabel()" (click)="go('/tabs/tab4')">
           <span class="summary-icon"><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span>
           <span><b>{{ ecoPoints | number }}</b><small>{{ t(copy.ecoPoints) }}</small></span>
         </button>
-        <button type="button" (click)="go('/tabs/tab4')">
+        <button type="button" [attr.aria-label]="passportSummaryAriaLabel()" (click)="go('/tabs/tab4')">
           <span class="summary-icon"><ion-icon aria-hidden="true" name="book-outline"></ion-icon></span>
           <span><strong>{{ t(copy.digitalPassport) }}</strong><small>{{ passportProgressSummary() }}</small></span>
         </button>
@@ -53,9 +53,9 @@
           <span class="quick-label mt-multiline">{{ t(copy.quickEvents) }}</span>
           <small class="quick-status" *ngIf="!eventsProviderConnected">{{ t(copy.eventsQuickStatus) }}</small>
         </button>
-        <button type="button" (click)="go('/tabs/tab2')"><span class="quick-icon"><ion-icon aria-hidden="true" name="sparkles-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickExplore) }}</span></button>
-        <button type="button" (click)="openVerificationSheet()"><span class="quick-icon"><ion-icon aria-hidden="true" name="checkmark"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickVerification) }}</span></button>
-        <button type="button" (click)="go('/tabs/tab3')"><span class="quick-icon"><ion-icon aria-hidden="true" name="alert-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickNotices) }}</span></button>
+        <button type="button" [attr.aria-label]="quickExploreAriaLabel()" (click)="go('/tabs/tab2')"><span class="quick-icon"><ion-icon aria-hidden="true" name="sparkles-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickExplore) }}</span></button>
+        <button type="button" [attr.aria-label]="quickVerificationAriaLabel()" (click)="openVerificationSheet()"><span class="quick-icon"><ion-icon aria-hidden="true" name="checkmark"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickVerification) }}</span></button>
+        <button type="button" [attr.aria-label]="quickNoticesAriaLabel()" (click)="go('/tabs/tab3')"><span class="quick-icon"><ion-icon aria-hidden="true" name="alert-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickNotices) }}</span></button>
       </section>
 
       <section class="quick-grid-note mt-reveal" *ngIf="!eventsProviderConnected" aria-live="polite">
@@ -73,29 +73,29 @@
           <div><strong>{{ activeJourney.to }}</strong><small>{{ t(copy.arrives) }} {{ activeJourney.arrive }}</small></div>
         </div>
         <div class="route-line"><i></i><span><ion-icon aria-hidden="true" [name]="activeJourneyIconName()"></ion-icon></span><i></i></div>
-        <div class="journey-footer"><small>{{ activeJourneyModeLabel() }} · {{ activeJourney.duration }}</small><button type="button" (click)="completeJourney()">{{ t(copy.completeJourney) }}</button></div>
+        <div class="journey-footer"><small>{{ activeJourneyModeLabel() }} · {{ activeJourney.duration }}</small><button type="button" [attr.aria-label]="completeJourneyAriaLabel()" (click)="completeJourney()">{{ t(copy.completeJourney) }}</button></div>
       </section>
       <ng-template #noActiveJourney>
-        <button class="journey-card journey-empty mt-reveal" type="button" (click)="go('/tabs/tab2')">
+        <button class="journey-card journey-empty mt-reveal" type="button" [attr.aria-label]="planJourneyAriaLabel()" (click)="go('/tabs/tab2')">
           <div class="journey-title"><b>{{ t(copy.planJourneyTitle) }}</b><span>{{ t(copy.readyWhenYouAre) }}</span></div>
           <p>{{ t(copy.planJourneyPrompt) }}</p>
           <strong>{{ t(copy.planJourneyAction) }} <ion-icon aria-hidden="true" name="arrow-forward"></ion-icon></strong>
         </button>
       </ng-template>
 
-      <button class="action-card verification-action" type="button" (click)="openVerificationSheet()">
+      <button class="action-card verification-action" type="button" [attr.aria-label]="verificationCardAriaLabel()" (click)="openVerificationSheet()">
         <span class="action-icon"><ion-icon aria-hidden="true" name="scan-outline"></ion-icon></span>
         <span><b>{{ t(copy.verificationCardTitle) }}</b><small class="mt-multiline">{{ verificationCardSummary() }}</small></span>
         <em class="mt-multiline">{{ verificationCardBadge() }}</em>
       </button>
 
-      <button class="action-card mission-action" type="button" (click)="go('/tabs/tab4')">
+      <button class="action-card mission-action" type="button" [attr.aria-label]="weeklyMissionAriaLabel()" (click)="go('/tabs/tab4')">
         <img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)">
         <span><b>{{ weeklyMissionTitleLabel }}</b><small class="mt-multiline">{{ weeklyMissionSummary() }}</small><i><u [style.width]="challengeProgressWidth"></u></i></span>
         <em class="mt-multiline">{{ weeklyMissionActionLabel }}</em>
       </button>
     </main>
-  </ng-container>
+  </div>
 
   <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
 

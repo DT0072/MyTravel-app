@@ -105,6 +105,18 @@ describe('Tab4Page', () => {
     expect(component.view).toBe('points');
   });
 
+  it('scrolls the Ionic content container to the top when switching profile subviews', () => {
+    const scrollToTop = jasmine.createSpy('scrollToTop');
+    (component as unknown as { profileContent: { scrollToTop: jasmine.Spy } }).profileContent = {
+      scrollToTop,
+    };
+
+    component.open('accessibility');
+
+    expect(component.view).toBe('accessibility');
+    expect(scrollToTop).toHaveBeenCalledOnceWith(260);
+  });
+
   it('ignores route query param changes after the page is destroyed', () => {
     fixture.destroy();
     queryParamMap$.next(convertToParamMap({ view: 'passport' }));
@@ -434,34 +446,80 @@ describe('Tab4Page', () => {
     );
   });
 
+  it('renders contextual aria labels for reward-navigation actions', () => {
+    component.view = 'points';
+    fixture.detectChanges();
+
+    const seasonCardButton = fixture.nativeElement.querySelector('.season-card button') as HTMLButtonElement;
+
+    expect(seasonCardButton.getAttribute('aria-label')).toBe('View status. Rewards provider pending.');
+
+    component.view = 'passport';
+    fixture.detectChanges();
+
+    const passportRewardsButton = fixture.nativeElement.querySelector('.passport-progress button') as HTMLButtonElement;
+
+    expect(passportRewardsButton.getAttribute('aria-label')).toBe('View rewards. Digital Passport. Provider pending.');
+
+    component.rewardsProviderConnected = true;
+    component.challengeMissions = [
+      {
+        title: { EN: 'Heritage by public transport', BM: 'Warisan dengan pengangkutan awam' },
+        description: { EN: 'Mission copy', BM: 'Salinan misi' },
+        progress: '1/3',
+        reward: { EN: '+80 points', BM: '+80 mata' },
+        image: 'assets/mytravel/wira-ui.png',
+        progressWidth: '33%',
+      },
+    ];
+    component.view = 'challenges';
+    fixture.detectChanges();
+
+    const nextRewardButton = fixture.nativeElement.querySelector('.next-reward button') as HTMLButtonElement;
+
+    expect(nextRewardButton.getAttribute('aria-label')).toBe('View rewards. Wira & Manja Badge.');
+
+    component.rewardsProviderConnected = false;
+    component.view = 'reward';
+    fixture.detectChanges();
+
+    const rewardBackButton = fixture.nativeElement.querySelector('.reward-back') as HTMLButtonElement;
+
+    expect(rewardBackButton.getAttribute('aria-label')).toBe('Back to challenges. Rewards status.');
+  });
+
   it('keeps profile secondary controls above the compact touch-target floor', () => {
     component.view = 'profile';
     fixture.detectChanges();
 
     const settingsButton = fixture.nativeElement.querySelector('.settings-list button') as HTMLButtonElement;
+    const settingsList = fixture.nativeElement.querySelector('.settings-list') as HTMLElement;
 
+    expect(getComputedStyle(settingsList).display).toBe('grid');
     expect(parseFloat(getComputedStyle(settingsButton).minHeight)).toBeGreaterThanOrEqual(44);
 
     component.view = 'points';
     fixture.detectChanges();
 
     const seasonCardButton = fixture.nativeElement.querySelector('.season-card button') as HTMLButtonElement;
+    const transactionFilterButton = fixture.nativeElement.querySelector('.segment-row button') as HTMLButtonElement;
 
-    expect(parseFloat(getComputedStyle(seasonCardButton).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(seasonCardButton).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(transactionFilterButton).minHeight)).toBeGreaterThanOrEqual(44);
 
     component.view = 'passport';
     fixture.detectChanges();
 
     const passportAction = fixture.nativeElement.querySelector('.passport-progress button') as HTMLButtonElement;
 
-    expect(parseFloat(getComputedStyle(passportAction).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(passportAction).minHeight)).toBeGreaterThanOrEqual(44);
 
     component.view = 'reward';
     fixture.detectChanges();
 
     const rewardBackButton = fixture.nativeElement.querySelector('.reward-back') as HTMLButtonElement;
 
-    expect(parseFloat(getComputedStyle(rewardBackButton).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(rewardBackButton).minHeight)).toBeGreaterThanOrEqual(44);
   });
 
   it('disables accessibility actions when preferences already match defaults', () => {
@@ -474,6 +532,8 @@ describe('Tab4Page', () => {
 
     expect(component.hasPendingAccessibilityChanges).toBeFalse();
     expect(component.canResetAccessibilitySettings).toBeFalse();
+    expect(parseFloat(getComputedStyle(saveButton).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(resetButton).minHeight)).toBeGreaterThanOrEqual(44);
     expect(saveButton.disabled).toBeTrue();
     expect(resetButton.disabled).toBeTrue();
     expect(statusCard.textContent).toContain('Default preferences active');
@@ -651,8 +711,11 @@ describe('Tab4Page', () => {
     fixture.detectChanges();
 
     const previewCard = fixture.nativeElement.querySelector('.preview-card') as HTMLElement;
+    const previewHeading = previewCard.querySelector('h2') as HTMLElement;
     const previewTitle = previewCard.querySelector('b') as HTMLElement;
     const previewCopy = previewCard.querySelector('p') as HTMLElement;
+    const defaultHeadingColor = getComputedStyle(previewHeading).color;
+    const defaultTitleColor = getComputedStyle(previewTitle).color;
     const defaultCopyColor = getComputedStyle(previewCopy).color;
 
     expect(previewCard.classList.contains('preview-contrast')).toBeFalse();
@@ -669,7 +732,10 @@ describe('Tab4Page', () => {
     expect(previewCard.classList.contains('preview-contrast')).toBeTrue();
     expect(previewCard.classList.contains('preview-underline')).toBeTrue();
     expect(getComputedStyle(previewTitle).textDecorationLine).toContain('underline');
+    expect(getComputedStyle(previewHeading).color).not.toBe(defaultHeadingColor);
+    expect(getComputedStyle(previewTitle).color).not.toBe(defaultTitleColor);
     expect(getComputedStyle(previewCopy).color).not.toBe(defaultCopyColor);
+    expect(getComputedStyle(previewTitle).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
   });
 
   it('localizes contextual accessibility control labels in BM', () => {
@@ -678,6 +744,15 @@ describe('Tab4Page', () => {
     expect(component.accessibilityLanguageAriaLabel('BM')).toBe('Tukar bahasa aplikasi kepada Bahasa Melayu (BM)');
     expect(component.textSizeAriaLabel('Extra large')).toBe('Tetapkan saiz teks kepada Sangat besar');
     expect(component.accessibilityOptionAriaLabel(component.accessibilityOptions[0])).toBe('Togol Kontras tinggi');
+  });
+
+  it('localizes reward-navigation aria labels in BM', () => {
+    component.language = 'BM';
+
+    expect(component.seasonCardButtonAriaLabel()).toBe('Lihat status. Penyedia ganjaran belum disambungkan.');
+    expect(component.passportRewardsButtonAriaLabel()).toBe('Lihat ganjaran. Pasport Digital. Penyedia belum sedia.');
+    expect(component.nextRewardButtonAriaLabel()).toBe('Lihat ganjaran. Lencana Wira & Manja.');
+    expect(component.rewardBackButtonAriaLabel()).toBe('Kembali ke cabaran. Status ganjaran.');
   });
 
   it('renders state-aware profile menu summaries', () => {

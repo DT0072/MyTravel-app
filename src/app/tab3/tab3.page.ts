@@ -59,6 +59,10 @@ const COMMUNITY_COPY = {
   localSubmissionAuthor: { EN: 'Local submission', BM: 'Kiriman setempat' },
   localSubmissionInitials: { EN: 'LS', BM: 'KS' },
   addTip: { EN: '+ Add tip', BM: '+ Tambah tip' },
+  addTipAria: {
+    EN: 'Add a community travel tip. Opens the travel tip form.',
+    BM: 'Tambah tip perjalanan komuniti. Membuka borang tip perjalanan.',
+  },
   missionTitle: { EN: 'Manja Community Mission', BM: 'Misi Komuniti Manja' },
   missionCopy: { EN: '0 of 2 local community updates submitted.', BM: '0 daripada 2 kemas kini komuniti setempat telah dihantar.' },
   missionProgressCopy: { EN: '{count} of 2 local community updates submitted.', BM: '{count} daripada 2 kemas kini komuniti setempat telah dihantar.' },
@@ -527,6 +531,18 @@ export class Tab3Page implements OnDestroy {
 
   reportPostAriaLabel(post: CommunityPost): string {
     return `${this.t(this.copy.reportPostAriaPrefix)}: ${this.t(post.place)}`;
+  }
+
+  addTipAriaLabel(): string {
+    return this.t(this.copy.addTipAria);
+  }
+
+  communityMissionAriaLabel(): string {
+    return [
+      this.verificationMissionTitleLabel,
+      this.verificationMissionCopyLabel,
+      this.verificationMissionActionLabel,
+    ].map((part) => part.replace(/[.!?]+$/, '')).join('. ') + '.';
   }
 
   verificationAnswerAriaLabel(answer: 'yes' | 'no'): string {

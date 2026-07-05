@@ -1,3 +1,18 @@
+.home-content {
+  --padding-bottom: 0;
+  --overflow: auto;
+}
+
+.home-content::part(scroll) {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.home-scroll-shell {
+  min-height: 100%;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
 .home-hero {
   height: 345px;
   position: relative;
@@ -7,21 +22,21 @@
 
 .hero-image, .hero-shade { position: absolute; inset: 0; width: 100%; height: 100%; }
 .hero-image { object-fit: cover; }
-.hero-shade { background: linear-gradient(180deg, rgba(3,13,36,.65), rgba(3,20,46,.06) 42%, rgba(3,13,36,.72)); }
+.hero-shade { background: linear-gradient(180deg, rgba(3,13,36,.72), rgba(3,20,46,.1) 38%, rgba(3,13,36,.82)), radial-gradient(circle at 82% 72%, rgba(2, 13, 37, .76), rgba(2, 13, 37, 0) 34%); }
 .mt-multiline { white-space: pre-line; }
 
 .welcome-copy { position: absolute; top: 82px; left: 22px; color: #fff; }
 .welcome-copy h2 { margin: 0 0 9px; font-size: 20px; line-height: 1.35; }
-.identity-pill { height: 42px; display: flex; align-items: center; gap: 7px; padding: 5px 10px 5px 6px; border: 1px solid rgba(255,255,255,.48); border-radius: 22px; background: rgba(255,255,255,.2); backdrop-filter: blur(12px); font-size: 11px; box-shadow: 0 7px 16px rgba(4,16,50,.18); }
+.identity-pill { min-height: 44px; max-width: min(248px, calc(100vw - 132px)); display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 7px; border: 1px solid rgba(255,255,255,.6); border-radius: 24px; background: rgba(4,17,40,.42); backdrop-filter: blur(14px); font-size: 11px; line-height: 1.25; box-shadow: 0 9px 20px rgba(4,16,50,.22); }
 .identity-pill .identity-mark { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; background: #0754cc; }
-.hero-wira { position: absolute; width: 112px; height: 138px; object-fit: contain; right: 7px; bottom: 42px; }
-.destination-pill { position: absolute; z-index: 3; left: 18px; bottom: 72px; min-height: 46px; max-width: calc(100% - 150px); padding: 5px 16px 5px 6px; border: 1px solid rgba(255,255,255,.72); border-radius: 23px; color: white; background: rgba(4,17,40,.62); backdrop-filter: blur(14px); font-size: clamp(13px, 3.2vw, 15px); font-weight: 800; line-height: 1.15; box-shadow: 0 12px 24px rgba(3,14,38,.24); }
+.hero-wira { position: absolute; width: 104px; height: 132px; object-fit: contain; right: 0; bottom: 38px; filter: drop-shadow(0 12px 18px rgba(3, 13, 36, .28)); }
+.destination-pill { position: absolute; z-index: 3; left: 18px; bottom: 72px; min-height: 46px; max-width: calc(100% - 126px); padding: 5px 16px 5px 6px; border: 1px solid rgba(255,255,255,.82); border-radius: 23px; color: white; background: rgba(4,17,40,.78); backdrop-filter: blur(16px); font-size: clamp(13px, 3.2vw, 15px); font-weight: 800; line-height: 1.15; text-shadow: 0 1px 6px rgba(0,0,0,.36); box-shadow: 0 12px 24px rgba(3,14,38,.24); }
 .destination-pill span { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: 6px; color: var(--mt-red); background: white; border-radius: 50%; vertical-align: middle; }
 .carousel-dots { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); display: flex; gap: 7px; }
 .carousel-dots i { width: 7px; height: 7px; background: rgba(255,255,255,.54); border-radius: 50%; }
 .carousel-dots i.active { width: 11px; background: #fff; border-radius: 4px; }
 
-.home-body { position: relative; z-index: 2; min-height: 520px; margin-top: -18px; padding: 0 16px 106px; border-radius: 30px 30px 0 0; background: linear-gradient(180deg, rgba(238,247,255,.95), #f7fbff 46%, #e3efff); }
+.home-body { position: relative; z-index: 2; min-height: 520px; margin-top: -18px; padding: 0 16px max(138px, calc(var(--mt-floating-tabbar-clearance) + 18px)); border-radius: 30px 30px 0 0; background: linear-gradient(180deg, rgba(238,247,255,.95), #f7fbff 46%, #e3efff); }
 .travel-summary { display: grid; grid-template-columns: 1fr 1fr; min-height: 82px; transform: translateY(-18px); margin-bottom: -18px; border-radius: 26px; overflow: hidden; background: linear-gradient(135deg, #087558, #0c8c8c 53%, #0d57db); box-shadow: 0 13px 28px rgba(4,39,79,.2); }
 .travel-summary button { border: 0; color: white; background: transparent; display: flex; align-items: center; gap: 10px; padding: 10px; text-align: left; }
 .travel-summary button + button { border-left: 1px solid rgba(255,255,255,.3); }
@@ -60,7 +75,7 @@
 .route-line span { height: 34px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.25); border-radius: 50%; background: rgba(255,255,255,.15); }
 .journey-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .journey-footer small { color: rgba(255,255,255,.72); font-size: 11px; }
-.journey-footer button { min-height: 40px; padding: 0 15px; border: 1px solid rgba(255,255,255,.4); border-radius: 20px; color: white; background: rgba(255,255,255,.14); font-size: 10px; font-weight: 700; }
+.journey-footer button { min-height: 44px; padding: 0 16px; border: 1px solid rgba(255,255,255,.4); border-radius: 22px; color: white; background: rgba(255,255,255,.14); font-size: 10px; font-weight: 700; }
 .journey-empty { display: block; }
 .journey-empty p { max-width: 330px; margin: 18px 0; color: rgba(255,255,255,.78); font-size: 11px; line-height: 1.45; }
 .journey-empty > strong { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; }
@@ -80,7 +95,7 @@
 .sheet-backdrop { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: flex-end; justify-content: center; background: rgba(3,12,35,.34); backdrop-filter: blur(5px); }
 .verification-sheet { position: relative; width: min(430px, 100%); padding: 12px 20px calc(24px + env(safe-area-inset-bottom)); border-radius: 30px 30px 0 0; background: #f8fbff; box-shadow: 0 -20px 50px rgba(3,15,51,.24); animation: sheetUp .4s cubic-bezier(.2,.8,.2,1) both; }
 .sheet-handle { width: 42px; height: 5px; margin: 0 auto 18px; border-radius: 3px; background: #cad5e5; }
-.sheet-close { position: absolute; top: 14px; right: 16px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #e8eff8; }
+.sheet-close { position: absolute; top: 14px; right: 16px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: #e8eff8; }
 .sheet-kicker { color: var(--mt-blue); font-size: clamp(10px, 2.2vw, 11px); font-weight: 800; letter-spacing: .08em; }
 .verification-sheet h2 { font-size: 21px; line-height: 1.2; }
 .verification-sheet > p:not(.sheet-kicker) { color: var(--mt-muted); font-size: 11px; }
@@ -89,7 +104,7 @@
 .route-loading b { font-size: clamp(11px, 2.5vw, 12px); line-height: 1.3; }
 .route-loading small { margin-top: 6px; color: var(--mt-muted); font-size: clamp(10px, 2.4vw, 11px); line-height: 1.45; }
 .answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
-.answer-grid button { height: 40px; border: 1px solid var(--mt-green); border-radius: 20px; background: white; color: var(--mt-green); font-weight: 700; }
+.answer-grid button { min-height: 44px; border: 1px solid var(--mt-green); border-radius: 22px; background: white; color: var(--mt-green); font-weight: 700; }
 .answer-grid button:last-child { border-color: var(--mt-red); color: var(--mt-red); }
 .answer-grid button.active { color: white; background: var(--mt-green); }
 .answer-grid button:last-child.active { background: var(--mt-red); }
@@ -104,5 +119,19 @@
 .event-row b, .event-row small { display: block; }
 .event-row b { font-size: 11px; }
 .event-row small { margin-top: 5px; color: var(--mt-muted); font-size: 10px; line-height: 1.4; }
+
+@media (min-width: 600px) {
+  .home-body { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; align-items: stretch; }
+  .travel-summary, .quick-grid, .quick-grid-note { grid-column: 1 / -1; }
+  .quick-grid, .quick-grid-note, .journey-card, .action-card { margin-top: 0; }
+  .journey-card, .action-card { min-height: 122px; height: 100%; }
+  .journey-empty p { margin: 12px 0; }
+  .action-card { grid-template-columns: 38px minmax(0, 1fr); }
+  .action-card em { grid-column: 1 / -1; justify-self: stretch; padding-block: 6px; }
+}
+
+@media (min-width: 600px) and (max-width: 839px) {
+  .home-hero { height: 328px; }
+}
 
 @keyframes sheetUp { from { transform: translateY(100%); } }

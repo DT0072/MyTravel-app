@@ -110,6 +110,19 @@ describe('TopbarComponent', () => {
     });
   });
 
+  it('keeps shared topbar controls at accessible touch-target sizes', () => {
+    component.notificationCount = 2;
+    fixture.detectChanges();
+
+    const languageButton = fixture.nativeElement.querySelector('.mt-language') as HTMLButtonElement;
+    const notificationButton = fixture.nativeElement.querySelector('.mt-icon-button') as HTMLButtonElement;
+
+    expect(parseFloat(getComputedStyle(languageButton).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(languageButton).minWidth)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(notificationButton).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(notificationButton).minWidth)).toBeGreaterThanOrEqual(44);
+  });
+
   it('scales topbar control typography with the shared text-size preference', () => {
     document.documentElement.style.setProperty('--mt-text-scale', '1.4');
     component.notificationCount = 2;

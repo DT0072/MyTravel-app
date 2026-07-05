@@ -292,6 +292,31 @@ describe('Tab1Page', () => {
     expect(component.eventsEmptyStateCopy()).toBe('Events will appear here when your Firestore events provider is connected.');
   });
 
+  it('adds contextual accessible names to home dashboard action cards', () => {
+    fixture.detectChanges();
+
+    const destinationButton = fixture.nativeElement.querySelector('.destination-pill') as HTMLButtonElement;
+    const summaryButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.travel-summary button'),
+    ) as HTMLButtonElement[];
+    const quickButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.quick-grid button'),
+    ) as HTMLButtonElement[];
+    const journeyButton = fixture.nativeElement.querySelector('.journey-empty') as HTMLButtonElement;
+    const verificationButton = fixture.nativeElement.querySelector('.verification-action') as HTMLButtonElement;
+    const missionButton = fixture.nativeElement.querySelector('.mission-action') as HTMLButtonElement;
+
+    expect(destinationButton.getAttribute('aria-label')).toBe('Featured destination. Open Navigation.');
+    expect(summaryButtons[0].getAttribute('aria-label')).toBe('120 Eco-Points. Open Profile.');
+    expect(summaryButtons[1].getAttribute('aria-label')).toBe('Digital Passport. Passport stamps will appear here when your Firestore passport provider is connected. Open Profile.');
+    expect(quickButtons[1].getAttribute('aria-label')).toBe('Explore Malaysia. Open Navigation.');
+    expect(quickButtons[2].getAttribute('aria-label')).toBe('MyTravel Verification. Open MyTravel Verification panel.');
+    expect(quickButtons[3].getAttribute('aria-label')).toBe('Travel Notices. Open Community.');
+    expect(journeyButton.getAttribute('aria-label')).toBe('Plan your next journey. Choose a route, departure time, and accessibility preference in Navigation. Open Navigation.');
+    expect(verificationButton.getAttribute('aria-label')).toBe('MyTravel Verification. Verification checkpoints will appear here when your Firestore verification provider is connected. Awaiting provider. Open MyTravel Verification panel.');
+    expect(missionButton.getAttribute('aria-label')).toBe('Rewards provider pending. Challenge progress will appear here when your Firestore rewards provider is connected. View status. Open Profile.');
+  });
+
   it('marks decorative home and sheet icons as hidden from assistive technology', () => {
     fixture.detectChanges();
 
@@ -395,7 +420,7 @@ describe('Tab1Page', () => {
     expect(parseFloat(getComputedStyle(travelSummaryCopy).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(journeyFooterMeta).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(journeyFooterAction).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(journeyFooterAction).minHeight)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(journeyFooterAction).minHeight)).toBeGreaterThanOrEqual(44);
 
     component.events = [
       {
@@ -418,8 +443,8 @@ describe('Tab1Page', () => {
     expect(parseFloat(getComputedStyle(eventDate).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(eventDate).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(eventCopy).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(eventCloseButton).width)).toBeGreaterThanOrEqual(40);
-    expect(parseFloat(getComputedStyle(eventCloseButton).height)).toBeGreaterThanOrEqual(40);
+    expect(parseFloat(getComputedStyle(eventCloseButton).width)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(eventCloseButton).height)).toBeGreaterThanOrEqual(44);
 
     component.activeSheet = 'verification';
     component.verificationTask = {
@@ -479,14 +504,40 @@ describe('Tab1Page', () => {
   it('keeps the featured destination control clear of the raised summary panel', () => {
     fixture.detectChanges();
 
+    const identityPill = fixture.nativeElement.querySelector('.identity-pill') as HTMLElement;
+    const heroShade = fixture.nativeElement.querySelector('.hero-shade') as HTMLElement;
+    const heroWira = fixture.nativeElement.querySelector('.hero-wira') as HTMLElement;
     const destinationPill = fixture.nativeElement.querySelector('.destination-pill') as HTMLElement;
+    const homeContent = fixture.nativeElement.querySelector('.home-content') as HTMLElement;
+    const homeScrollShell = fixture.nativeElement.querySelector('.home-scroll-shell') as HTMLElement;
     const homeBody = fixture.nativeElement.querySelector('.home-body') as HTMLElement;
     const travelSummary = fixture.nativeElement.querySelector('.travel-summary') as HTMLElement;
+    const journeyCard = fixture.nativeElement.querySelector('.journey-card') as HTMLElement;
+    const verificationAction = fixture.nativeElement.querySelector('.verification-action') as HTMLElement;
 
+    expect(homeContent).toBeTruthy();
+    expect(homeScrollShell).toBeTruthy();
+    expect(getComputedStyle(homeContent).getPropertyValue('--overflow').trim()).toBe('auto');
+    expect(getComputedStyle(homeContent).getPropertyValue('--padding-bottom').trim()).toBe('0');
+    expect(parseFloat(getComputedStyle(homeScrollShell).minHeight)).toBeGreaterThanOrEqual(100);
+    expect(parseFloat(getComputedStyle(identityPill).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(identityPill).borderTopLeftRadius)).toBeGreaterThanOrEqual(24);
+    expect(parseFloat(getComputedStyle(identityPill).lineHeight)).toBeGreaterThanOrEqual(13);
+    expect(getComputedStyle(heroShade).backgroundImage).toContain('radial-gradient');
+    expect(parseFloat(getComputedStyle(heroWira).width)).toBeLessThanOrEqual(104);
     expect(parseFloat(getComputedStyle(destinationPill).bottom)).toBeGreaterThanOrEqual(64);
+    expect(getComputedStyle(destinationPill).backgroundColor).toContain('0.78');
+    expect(getComputedStyle(destinationPill).textShadow).not.toBe('none');
+    expect(parseFloat(getComputedStyle(destinationPill).borderTopLeftRadius)).toBeGreaterThanOrEqual(23);
     expect(parseFloat(getComputedStyle(homeBody).marginTop)).toBeGreaterThanOrEqual(-18);
     expect(parseFloat(getComputedStyle(travelSummary).minHeight)).toBeGreaterThanOrEqual(82);
     expect(getComputedStyle(destinationPill).zIndex).toBe('3');
+
+    if (window.innerWidth >= 600) {
+      expect(getComputedStyle(homeBody).display).toBe('grid');
+      expect(parseFloat(getComputedStyle(journeyCard).minHeight)).toBeLessThanOrEqual(128);
+      expect(parseFloat(getComputedStyle(verificationAction).minHeight)).toBeLessThanOrEqual(128);
+    }
   });
 
   it('renders the verification sheet as an accessible dialog and closes it on escape', () => {
@@ -526,6 +577,8 @@ describe('Tab1Page', () => {
 
     expect(answerButtons[0].getAttribute('aria-pressed')).toBe('false');
     expect(answerButtons[0].getAttribute('aria-label')).toBe('Select verification answer Yes');
+    expect(parseFloat(getComputedStyle(answerButtons[0]).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(answerButtons[1]).minHeight)).toBeGreaterThanOrEqual(44);
 
     component.verificationAnswer = 'no';
     fixture.detectChanges();
@@ -544,5 +597,20 @@ describe('Tab1Page', () => {
 
     expect(component.verificationAnswerAriaLabel('yes')).toBe('Pilih jawapan pengesahan Ya');
     expect(component.verificationAnswerAriaLabel('no')).toBe('Pilih jawapan pengesahan Tidak');
+  });
+
+  it('localizes home dashboard accessible names in Bahasa Melayu', () => {
+    accessibilityPreferencesService.setLanguage.and.returnValue({
+      ...preferences,
+      language: 'BM',
+    });
+
+    component.updateLanguage('BM');
+
+    expect(component.destinationPillAriaLabel()).toBe('Destinasi pilihan. Buka Navigasi.');
+    expect(component.quickExploreAriaLabel()).toBe('Teroka Malaysia. Buka Navigasi.');
+    expect(component.quickVerificationAriaLabel()).toBe('Pengesahan MyTravel. Buka panel Pengesahan MyTravel.');
+    expect(component.passportSummaryAriaLabel()).toBe('Pasport Digital. Cop pasport akan dipaparkan di sini apabila penyedia pasport Firestore anda disambungkan. Buka Profil.');
+    expect(component.weeklyMissionAriaLabel()).toBe('Penyedia ganjaran belum disambungkan. Kemajuan cabaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan. Lihat status. Buka Profil.');
   });
 });

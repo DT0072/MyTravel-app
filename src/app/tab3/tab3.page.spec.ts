@@ -423,6 +423,7 @@ describe('Tab3Page', () => {
     ) as HTMLButtonElement[];
 
     expect(tabButtons[0].getAttribute('role')).toBe('tab');
+    expect(parseFloat(getComputedStyle(tabButtons[0]).minHeight)).toBeGreaterThanOrEqual(44);
     expect(tabButtons[0].getAttribute('aria-selected')).toBe('true');
     expect(tabButtons[0].getAttribute('tabindex')).toBe('0');
     expect(tabButtons[1].getAttribute('aria-selected')).toBe('false');
@@ -498,6 +499,8 @@ describe('Tab3Page', () => {
     ) as HTMLButtonElement[];
 
     expect(answerGroup.getAttribute('aria-label')).toBe('Verification answer options');
+    expect(parseFloat(getComputedStyle(answerButtons[0]).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(answerButtons[1]).minHeight)).toBeGreaterThanOrEqual(44);
     expect(answerButtons[0].getAttribute('aria-label')).toBe('Select verification answer Yes');
     expect(answerButtons[1].getAttribute('aria-label')).toBe('Select verification answer No');
     expect(answerButtons[0].getAttribute('aria-pressed')).toBe('false');
@@ -565,10 +568,15 @@ describe('Tab3Page', () => {
     fixture.detectChanges();
 
     const authorMeta = fixture.nativeElement.querySelector('.author small') as HTMLElement;
+    const postActions = fixture.nativeElement.querySelector('.post-actions') as HTMLElement;
     const postAction = fixture.nativeElement.querySelector('.post-actions button') as HTMLButtonElement;
 
     expect(parseFloat(getComputedStyle(authorMeta).fontSize)).toBeGreaterThan(9);
+    expect(getComputedStyle(postActions).flexWrap).toBe('wrap');
     expect(parseFloat(getComputedStyle(postAction).fontSize)).toBeGreaterThan(9);
+    expect(parseFloat(getComputedStyle(postAction).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(postAction).paddingLeft)).toBeGreaterThanOrEqual(12);
+    expect(parseFloat(getComputedStyle(postAction).borderRadius)).toBeGreaterThanOrEqual(22);
 
     component.notices = [
       {
@@ -602,7 +610,7 @@ describe('Tab3Page', () => {
     expect(communityFilters.length).toBe(3);
     communityFilters.forEach((filter) => {
       expect(parseFloat(getComputedStyle(filter).fontSize)).toBeGreaterThan(10);
-      expect(parseFloat(getComputedStyle(filter).minHeight)).toBeGreaterThanOrEqual(42);
+      expect(parseFloat(getComputedStyle(filter).minHeight)).toBeGreaterThanOrEqual(44);
     });
 
     component.notices = [
@@ -627,7 +635,7 @@ describe('Tab3Page', () => {
     expect(noticeButtons.length).toBe(4);
     noticeButtons.forEach((button) => {
       expect(parseFloat(getComputedStyle(button).fontSize)).toBeGreaterThan(10);
-      expect(parseFloat(getComputedStyle(button).minHeight)).toBeGreaterThanOrEqual(42);
+      expect(parseFloat(getComputedStyle(button).minHeight)).toBeGreaterThanOrEqual(44);
     });
   });
 
@@ -674,7 +682,7 @@ describe('Tab3Page', () => {
 
     expect(parseFloat(getComputedStyle(steps).minHeight)).toBeGreaterThanOrEqual(48);
     expect(parseFloat(getComputedStyle(tipInput).fontSize)).toBeGreaterThan(10);
-    expect(parseFloat(getComputedStyle(tipInput).minHeight)).toBeGreaterThanOrEqual(42);
+    expect(parseFloat(getComputedStyle(tipInput).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(photoButton).fontSize)).toBeGreaterThan(10);
     expect(parseFloat(getComputedStyle(toggleRow).minHeight)).toBeGreaterThanOrEqual(52);
     expect(parseFloat(getComputedStyle(toggleCopy).fontSize)).toBeGreaterThan(10);
@@ -912,6 +920,18 @@ describe('Tab3Page', () => {
     expect(component.reportPostAriaLabel(post)).toBe('Report travel tip: National Museum');
   });
 
+  it('renders contextual accessibility labels for community CTAs', () => {
+    fixture.detectChanges();
+
+    const addTipButton = fixture.nativeElement.querySelector('.add-tip') as HTMLButtonElement;
+    const missionButton = fixture.nativeElement.querySelector('.mission-card') as HTMLButtonElement;
+
+    expect(addTipButton.getAttribute('aria-label')).toBe('Add a community travel tip. Opens the travel tip form.');
+    expect(missionButton.getAttribute('aria-label')).toBe(
+      'Manja Community Mission. 0 of 2 local community updates submitted. Contribute.',
+    );
+  });
+
   it('localizes community post accessibility labels in Bahasa Melayu', () => {
     accessibilityPreferencesService.setLanguage.and.returnValue({
       ...preferences,
@@ -940,6 +960,10 @@ describe('Tab3Page', () => {
     expect(component.helpfulPostAriaLabel(post)).toBe('Tandakan tip sebagai membantu: Muzium Negara');
     expect(component.notHelpfulPostAriaLabel(post)).toBe('Tandakan tip sebagai tidak membantu: Muzium Negara');
     expect(component.reportPostAriaLabel(post)).toBe('Laporkan tip perjalanan: Muzium Negara');
+    expect(component.addTipAriaLabel()).toBe('Tambah tip perjalanan komuniti. Membuka borang tip perjalanan.');
+    expect(component.communityMissionAriaLabel()).toBe(
+      'Misi Komuniti Manja. 0 daripada 2 kemas kini komuniti setempat telah dihantar. Sumbang.',
+    );
   });
 
   it('localizes verification answer accessibility labels in Bahasa Melayu', () => {

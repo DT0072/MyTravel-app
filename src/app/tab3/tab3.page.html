@@ -1,6 +1,6 @@
 <ion-content [fullscreen]="true">
   <!-- Shares community travel advice, verification tasks, and notices. -->
-  <div class="mt-screen community-screen">
+  <div class="mt-screen community-screen" [class.home-view]="view === 'community'">
     <app-topbar
       [language]="language"
       [notificationCount]="savedNoticeCount"
@@ -37,8 +37,8 @@
           <h2>{{ t(copy.noPostsTitle) }}</h2>
           <p>{{ t(copy.noPostsCopy) }}</p>
         </section>
-        <button class="mt-primary add-tip" type="button" (click)="openAddTip()">{{ t(copy.addTip) }}</button>
-        <button class="mt-card mission-card" type="button" (click)="openCommunityMission()"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ verificationMissionTitleLabel }}</b><small>{{ verificationMissionCopyLabel }}</small><i><u [style.width]="verificationMissionWidth"></u></i></span><em>{{ verificationMissionActionLabel }}</em></button>
+        <button class="mt-primary add-tip" type="button" [attr.aria-label]="addTipAriaLabel()" (click)="openAddTip()">{{ t(copy.addTip) }}</button>
+        <button class="mt-card mission-card" type="button" [attr.aria-label]="communityMissionAriaLabel()" (click)="openCommunityMission()"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ verificationMissionTitleLabel }}</b><small>{{ verificationMissionCopyLabel }}</small><i><u [style.width]="verificationMissionWidth"></u></i></span><em>{{ verificationMissionActionLabel }}</em></button>
         </div>
       </ng-container>
 

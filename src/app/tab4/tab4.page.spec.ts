@@ -150,6 +150,19 @@ describe('Tab4Page', () => {
     expect(profileCard.textContent).not.toContain('MyDigital ID');
   });
 
+  it('makes the profile dashboard scroll-safe above the floating tabbar', () => {
+    component.view = 'profile';
+    fixture.detectChanges();
+
+    const profileScreen = fixture.nativeElement.querySelector('.profile-screen') as HTMLElement;
+    const settingsList = fixture.nativeElement.querySelector('.settings-list') as HTMLElement;
+
+    expect(profileScreen.classList.contains('mt-tabbar-scroll-screen')).toBeTrue();
+    expect(getComputedStyle(profileScreen).overflowY).toBe('auto');
+    expect(parseFloat(getComputedStyle(profileScreen).paddingBottom)).toBeGreaterThanOrEqual(170);
+    expect(settingsList).toBeTruthy();
+  });
+
   it('keeps challenge and reward promo labels provider-ready when rewards data is unavailable', () => {
     expect(component.rewardsProviderConnected).toBeFalse();
     expect(component.challengeBannerTitleLabel).toBe('Rewards provider pending');

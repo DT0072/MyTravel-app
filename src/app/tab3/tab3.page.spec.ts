@@ -677,6 +677,8 @@ describe('Tab3Page', () => {
     const steps = fixture.nativeElement.querySelector('.steps') as HTMLElement;
     const tipInput = fixture.nativeElement.querySelector('.tip-form input[name="location"]') as HTMLInputElement;
     const photoButton = fixture.nativeElement.querySelector('.photo-row button') as HTMLButtonElement;
+    const photoPlaceholder = fixture.nativeElement.querySelector('.photo-placeholder') as HTMLElement;
+    const photoPlaceholderCopy = fixture.nativeElement.querySelector('.photo-placeholder small') as HTMLElement;
     const toggleRow = fixture.nativeElement.querySelector('.toggle-row') as HTMLElement;
     const toggleCopy = fixture.nativeElement.querySelector('.toggle-row small') as HTMLElement;
 
@@ -684,8 +686,28 @@ describe('Tab3Page', () => {
     expect(parseFloat(getComputedStyle(tipInput).fontSize)).toBeGreaterThan(10);
     expect(parseFloat(getComputedStyle(tipInput).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(photoButton).fontSize)).toBeGreaterThan(10);
+    expect(getComputedStyle(photoPlaceholder).overflow).toBe('hidden');
+    expect(getComputedStyle(photoPlaceholderCopy).overflow).toBe('hidden');
     expect(parseFloat(getComputedStyle(toggleRow).minHeight)).toBeGreaterThanOrEqual(52);
     expect(parseFloat(getComputedStyle(toggleCopy).fontSize)).toBeGreaterThan(10);
+  });
+
+  it('makes Tab3 detail views scroll-safe above the floating tabbar', () => {
+    const homeScreen = fixture.nativeElement.querySelector('.community-screen') as HTMLElement;
+    expect(homeScreen.classList).toContain('home-view');
+    expect(getComputedStyle(homeScreen).overflowY).not.toBe('auto');
+
+    component.openAddTip();
+    fixture.detectChanges();
+
+    const addTipScreen = fixture.nativeElement.querySelector('.community-screen') as HTMLElement;
+    const addTipStyles = getComputedStyle(addTipScreen);
+
+    expect(addTipScreen.classList).not.toContain('home-view');
+    expect(addTipStyles.overflowY).toBe('auto');
+    expect(addTipStyles.overscrollBehaviorY).toBe('contain');
+    expect(parseFloat(addTipStyles.paddingBottom)).toBeGreaterThanOrEqual(170);
+    expect(getComputedStyle(fixture.nativeElement.querySelector('.tip-form')).display).toBe('block');
   });
 
   it('hides decorative icons from assistive tech across Tab3 surfaces', () => {
@@ -930,6 +952,65 @@ describe('Tab3Page', () => {
     expect(missionButton.getAttribute('aria-label')).toBe(
       'Manja Community Mission. 0 of 2 local community updates submitted. Contribute.',
     );
+  });
+
+  it('renders state-aware accessibility labels for add-tip form actions', async () => {
+    component.openAddTip();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const saveDraftButton = fixture.nativeElement.querySelector('.form-actions .mt-secondary') as HTMLButtonElement;
+    const submitButton = fixture.nativeElement.querySelector('.form-actions .mt-primary') as HTMLButtonElement;
+
+    expect(saveDraftButton.getAttribute('aria-label')).toBe('Save this travel tip draft locally');
+    expect(submitButton.disabled).toBeTrue();
+    expect(submitButton.getAttribute('aria-disabled')).toBe('true');
+    expect(submitButton.getAttribute('aria-label')).toBe(
+      'Complete the required travel tip fields before submitting for review',
+    );
+
+    component.tipDraft.location = 'National Museum';
+    component.tipDraft.tip = 'Use the covered walkway from the station and check current gallery hours.';
+    component.tipDraft.confirmed = true;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(submitButton.disabled).toBeFalse();
+    expect(submitButton.getAttribute('aria-disabled')).toBe('false');
+    expect(submitButton.getAttribute('aria-label')).toBe('Submit this travel tip for review');
+  });
+
+  it('renders state-aware accessibility labels for verification submit', () => {
+    component.verificationTask = {
+      id: 'verification-kl-sentral-access',
+      title: 'KL Sentral access check',
+      place: { EN: 'KL Sentral', BM: 'KL Sentral' },
+      station: { EN: 'KL Sentral Station', BM: 'Stesen KL Sentral' },
+      badge: { EN: 'Verified transit hub', BM: 'Hab transit disahkan' },
+      address: { EN: 'Main concourse', BM: 'Ruang legar utama' },
+      question: { EN: 'Is the lift still available?', BM: 'Adakah lif masih tersedia?' },
+      lastUpdated: { EN: 'Last updated today.', BM: 'Kali terakhir dikemas kini hari ini.' },
+      image: 'assets/mytravel/wira-ui.png',
+      points: 40,
+    };
+    component.startVerification();
+    fixture.detectChanges();
+
+    const submitButton = fixture.nativeElement.querySelector('.community-screen > button.mt-primary') as HTMLButtonElement;
+
+    expect(submitButton.disabled).toBeTrue();
+    expect(submitButton.getAttribute('aria-disabled')).toBe('true');
+    expect(submitButton.getAttribute('aria-label')).toBe(
+      'Select Yes or No before submitting this verification',
+    );
+
+    component.verificationAnswer = 'yes';
+    fixture.detectChanges();
+
+    expect(submitButton.disabled).toBeFalse();
+    expect(submitButton.getAttribute('aria-disabled')).toBe('false');
+    expect(submitButton.getAttribute('aria-label')).toBe('Submit the selected verification answer');
   });
 
   it('localizes community post accessibility labels in Bahasa Melayu', () => {

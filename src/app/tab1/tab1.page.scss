@@ -13,6 +13,10 @@
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
+.home-scroll-shell.mt-tabbar-scroll-screen {
+  padding-bottom: 170px;
+}
+
 .home-hero {
   height: 345px;
   position: relative;

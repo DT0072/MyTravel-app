@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { of, Subject } from 'rxjs';
@@ -138,6 +138,29 @@ describe('Tab2Page', () => {
     expect(component.view).toBe('results');
     expect(navigationService.getRecentLocations).toHaveBeenCalledWith('EN', []);
   });
+
+  it('resets the navigation viewport and focuses the results heading after route search', fakeAsync(() => {
+    const scrollToTop = jasmine.createSpy('scrollToTop').and.resolveTo();
+    const focus = jasmine.createSpy('focus');
+
+    (component as unknown as {
+      navigationContent: { scrollToTop: jasmine.Spy };
+      resultsHeadingRef: { nativeElement: { focus: jasmine.Spy } };
+    }).navigationContent = { scrollToTop };
+    (component as unknown as {
+      resultsHeadingRef: { nativeElement: { focus: jasmine.Spy } };
+    }).resultsHeadingRef = { nativeElement: { focus } };
+    component.from = 'KL Sentral';
+    component.to = 'Pasar Seni';
+    component.plannerDate = '2026-07-01';
+    component.plannerTime = '09:15';
+
+    component.findRoute();
+    tick();
+
+    expect(scrollToTop).toHaveBeenCalledOnceWith(0);
+    expect(focus).toHaveBeenCalledOnceWith({ preventScroll: true });
+  }));
 
   it('shows state-aware departure and arrival summaries on the results card', () => {
     component.from = 'Batu Caves';
@@ -288,6 +311,62 @@ describe('Tab2Page', () => {
     fixture.detectChanges();
 
     expect(manageButton.getAttribute('aria-label')).toBe('Finish managing recent locations');
+  });
+
+  it('renders context-aware aria labels for primary route actions', () => {
+    fixture.detectChanges();
+
+    const findRouteButton = fixture.nativeElement.querySelector('.find-route') as HTMLButtonElement;
+
+    expect(findRouteButton.getAttribute('aria-label')).toBe('Find route. Enter origin and destination first.');
+
+    component.from = 'KL Sentral';
+    component.to = 'Pasar Seni';
+    fixture.detectChanges();
+
+    expect(findRouteButton.getAttribute('aria-label')).toBe('Find route from KL Sentral to Pasar Seni');
+
+    component.view = 'results';
+    component.selectedRoute = createRoute('MRT');
+    fixture.detectChanges();
+
+    const startJourneyButton = fixture.nativeElement.querySelector('.route-sheet .mt-primary') as HTMLButtonElement;
+    const chooseAnotherRouteButton = fixture.nativeElement.querySelector('.route-sheet .route-cancel') as HTMLButtonElement;
+
+    expect(startJourneyButton.getAttribute('aria-label')).toBe('Start this journey by MRT to Pasar Seni');
+    expect(chooseAnotherRouteButton.getAttribute('aria-label')).toBe('Close route details and choose another route');
+  });
+
+  it('keeps the primary route CTA inside the planner card for floating-tabbar clearance', () => {
+    fixture.detectChanges();
+
+    const plannerCard = fixture.nativeElement.querySelector('.planner-card') as HTMLElement;
+    const findRouteButton = fixture.nativeElement.querySelector('.find-route') as HTMLButtonElement;
+
+    expect(plannerCard.contains(findRouteButton)).toBeTrue();
+  });
+
+  it('marks the screen when navigation results are active for responsive layout rules', () => {
+    const navScreen = fixture.nativeElement.querySelector('.nav-screen') as HTMLElement;
+
+    expect(navScreen.classList.contains('results-active')).toBeFalse();
+
+    component.view = 'results';
+    fixture.detectChanges();
+
+    expect(navScreen.classList.contains('results-active')).toBeTrue();
+  });
+
+  it('makes the navigation screen scroll-safe above the floating tabbar', () => {
+    fixture.detectChanges();
+
+    const navScreen = fixture.nativeElement.querySelector('.nav-screen') as HTMLElement;
+    const styles = getComputedStyle(navScreen);
+
+    expect(navScreen.classList.contains('mt-tabbar-scroll-screen')).toBeTrue();
+    expect(styles.overflowY).toBe('auto');
+    expect(styles.overscrollBehaviorY).toBe('contain');
+    expect(parseFloat(styles.paddingBottom)).toBeGreaterThanOrEqual(170);
   });
 
   it('renders localized route mode labels in results, dialogs, and journey feedback', () => {

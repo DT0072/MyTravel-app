@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { IonContent } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import {
   AccessibilityPreferences,
@@ -36,6 +37,9 @@ const NAVIGATION_COPY = {
   transportModePrefix: { EN: 'Select transport mode', BM: 'Pilih mod pengangkutan' },
   accessibleRoutesNote: { EN: 'Accessible routes are prioritised from your saved preferences.', BM: 'Laluan mesra akses diutamakan berdasarkan pilihan tersimpan anda.' },
   findRoute: { EN: 'Find route', BM: 'Cari laluan' },
+  findRouteNeedsFields: { EN: 'Find route. Enter origin and destination first.', BM: 'Cari laluan. Masukkan lokasi asal dan destinasi dahulu.' },
+  findRouteFromPrefix: { EN: 'Find route from', BM: 'Cari laluan dari' },
+  routeToConnector: { EN: 'to', BM: 'ke' },
   serviceStatus: { EN: 'Service status', BM: 'Status perkhidmatan' },
   viewAll: { EN: 'View all', BM: 'Lihat semua' },
   viewAllServiceStatuses: { EN: 'Show all service updates', BM: 'Tunjukkan semua kemas kini perkhidmatan' },
@@ -89,7 +93,9 @@ const NAVIGATION_COPY = {
   walkingDistance: { EN: 'Walking distance', BM: 'Jarak berjalan kaki' },
   walkingDistanceCopy: { EN: 'Stations and timings are shown as a planning preview.', BM: 'Stesen dan masa ditunjukkan sebagai pratonton perancangan.' },
   startJourney: { EN: 'Start this journey', BM: 'Mulakan perjalanan ini' },
+  startJourneyPrefix: { EN: 'Start this journey by', BM: 'Mulakan perjalanan ini dengan' },
   chooseAnotherRoute: { EN: 'Choose another route', BM: 'Pilih laluan lain' },
+  chooseAnotherRouteLabel: { EN: 'Close route details and choose another route', BM: 'Tutup butiran laluan dan pilih laluan lain' },
   plannerErrorMissingFields: { EN: 'Enter both a starting point and destination.', BM: 'Masukkan titik permulaan dan destinasi.' },
   plannerErrorSameLocation: { EN: 'Starting point and destination must be different.', BM: 'Titik permulaan dan destinasi mestilah berbeza.' },
   plannerErrorMissingTime: { EN: 'Choose a valid travel date and time.', BM: 'Pilih tarikh dan masa perjalanan yang sah.' },
@@ -114,6 +120,8 @@ export class Tab2Page implements OnDestroy {
   private routePlanSubscription?: Subscription;
   private localizedDataSubscription = new Subscription();
   private readonly uiTimeouts = new ManagedTimeouts();
+  @ViewChild('navigationContent') private navigationContent?: IonContent;
+  @ViewChild('resultsHeading') private resultsHeadingRef?: ElementRef<HTMLElement>;
   @ViewChild('routeSheet') private routeSheetRef?: ElementRef<HTMLElement>;
   readonly copy = NAVIGATION_COPY;
   view: 'planner' | 'results' = 'planner';
@@ -185,6 +193,7 @@ export class Tab2Page implements OnDestroy {
     this.view = 'results';
     this.buildRoutes();
     this.refreshLocalizedData();
+    this.resetResultsViewport();
   }
 
   selectMode(mode: string): void {
@@ -249,6 +258,17 @@ export class Tab2Page implements OnDestroy {
     return `${this.t(this.copy.sortRoutesPrefix)} ${this.sortLabel(sort)}`;
   }
 
+  findRouteButtonAriaLabel(): string {
+    const from = this.from.trim();
+    const to = this.to.trim();
+
+    if (!from || !to) {
+      return this.t(this.copy.findRouteNeedsFields);
+    }
+
+    return `${this.t(this.copy.findRouteFromPrefix)} ${from} ${this.t(this.copy.routeToConnector)} ${to}`;
+  }
+
   serviceStatusOverviewAriaLabel(): string {
     return this.t(this.copy.viewAllServiceStatuses);
   }
@@ -273,6 +293,18 @@ export class Tab2Page implements OnDestroy {
 
   routeDetailsAriaLabel(route: RouteOption): string {
     return `${this.t(this.copy.viewRouteDetailsPrefix)} ${this.modeLabel(route.mode)}`;
+  }
+
+  startJourneyButtonAriaLabel(): string {
+    if (!this.selectedRoute) {
+      return this.t(this.copy.startJourney);
+    }
+
+    return `${this.t(this.copy.startJourneyPrefix)} ${this.modeLabel(this.selectedRoute.mode)} ${this.t(this.copy.routeToConnector)} ${this.to}`;
+  }
+
+  chooseAnotherRouteAriaLabel(): string {
+    return this.t(this.copy.chooseAnotherRouteLabel);
   }
 
   journeyDepartureSummary(): string {
@@ -413,6 +445,13 @@ export class Tab2Page implements OnDestroy {
         this.isLoadingRoutes = false;
       },
     });
+  }
+
+  private resetResultsViewport(): void {
+    this.uiTimeouts.schedule('navigation-results-viewport', () => {
+      void this.navigationContent?.scrollToTop(0);
+      this.resultsHeadingRef?.nativeElement.focus({ preventScroll: true });
+    }, 0);
   }
 
   private refreshLocalizedData(): void {

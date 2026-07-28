@@ -540,6 +540,18 @@ describe('Tab1Page', () => {
     }
   });
 
+  it('makes the home dashboard scroll-safe above the floating tabbar', () => {
+    fixture.detectChanges();
+
+    const homeScrollShell = fixture.nativeElement.querySelector('.home-scroll-shell') as HTMLElement;
+    const homeBody = fixture.nativeElement.querySelector('.home-body') as HTMLElement;
+
+    expect(homeScrollShell.classList.contains('mt-tabbar-scroll-screen')).toBeTrue();
+    expect(getComputedStyle(homeScrollShell).overflowY).toBe('auto');
+    expect(parseFloat(getComputedStyle(homeScrollShell).paddingBottom)).toBeGreaterThanOrEqual(170);
+    expect(parseFloat(getComputedStyle(homeBody).paddingBottom)).toBeGreaterThanOrEqual(138);
+  });
+
   it('renders the verification sheet as an accessible dialog and closes it on escape', () => {
     component.openVerificationSheet();
     fixture.detectChanges();

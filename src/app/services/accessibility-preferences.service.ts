@@ -170,6 +170,10 @@ export class AccessibilityPreferencesService {
   }
 
   private canUseStorage(): boolean {
-    return typeof globalThis.localStorage !== 'undefined';
+    try {
+      return typeof globalThis.localStorage !== 'undefined';
+    } catch {
+      return false;
+    }
   }
 }

@@ -509,7 +509,11 @@ export class AppStateService {
   }
 
   private canUseStorage(): boolean {
-    return typeof globalThis.localStorage !== 'undefined';
+    try {
+      return typeof globalThis.localStorage !== 'undefined';
+    } catch {
+      return false;
+    }
   }
 
   private createId(prefix: string): string {

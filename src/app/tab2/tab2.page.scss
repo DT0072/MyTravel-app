@@ -19,6 +19,10 @@
 .mode-row ion-icon { margin-right: 4px; vertical-align: middle; }
 .mode-row button.active { color: white; background: var(--mt-navy); border-color: var(--mt-navy); }
 .find-route { margin: 12px 0 0; }
+.planner-note + .find-route,
+.planner-error + .find-route {
+  margin-top: 4px;
+}
 
 .section-title { display: flex; justify-content: space-between; align-items: center; }
 .section-title button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 12px; border: 0; border-radius: 22px; color: var(--mt-blue); background: transparent; font-size: 8px; font-weight: 700; }
@@ -111,52 +115,6 @@
   line-height: var(--mt-copy-line-height);
 }
 
-.planner-card label,
-.planner-card > p,
-.section-title b,
-.section-title button,
-.route-summary b,
-.sort-row button,
-.route-name b,
-.route-loading b,
-.info-note b,
-.route-detail-note b {
-  font-size: calc(1em * var(--mt-text-scale));
-}
-
-.planner-card label {
-  font-size: calc(9px * var(--mt-text-scale));
-}
-
-.planner-card label input {
-  font-size: calc(10px * var(--mt-text-scale));
-}
-
-.date-row button,
-.mode-row button,
-.recent-card > button b,
-.service-row b,
-.route-summary b,
-.route-name b,
-.route-meta b,
-.route-detail-grid strong {
-  font-size: calc(9px * var(--mt-text-scale));
-}
-
-.date-row small,
-.recent-card > button small,
-.service-row small,
-.service-row em,
-.route-summary small,
-.sort-row button,
-.route-name small,
-.route-meta small,
-.info-note b,
-.info-note small,
-.sheet-kicker {
-  font-size: calc(8px * var(--mt-text-scale));
-}
-
 .route-time strong,
 .route-sheet h2 {
   font-size: calc(21px * var(--mt-text-scale));
@@ -230,5 +188,43 @@
     grid-column: 1 / -1;
     width: 100%;
     border-radius: 22px;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .nav-screen.results-active {
+    display: grid;
+    grid-template-columns: minmax(230px, 0.8fr) minmax(300px, 1fr);
+    gap: 8px 14px;
+  }
+
+  .nav-screen.results-active app-topbar {
+    grid-column: 1 / -1;
+  }
+
+  .nav-screen.results-active :is(.results-heading, .route-summary, .sort-row) {
+    grid-column: 1;
+    margin-block: 0;
+  }
+
+  .nav-screen.results-active .results-heading {
+    grid-row: 2;
+    padding-top: 0;
+  }
+
+  .nav-screen.results-active .route-summary { grid-row: 3; }
+  .nav-screen.results-active .sort-row { grid-row: 4; }
+
+  .nav-screen.results-active :is(.route-loading, .route-card, .info-note) {
+    grid-column: 2;
+    margin-block: 0;
+  }
+
+  .nav-screen.results-active :is(.route-loading, .route-card) { grid-row: 2; }
+  .nav-screen.results-active .info-note { grid-row: 3; }
+  .nav-screen.results-active .sort-note {
+    grid-column: 2;
+    grid-row: 4;
+    margin-block: 0;
   }
 }

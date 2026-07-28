@@ -1,6 +1,6 @@
-<ion-content [fullscreen]="true">
+<ion-content #navigationContent [fullscreen]="true">
   <!-- Plans journeys and presents available public-transport routes. -->
-  <div class="mt-screen nav-screen">
+  <div class="mt-screen nav-screen mt-tabbar-scroll-screen" [class.results-active]="view === 'results'">
     <app-topbar
       [language]="language"
       [notificationCount]="savedNoticeCount"
@@ -23,8 +23,8 @@
         <div class="mode-row" role="group" [attr.aria-label]="t(copy.transportModeAria)"><button *ngFor="let mode of modes" type="button" [class.active]="activeMode === mode" [attr.aria-label]="modeButtonAriaLabel(mode)" [attr.aria-pressed]="activeMode === mode" (click)="selectMode(mode)"><ion-icon aria-hidden="true" [name]="modeIconName(mode)"></ion-icon>{{ modeLabel(mode) }}</button></div>
         <p *ngIf="preferAccessibleRoutes" class="planner-note"><ion-icon aria-hidden="true" name="accessibility-outline"></ion-icon> {{ t(copy.accessibleRoutesNote) }}</p>
         <p *ngIf="plannerError" class="planner-error" role="alert">{{ plannerError }}</p>
+        <button class="mt-primary find-route" type="button" [attr.aria-label]="findRouteButtonAriaLabel()" (click)="findRoute()"><ion-icon aria-hidden="true" name="search"></ion-icon> {{ t(copy.findRoute) }}</button>
       </section>
-      <button class="mt-primary find-route" type="button" (click)="findRoute()"><ion-icon aria-hidden="true" name="search"></ion-icon> {{ t(copy.findRoute) }}</button>
 
       <section class="mt-card service-card mt-reveal">
         <div class="section-title"><b>{{ t(copy.serviceStatus) }}</b><button type="button" [attr.aria-label]="serviceStatusOverviewAriaLabel()" (click)="openServiceStatus()">{{ t(copy.viewAll) }} ›</button></div>
@@ -37,7 +37,7 @@
     </ng-container>
 
     <ng-template #resultsView>
-      <div class="results-heading"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToPlanner)" (click)="view = 'planner'"><ion-icon aria-hidden="true" name="arrow-back"></ion-icon></button><div><h1>{{ t(copy.journeyOptions) }}</h1><p>{{ t(copy.journeyOptionsCopy) }}</p></div></div>
+      <div #resultsHeading class="results-heading" tabindex="-1"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToPlanner)" (click)="view = 'planner'"><ion-icon aria-hidden="true" name="arrow-back"></ion-icon></button><div><h1>{{ t(copy.journeyOptions) }}</h1><p>{{ t(copy.journeyOptionsCopy) }}</p></div></div>
       <section class="mt-card route-summary"><span><ion-icon aria-hidden="true" [name]="resultsSummaryIconName()"></ion-icon></span><div><b>{{ from }}</b><small>{{ journeyDepartureSummary() }}</small></div><ion-icon aria-hidden="true" name="arrow-forward"></ion-icon><span class="destination"><ion-icon aria-hidden="true" name="location"></ion-icon></span><div><b>{{ to }}</b><small>{{ journeyArrivalSummary() }}</small></div></section>
       <div class="sort-row" role="group" [attr.aria-label]="t(copy.sortRoutesAria)"><button *ngFor="let item of ['Fastest','Less walking','Accessible']" type="button" [class.active]="sort === item" [attr.aria-label]="sortButtonAriaLabel(item)" [attr.aria-pressed]="sort === item" (click)="selectSort(item)">{{ sortLabel(item) }}</button></div>
       <p *ngIf="preferAccessibleRoutes" class="sort-note"><ion-icon aria-hidden="true" name="accessibility-outline"></ion-icon> {{ t(copy.sortAccessibleNote) }}</p>
@@ -87,8 +87,8 @@
         <b>{{ t(copy.walkingDistance) }}</b>
         <small>{{ selectedRoute.walk }} · {{ t(copy.walkingDistanceCopy) }}</small>
       </section>
-      <button class="mt-primary" type="button" (click)="startJourney()">{{ t(copy.startJourney) }}</button>
-      <button class="mt-secondary route-cancel" type="button" (click)="closeRouteDetails()">{{ t(copy.chooseAnotherRoute) }}</button>
+      <button class="mt-primary" type="button" [attr.aria-label]="startJourneyButtonAriaLabel()" (click)="startJourney()">{{ t(copy.startJourney) }}</button>
+      <button class="mt-secondary route-cancel" type="button" [attr.aria-label]="chooseAnotherRouteAriaLabel()" (click)="closeRouteDetails()">{{ t(copy.chooseAnotherRoute) }}</button>
     </section>
   </div>
 </ion-content>

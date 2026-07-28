@@ -130,6 +130,18 @@ const COMMUNITY_COPY = {
   confirmAccuracy: { EN: 'I confirm this information is accurate and current.', BM: 'Saya mengesahkan maklumat ini tepat dan terkini.' },
   saveDraft: { EN: 'Save draft', BM: 'Simpan draf' },
   submitForReview: { EN: 'Submit for review →', BM: 'Hantar untuk semakan →' },
+  saveDraftAria: {
+    EN: 'Save this travel tip draft locally',
+    BM: 'Simpan draf tip perjalanan ini secara setempat',
+  },
+  submitForReviewReadyAria: {
+    EN: 'Submit this travel tip for review',
+    BM: 'Hantar tip perjalanan ini untuk semakan',
+  },
+  submitForReviewDisabledAria: {
+    EN: 'Complete the required travel tip fields before submitting for review',
+    BM: 'Lengkapkan medan wajib tip perjalanan sebelum menghantar untuk semakan',
+  },
   verificationTitle: { EN: 'MyTravel Verification', BM: 'Pengesahan MyTravel' },
   backToVerification: { EN: 'Back to community', BM: 'Kembali ke komuniti' },
   verifiedTransitHub: { EN: 'Verified transit hub', BM: 'Hab transit disahkan' },
@@ -143,6 +155,14 @@ const COMMUNITY_COPY = {
   pointsAwardedAfterVerification: { EN: 'Points awarded after verification', BM: 'Mata diberikan selepas pengesahan' },
   points: { EN: 'points', BM: 'mata' },
   submitVerification: { EN: 'Submit verification', BM: 'Hantar pengesahan' },
+  submitVerificationReadyAria: {
+    EN: 'Submit the selected verification answer',
+    BM: 'Hantar jawapan pengesahan yang dipilih',
+  },
+  submitVerificationDisabledAria: {
+    EN: 'Select Yes or No before submitting this verification',
+    BM: 'Pilih Ya atau Tidak sebelum menghantar pengesahan ini',
+  },
   travelNotices: { EN: 'Travel Notices', BM: 'Notis Perjalanan' },
   noticeFiltersAria: { EN: 'Travel notice filters', BM: 'Penapis notis perjalanan' },
   backToProfile: { EN: 'Back to community', BM: 'Kembali ke komuniti' },
@@ -469,6 +489,10 @@ export class Tab3Page implements OnDestroy {
   }
 
   submitTip(): void {
+    if (!this.canSubmitTip()) {
+      return;
+    }
+
     const savedTip = this.appStateService.submitTip(this.tipDraft);
     const reactions = this.reactionMap(this.appStateService.getSnapshot().postReactions);
     this.posts = [
@@ -551,6 +575,28 @@ export class Tab3Page implements OnDestroy {
       : this.t(this.copy.no);
 
     return `${this.t(this.copy.verificationAnswerPrefix)} ${label}`;
+  }
+
+  saveDraftAriaLabel(): string {
+    return this.t(this.copy.saveDraftAria);
+  }
+
+  canSubmitTip(): boolean {
+    return this.tipDraft.location.trim().length > 0
+      && this.tipDraft.tip.trim().length >= 20
+      && this.tipDraft.confirmed;
+  }
+
+  submitTipAriaLabel(isReady: boolean): string {
+    return isReady
+      ? this.t(this.copy.submitForReviewReadyAria)
+      : this.t(this.copy.submitForReviewDisabledAria);
+  }
+
+  submitVerificationAriaLabel(): string {
+    return this.verificationAnswer
+      ? this.t(this.copy.submitVerificationReadyAria)
+      : this.t(this.copy.submitVerificationDisabledAria);
   }
 
   postHasImage(post: CommunityPost): boolean {

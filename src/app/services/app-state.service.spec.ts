@@ -140,4 +140,26 @@ describe('AppStateService', () => {
 
     expect(JSON.parse(globalThis.localStorage.getItem(storageKey) ?? '{}')).toEqual(service.getSnapshot());
   });
+
+  it('keeps the offline state usable when browser storage access is blocked', () => {
+    const localStorageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+
+    try {
+      Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        get: () => {
+          throw new Error('Storage access blocked');
+        },
+      });
+
+      const storageBlockedService = new AppStateService();
+
+      expect(() => storageBlockedService.recordRecentLocations(['KL Sentral'])).not.toThrow();
+      expect(storageBlockedService.getSnapshot().recentLocationValues).toEqual(['KL Sentral']);
+    } finally {
+      if (localStorageDescriptor) {
+        Object.defineProperty(globalThis, 'localStorage', localStorageDescriptor);
+      }
+    }
+  });
 });

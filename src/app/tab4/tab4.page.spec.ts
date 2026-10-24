@@ -331,6 +331,7 @@ describe('Tab4Page', () => {
     component.passportProviderConnected = true;
     component.stamps = [
       {
+        id: 'selangor',
         name: 'Selangor',
         active: true,
         image: 'assets/mytravel/manja-ui.png',
@@ -340,6 +341,7 @@ describe('Tab4Page', () => {
         description: { EN: 'State stamp', BM: 'Cop negeri' },
       },
       {
+        id: 'putrajaya',
         name: 'Putrajaya',
         active: false,
         image: 'assets/mytravel/manja-ui.png',
@@ -370,6 +372,7 @@ describe('Tab4Page', () => {
     component.passportProviderConnected = true;
     component.stamps = [
       {
+        id: 'selangor',
         name: 'Selangor',
         active: true,
         image: 'assets/mytravel/manja-ui.png',
@@ -379,6 +382,7 @@ describe('Tab4Page', () => {
         description: { EN: 'State stamp', BM: 'Cop negeri' },
       },
       {
+        id: 'labuan',
         name: 'Labuan',
         active: false,
         image: 'assets/mytravel/manja-ui.png',

@@ -1,10 +1,9 @@
 import { Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  AccessibilityPreferencesService,
-  AppLanguage,
-} from '../services/accessibility-preferences.service';
+import { AccessibilityPreferencesService, AppLanguage } from '../services/accessibility-preferences.service';
 import { AppJourney, AppStateService } from '../services/app-state.service';
+import { AuthService, UserProfile } from '../services/auth.service';
+import { PassportService } from '../services/passport.service';
 import { ManagedTimeouts } from '../shared/utils/managed-timeouts';
 import {
   buildChallengeProgress,
@@ -123,11 +122,18 @@ const HOME_COPY = {
 export class Tab1Page implements OnDestroy {
   private readonly accessibilityPreferencesService = inject(AccessibilityPreferencesService);
   private readonly appStateService = inject(AppStateService);
+  private readonly authService = inject(AuthService);
+  private readonly passportService = inject(PassportService);
   private readonly router = inject(Router);
   private readonly uiTimeouts = new ManagedTimeouts();
   @ViewChild('verificationSheet') private verificationSheetRef?: ElementRef<HTMLElement>;
   @ViewChild('eventsSheet') private eventsSheetRef?: ElementRef<HTMLElement>;
   readonly copy = HOME_COPY;
+  currentUser: UserProfile | null = this.authService.currentUser;
+
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated;
+  }
   language: AppLanguage = 'EN';
   activeSheet: 'verification' | 'events' | null = null;
   toast = '';
@@ -385,15 +391,17 @@ export class Tab1Page implements OnDestroy {
 
   private refreshState(): void {
     const state = this.appStateService.getSnapshot();
+    this.currentUser = this.authService.currentUser;
     const progress = buildTravelProgress(state);
-    const passportSummary = buildPassportSummary(progress);
-    const challengeSummary = buildChallengeProgress(progress, passportSummary.collectedCount);
+    const stamps = this.passportService.getStamps();
+    const collectedStamps = stamps.filter((s) => s.active).length;
+    const challengeSummary = buildChallengeProgress(progress, collectedStamps);
     const verificationProgress = buildVerificationProgress(state.completedVerificationIds);
-    this.ecoPoints = state.ecoPoints;
+    this.ecoPoints = this.authService.isAuthenticated ? (this.currentUser?.ecoPoints ?? state.ecoPoints) : 0;
     this.savedNoticeCount = state.savedNoticeIds.length;
     this.activeJourney = state.activeJourney;
-    this.passportCollectedCount = passportSummary.collectedCount;
-    this.passportTotalCount = passportSummary.totalCount;
+    this.passportCollectedCount = collectedStamps;
+    this.passportTotalCount = stamps.length;
     this.challengeCompletedSteps = challengeSummary.completedSteps;
     this.challengeTotalSteps = challengeSummary.totalSteps;
     this.verificationCompletedCount = verificationProgress.completedCount;

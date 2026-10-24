@@ -11,6 +11,8 @@ import {
   createDefaultAccessibilityPreferences,
 } from '../services/accessibility-preferences.service';
 import { AppStateService, PointTransaction } from '../services/app-state.service';
+import { AuthService, UserProfile } from '../services/auth.service';
+import { PassportService, ProfileStamp } from '../services/passport.service';
 import { ManagedTimeouts } from '../shared/utils/managed-timeouts';
 
 type LocalizedText = Record<AppLanguage, string>;
@@ -25,7 +27,8 @@ type ProfileMenuItemId =
   | 'accessibility'
   | 'privacy'
   | 'help'
-  | 'signout';
+  | 'signout'
+  | 'signin';
 
 const REWARD_PROGRESS_TARGET_POINTS = 1000;
 
@@ -259,15 +262,7 @@ interface ProfileMenuItem {
   target: string;
 }
 
-interface ProfileStamp {
-  name: string;
-  active: boolean;
-  image: string;
-  heroImage: string;
-  region: 'state' | 'federal';
-  label: LocalizedText;
-  description: LocalizedText;
-}
+
 
 interface ProfileTransaction {
   title: LocalizedText;
@@ -310,10 +305,12 @@ interface RewardsProgressData {
   standalone: false,
 })
 export class Tab4Page implements OnDestroy {
-  @ViewChild('profileContent') private profileContent?: IonContent;
+  @ViewChild('profileContent') private profileContent?: any;
 
   private readonly accessibilityPreferencesService = inject(AccessibilityPreferencesService);
   private readonly appStateService = inject(AppStateService);
+  private readonly authService = inject(AuthService);
+  private readonly passportService = inject(PassportService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly routeSubscription = new Subscription();
@@ -329,16 +326,28 @@ export class Tab4Page implements OnDestroy {
     { key: 'voice', title: this.copy.voiceGuidance, description: this.copy.voiceGuidanceCopy },
     { key: 'wheelchair', title: this.copy.wheelchairRoutes, description: this.copy.wheelchairRoutesCopy },
   ];
-  readonly menuItems: ProfileMenuItem[] = [
-    { id: 'contributions', title: this.copy.menuContributions, description: this.copy.menuContributionsCopy, icon: 'chatbubbles-outline', action: 'route', target: '/tabs/profile/my-contributions' },
-    { id: 'journey-history', title: this.copy.menuJourneyHistory, description: this.copy.menuJourneyHistoryCopy, icon: 'time-outline', action: 'route', target: '/tabs/profile/journey-history' },
-    { id: 'saved-destinations', title: this.copy.menuSavedDestinations, description: this.copy.menuSavedDestinationsCopy, icon: 'bookmark-outline', action: 'route', target: '/tabs/profile/saved-destinations' },
-    { id: 'settings', title: this.copy.menuSettings, description: this.copy.menuSettingsCopy, icon: 'settings-outline', action: 'route', target: '/tabs/profile/settings' },
-    { id: 'accessibility', title: this.copy.menuAccessibility, description: this.copy.menuAccessibilityCopy, icon: 'accessibility-outline', action: 'view', target: 'accessibility' },
-    { id: 'privacy', title: this.copy.menuPrivacy, description: this.copy.menuPrivacyCopy, icon: 'shield-outline', action: 'route', target: '/tabs/profile/privacy' },
-    { id: 'help', title: this.copy.menuHelp, description: this.copy.menuHelpCopy, icon: 'help-circle-outline', action: 'route', target: '/tabs/profile/help' },
-    { id: 'signout', title: this.copy.menuSignOut, description: this.copy.menuSignOutCopy, icon: 'log-out-outline', action: 'signout', target: '' },
-  ];
+
+  currentUser: UserProfile | null = this.authService.currentUser;
+
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated;
+  }
+
+  get menuItems(): ProfileMenuItem[] {
+    const isAuth = this.isAuthenticated;
+    return [
+      { id: 'contributions', title: this.copy.menuContributions, description: this.copy.menuContributionsCopy, icon: 'chatbubbles-outline', action: 'route', target: '/tabs/profile/my-contributions' },
+      { id: 'journey-history', title: this.copy.menuJourneyHistory, description: this.copy.menuJourneyHistoryCopy, icon: 'time-outline', action: 'route', target: '/tabs/profile/journey-history' },
+      { id: 'saved-destinations', title: this.copy.menuSavedDestinations, description: this.copy.menuSavedDestinationsCopy, icon: 'bookmark-outline', action: 'route', target: '/tabs/profile/saved-destinations' },
+      { id: 'settings', title: this.copy.menuSettings, description: this.copy.menuSettingsCopy, icon: 'settings-outline', action: 'route', target: '/tabs/profile/settings' },
+      { id: 'accessibility', title: this.copy.menuAccessibility, description: this.copy.menuAccessibilityCopy, icon: 'accessibility-outline', action: 'view', target: 'accessibility' },
+      { id: 'privacy', title: this.copy.menuPrivacy, description: this.copy.menuPrivacyCopy, icon: 'shield-outline', action: 'route', target: '/tabs/profile/privacy' },
+      { id: 'help', title: this.copy.menuHelp, description: this.copy.menuHelpCopy, icon: 'help-circle-outline', action: 'route', target: '/tabs/profile/help' },
+      isAuth
+        ? { id: 'signout', title: this.copy.menuSignOut, description: this.copy.menuSignOutCopy, icon: 'log-out-outline', action: 'signout', target: '' }
+        : { id: 'signin', title: { EN: 'Sign In / Register', BM: 'Log Masuk / Daftar' }, description: { EN: 'Connect account to sync stamps & rewards', BM: 'Sambung akaun untuk segerakkan cop & ganjaran' }, icon: 'log-in-outline', action: 'route', target: '/login' },
+    ];
+  }
   stamps: ProfileStamp[] = [];
   challengeMissions: ChallengeMission[] = [];
   unlockSteps: UnlockStep[] = [];
@@ -362,6 +371,39 @@ export class Tab4Page implements OnDestroy {
   savedNoticeCount = 0;
   private appliedAccessibilityPreferences = this.cloneAccessibilityPreferences(this.defaultAccessibilityPreferences);
 
+  getProfileSubtitle(): string {
+    if (!this.isAuthenticated || !this.currentUser) {
+      return this.language === 'BM'
+        ? 'Sambung akaun untuk segerakkan pasport & mata eko'
+        : 'Connect account to sync passport & eco-points';
+    }
+
+    if (this.currentUser.travelerType === 'malaysian') {
+      const state = this.currentUser.homeState || 'Malaysia';
+      return this.language === 'BM'
+        ? `${state} · Pengesahan MyKad`
+        : `${state} · MyKad Verified`;
+    } else if (this.currentUser.travelerType === 'foreign') {
+      const country = this.currentUser.nationality || 'International';
+      return this.language === 'BM'
+        ? `${country} · Pengesahan Pasport`
+        : `${country} · Passport Verified`;
+    }
+
+    return this.currentUser.email || (this.language === 'BM' ? 'Pengembara Disahkan' : 'Verified Traveler');
+  }
+
+  getUserTypeBadgeLabel(): string {
+    if (!this.currentUser) return '';
+    if (this.currentUser.travelerType === 'malaysian') {
+      return this.language === 'BM' ? '🇲🇾 Warganegara Malaysia · Disahkan' : '🇲🇾 Malaysian Citizen · Verified';
+    }
+    if (this.currentUser.travelerType === 'foreign') {
+      return this.language === 'BM' ? '🌐 Pelancong Luar Negara · Disahkan' : '🌐 Foreign Traveller · Verified';
+    }
+    return this.language === 'BM' ? 'Disahkan Firebase' : 'Firebase Verified';
+  }
+
   get filteredTransactions(): ProfileTransaction[] {
     if (this.transactionFilter === 'All') {
       return this.transactions;
@@ -383,6 +425,9 @@ export class Tab4Page implements OnDestroy {
   }
 
   get passportCollectedCount(): number {
+    if (!this.isAuthenticated) {
+      return 0;
+    }
     return this.stamps.filter((stamp) => stamp.active).length;
   }
 
@@ -395,7 +440,7 @@ export class Tab4Page implements OnDestroy {
   }
 
   get passportProgressWidth(): string {
-    if (this.passportTotalCount === 0) {
+    if (!this.isAuthenticated || this.passportTotalCount === 0) {
       return '0%';
     }
 
@@ -405,6 +450,10 @@ export class Tab4Page implements OnDestroy {
   get passportStatusLabel(): string {
     if (!this.passportProviderConnected || this.passportTotalCount === 0) {
       return this.t(this.copy.passportProviderPendingLabel);
+    }
+
+    if (!this.isAuthenticated) {
+      return '0/16';
     }
 
     return `${this.passportCollectedCount}/${this.passportTotalCount}`;
@@ -572,6 +621,21 @@ export class Tab4Page implements OnDestroy {
     this.applyAccessibilityPreferences(this.accessibilityPreferencesService.getPreferences());
     this.refreshAppState();
 
+    this.routeSubscription.add(
+      this.authService.currentUser$.subscribe((user) => {
+        this.currentUser = user;
+        this.refreshAppState();
+      })
+    );
+
+    this.routeSubscription.add(
+      this.passportService.stamps$.subscribe((stamps) => {
+        this.stamps = stamps;
+        this.passportProviderConnected = true;
+        this.syncSelectedStamp();
+      })
+    );
+
     this.routeSubscription.add(this.route.queryParamMap.subscribe((params) => {
       const requestedView = params.get('view');
 
@@ -618,15 +682,45 @@ export class Tab4Page implements OnDestroy {
     }
 
     if (item.action === 'signout') {
+      void this.authService.logout();
       this.appStateService.resetState();
       this.refreshAppState();
       this.view = 'profile';
       this.showToast(this.t(this.copy.signOutComplete));
-      void this.router.navigate(['/tabs/tab1']);
+      void this.router.navigate(['/login']);
       return;
     }
 
     void this.router.navigate([item.target]);
+  }
+
+  goToLogin(): void {
+    void this.router.navigate(['/login']);
+  }
+
+  async unlockSelectedStamp(): Promise<void> {
+    if (!this.isAuthenticated) {
+      this.showToast(
+        this.language === 'BM'
+          ? 'Sila log masuk untuk membuka cop pasport.'
+          : 'Please sign in to unlock passport stamps.'
+      );
+      this.goToLogin();
+      return;
+    }
+
+    if (!this.selectedStamp || this.selectedStamp.active) {
+      return;
+    }
+
+    const success = await this.passportService.unlockStamp(this.selectedStamp.id);
+    if (success) {
+      this.refreshAppState();
+      const msg = this.language === 'BM'
+        ? `Tahniah! Cop ${this.selectedStamp.name} berjaya dibuka (+50 Mata Eko)!`
+        : `Congratulations! ${this.selectedStamp.name} stamp unlocked (+50 Eco-Points)!`;
+      this.showToast(msg);
+    }
   }
 
   selectTransactionFilter(filter: TransactionFilter): void {
@@ -817,8 +911,10 @@ export class Tab4Page implements OnDestroy {
 
   private refreshAppState(): void {
     const state = this.appStateService.getSnapshot();
-    this.ecoPoints = state.ecoPoints;
-    this.transactions = state.transactions.map((transaction) => this.mapTransaction(transaction));
+    this.currentUser = this.authService.currentUser;
+    const isAuth = this.isAuthenticated;
+    this.ecoPoints = isAuth ? (this.currentUser?.ecoPoints ?? state.ecoPoints) : 0;
+    this.transactions = isAuth ? state.transactions.map((transaction) => this.mapTransaction(transaction)) : [];
     this.approvedContributionCount = state.contributions.filter((contribution) => contribution.status === 'Approved').length;
     this.pendingContributionCount = state.contributions.filter((contribution) => contribution.status !== 'Approved').length;
     this.journeyHistoryCount = state.journeyHistory.length;
@@ -873,11 +969,10 @@ export class Tab4Page implements OnDestroy {
     };
   }
 
-  // Firestore-backed progression remains unavailable until a provider is wired in.
   private loadPassportData(): ProviderCollection<ProfileStamp> {
     return {
-      connected: false,
-      items: [],
+      connected: true,
+      items: this.passportService.getStamps(),
     };
   }
 

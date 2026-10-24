@@ -5,28 +5,34 @@
       <img class="hero-image" src="assets/mytravel/timah-tasoh-hero.png" [alt]="t(copy.featuredDestinationAlt)">
       <div class="hero-shade"></div>
 
-      <app-topbar
-        [light]="true"
-        [extraClass]="'home-topbar'"
-        [language]="language"
-        [notificationCount]="savedNoticeCount"
-        (languageChange)="updateLanguage($event)"
-        (notificationClick)="openNotifications()"
-      ></app-topbar>
+      <div class="home-hero-inner">
+        <app-topbar
+          [light]="true"
+          [extraClass]="'home-topbar'"
+          [language]="language"
+          [notificationCount]="savedNoticeCount"
+          (languageChange)="updateLanguage($event)"
+          (notificationClick)="openNotifications()"
+        ></app-topbar>
 
-      <div class="welcome-copy mt-reveal">
-        <h2>{{ t(copy.welcomeTitle) }}</h2>
-        <div class="identity-pill">
-          <span class="identity-mark"><ion-icon aria-hidden="true" name="person-outline"></ion-icon></span>
-          <span>{{ t(copy.profileProviderPending) }}</span>
+        <div class="welcome-copy mt-reveal">
+          <h2>{{ t(copy.welcomeTitle) }}</h2>
+          <button class="identity-pill" type="button" (click)="isAuthenticated ? go('/tabs/tab4') : go('/login')">
+            <span class="identity-mark">
+              <ion-icon *ngIf="!isAuthenticated" aria-hidden="true" name="person-outline"></ion-icon>
+              <strong *ngIf="isAuthenticated && currentUser">{{ currentUser.initials }}</strong>
+            </span>
+            <span>{{ isAuthenticated && currentUser ? currentUser.displayName : (language === 'BM' ? 'Log Masuk / Daftar' : 'Sign In / Register') }}</span>
+            <ion-icon class="pill-arrow" aria-hidden="true" name="chevron-forward"></ion-icon>
+          </button>
         </div>
-      </div>
 
-      <img class="hero-wira" src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)">
-      <button class="destination-pill" type="button" [attr.aria-label]="destinationPillAriaLabel()" (click)="go('/tabs/tab2')">
-        <span><ion-icon aria-hidden="true" name="location"></ion-icon></span> {{ t(copy.destination) }}
-      </button>
-      <div class="carousel-dots" aria-hidden="true"><i></i><i></i><i></i><i class="active"></i><i></i></div>
+        <img class="hero-wira" src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)">
+        <button class="destination-pill" type="button" [attr.aria-label]="destinationPillAriaLabel()" (click)="go('/tabs/tab2')">
+          <span><ion-icon aria-hidden="true" name="location"></ion-icon></span> {{ t(copy.destination) }}
+        </button>
+        <div class="carousel-dots" aria-hidden="true"><i></i><i></i><i></i><i class="active"></i><i></i></div>
+      </div>
     </section>
 
     <main class="home-body">

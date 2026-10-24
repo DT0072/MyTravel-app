@@ -1,0 +1,232 @@
+<ion-content [fullscreen]="true">
+  <div class="mt-screen login-screen">
+    <div class="login-header-bar">
+      <button class="login-close-btn" type="button" aria-label="Back" (click)="goBack()">
+        <ion-icon aria-hidden="true" name="chevron-back"></ion-icon>
+      </button>
+      <app-topbar
+        [language]="language"
+        [showNotification]="false"
+        (languageChange)="updateLanguage($event)"
+      ></app-topbar>
+    </div>
+
+    <div class="login-hero mt-reveal">
+      <div class="brand-badge">
+        <img class="brand-logo" src="assets/mytravel/tourism-malaysia-logo.png" alt="Tourism Malaysia">
+        <img class="mascot-wira" src="assets/mytravel/wira-ui.png" alt="Wira mascot">
+      </div>
+      <h1>{{ t(copy.welcome) }}</h1>
+      <p>{{ t(copy.subtitle) }}</p>
+    </div>
+
+    <div class="auth-segment" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [class.active]="mode === 'signin'"
+        [attr.aria-selected]="mode === 'signin'"
+        (click)="setMode('signin')"
+      >
+        {{ t(copy.signInTab) }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="mode === 'register'"
+        [attr.aria-selected]="mode === 'register'"
+        (click)="setMode('register')"
+      >
+        {{ t(copy.registerTab) }}
+      </button>
+    </div>
+
+    <section class="mt-card auth-card mt-reveal">
+      <form (ngSubmit)="submit()" novalidate>
+        <ng-container *ngIf="mode === 'register'">
+          <div class="traveler-type-section">
+            <span class="field-title">{{ t(copy.travelerTypePrompt) }}</span>
+            <div class="traveler-type-toggle" role="radiogroup" [attr.aria-label]="t(copy.travelerTypePrompt)">
+              <button
+                type="button"
+                role="radio"
+                class="traveler-pill"
+                [class.active]="travelerType === 'malaysian'"
+                [attr.aria-checked]="travelerType === 'malaysian'"
+                (click)="travelerType = 'malaysian'"
+              >
+                <span class="pill-flag">🇲🇾</span>
+                <span>{{ t(copy.malaysianCitizen) }}</span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                class="traveler-pill"
+                [class.active]="travelerType === 'foreign'"
+                [attr.aria-checked]="travelerType === 'foreign'"
+                (click)="travelerType = 'foreign'"
+              >
+                <span class="pill-flag">🌐</span>
+                <span>{{ t(copy.foreignTraveller) }}</span>
+              </button>
+            </div>
+          </div>
+
+          <label class="auth-field">
+            <span>{{ t(copy.fullName) }}</span>
+            <div class="input-wrap">
+              <ion-icon aria-hidden="true" name="person-outline"></ion-icon>
+              <input
+                type="text"
+                name="fullName"
+                [(ngModel)]="name"
+                [placeholder]="t(copy.fullNamePlaceholder)"
+                autocomplete="name"
+                required
+              >
+            </div>
+          </label>
+
+          <!-- Malaysian Citizen Verification -->
+          <ng-container *ngIf="travelerType === 'malaysian'">
+            <label class="auth-field">
+              <span>{{ t(copy.mykadLabel) }}</span>
+              <div class="input-wrap">
+                <ion-icon aria-hidden="true" name="card-outline"></ion-icon>
+                <input
+                  type="text"
+                  name="mykad"
+                  [(ngModel)]="idNumber"
+                  [placeholder]="t(copy.mykadPlaceholder)"
+                  maxlength="14"
+                  autocomplete="off"
+                  required
+                >
+              </div>
+              <small class="field-hint">{{ t(copy.mykadHelper) }}</small>
+            </label>
+
+            <label class="auth-field">
+              <span>{{ t(copy.homeStateLabel) }}</span>
+              <div class="input-wrap select-wrap">
+                <ion-icon aria-hidden="true" name="location-outline"></ion-icon>
+                <select name="homeState" [(ngModel)]="homeState" required>
+                  <option *ngFor="let state of malaysianStates" [value]="state">{{ state }}</option>
+                </select>
+              </div>
+            </label>
+
+            <div class="verified-indicator malaysian-verified">
+              <ion-icon aria-hidden="true" name="shield-checkmark"></ion-icon>
+              <span>{{ t(copy.verifiedBadgeMalaysian) }}</span>
+            </div>
+          </ng-container>
+
+          <!-- Foreign Traveller Verification -->
+          <ng-container *ngIf="travelerType === 'foreign'">
+            <label class="auth-field">
+              <span>{{ t(copy.passportLabel) }}</span>
+              <div class="input-wrap">
+                <ion-icon aria-hidden="true" name="airplane-outline"></ion-icon>
+                <input
+                  type="text"
+                  name="passport"
+                  [(ngModel)]="idNumber"
+                  [placeholder]="t(copy.passportPlaceholder)"
+                  maxlength="20"
+                  autocomplete="off"
+                  required
+                >
+              </div>
+              <small class="field-hint">{{ t(copy.passportHelper) }}</small>
+            </label>
+
+            <label class="auth-field">
+              <span>{{ t(copy.nationalityLabel) }}</span>
+              <div class="input-wrap select-wrap">
+                <ion-icon aria-hidden="true" name="globe-outline"></ion-icon>
+                <select name="nationality" [(ngModel)]="nationality" required>
+                  <option *ngFor="let country of nationalities" [value]="country">{{ country }}</option>
+                </select>
+              </div>
+            </label>
+
+            <div class="verified-indicator foreign-verified">
+              <ion-icon aria-hidden="true" name="globe-outline"></ion-icon>
+              <span>{{ t(copy.verifiedBadgeForeign) }}</span>
+            </div>
+          </ng-container>
+        </ng-container>
+
+        <label class="auth-field">
+          <span>{{ t(copy.email) }}</span>
+          <div class="input-wrap">
+            <ion-icon aria-hidden="true" name="mail-outline"></ion-icon>
+            <input
+              type="email"
+              name="email"
+              [(ngModel)]="email"
+              [placeholder]="t(copy.emailPlaceholder)"
+              autocomplete="email"
+              required
+            >
+          </div>
+        </label>
+
+        <label class="auth-field">
+          <span>{{ t(copy.password) }}</span>
+          <div class="input-wrap">
+            <ion-icon aria-hidden="true" name="lock-closed-outline"></ion-icon>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="password"
+              [placeholder]="t(copy.passwordPlaceholder)"
+              autocomplete="current-password"
+              required
+            >
+            <button
+              type="button"
+              class="eye-btn"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              (click)="showPassword = !showPassword"
+            >
+              <ion-icon aria-hidden="true" [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+            </button>
+          </div>
+        </label>
+
+        <div *ngIf="errorMessage" class="auth-error" role="alert">
+          <ion-icon aria-hidden="true" name="alert-circle-outline"></ion-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <button
+          class="mt-primary auth-submit"
+          type="submit"
+          [disabled]="loading"
+        >
+          <span *ngIf="!loading">{{ mode === 'signin' ? t(copy.signInAction) : t(copy.registerAction) }}</span>
+          <span *ngIf="loading" class="spinner-dot">...</span>
+        </button>
+      </form>
+
+      <div class="auth-divider">
+        <i></i><span>{{ t(copy.or) }}</span><i></i>
+      </div>
+
+      <button
+        class="mt-secondary guest-btn"
+        type="button"
+        (click)="continueAsGuest()"
+      >
+        <ion-icon aria-hidden="true" name="compass-outline"></ion-icon>
+        <span>{{ t(copy.guestAction) }}</span>
+      </button>
+
+      <p class="guest-notice">{{ t(copy.guestNotice) }}</p>
+    </section>
+  </div>
+
+  <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
+</ion-content>

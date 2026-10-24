@@ -120,7 +120,7 @@ export class Tab2Page implements OnDestroy {
   private routePlanSubscription?: Subscription;
   private localizedDataSubscription = new Subscription();
   private readonly uiTimeouts = new ManagedTimeouts();
-  @ViewChild('navigationContent') private navigationContent?: IonContent;
+  @ViewChild('navigationContent') private navigationContent?: any;
   @ViewChild('resultsHeading') private resultsHeadingRef?: ElementRef<HTMLElement>;
   @ViewChild('routeSheet') private routeSheetRef?: ElementRef<HTMLElement>;
   readonly copy = NAVIGATION_COPY;

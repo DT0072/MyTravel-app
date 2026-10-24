@@ -334,6 +334,29 @@ export class AppStateService {
     });
   }
 
+  awardEcoPoints(
+    points: number,
+    options?: { title?: string; subtitle?: string; status?: 'Earned' | 'Pending' },
+  ): void {
+    const createdAt = new Date().toISOString();
+    const transaction: PointTransaction | null = options?.title
+      ? {
+          id: this.createId('transaction'),
+          title: options.title,
+          subtitle: options.subtitle || '',
+          points,
+          status: options.status || 'Earned',
+          createdAt,
+        }
+      : null;
+
+    this.updateState((state) => ({
+      ...state,
+      ecoPoints: Math.max(0, state.ecoPoints + points),
+      transactions: transaction ? [transaction, ...state.transactions] : state.transactions,
+    }));
+  }
+
   private updateState(updater: (state: PersistedAppState) => PersistedAppState): void {
     const nextState = updater(this.getSnapshot());
     this.stateSubject.next(nextState);

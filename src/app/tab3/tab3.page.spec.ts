@@ -563,8 +563,7 @@ describe('Tab3Page', () => {
       ],
     });
 
-    fixture = TestBed.createComponent(Tab3Page);
-    component = fixture.componentInstance;
+    component.ionViewWillEnter();
     fixture.detectChanges();
 
     const authorMeta = fixture.nativeElement.querySelector('.author small') as HTMLElement;

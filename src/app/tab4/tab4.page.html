@@ -9,7 +9,23 @@
 
     <ng-container *ngIf="view === 'profile'">
       <div class="mt-page-heading"><h1>{{ t(copy.pageTitle) }}</h1><p>{{ t(copy.pageSubtitle) }}</p></div>
-      <section class="mt-card profile-card"><span>{{ t(copy.profileProviderBadge) }}</span><div><h2>{{ t(copy.profileProviderTitle) }}</h2><p>{{ t(copy.profileProviderCopy) }}</p><b>{{ t(copy.profileProviderStatus) }}</b></div></section>
+      <section class="mt-card profile-card" [class.unauthenticated]="!isAuthenticated" (click)="!isAuthenticated ? goToLogin() : null">
+        <span>{{ isAuthenticated && currentUser ? currentUser.initials : '?' }}</span>
+        <div class="profile-card-content">
+          <div class="profile-title-row">
+            <h2>{{ isAuthenticated && currentUser ? currentUser.displayName : (language === 'BM' ? 'Sila Log Masuk' : 'Sign In to MyTravel') }}</h2>
+            <ion-icon *ngIf="!isAuthenticated" aria-hidden="true" name="chevron-forward"></ion-icon>
+          </div>
+          <p>{{ getProfileSubtitle() }}</p>
+          <div class="profile-badge-row">
+            <span *ngIf="isAuthenticated" class="user-badge" [class.badge-malaysian]="currentUser?.travelerType === 'malaysian'" [class.badge-foreign]="currentUser?.travelerType === 'foreign'">
+              <ion-icon aria-hidden="true" [name]="currentUser?.travelerType === 'foreign' ? 'globe-outline' : 'shield-checkmark'"></ion-icon>
+              {{ getUserTypeBadgeLabel() }}
+            </span>
+            <b *ngIf="!isAuthenticated">{{ language === 'BM' ? 'Ketik untuk log masuk' : 'Tap to sign in' }}</b>
+          </div>
+        </div>
+      </section>
       <section class="stat-grid"><button class="mt-card" type="button" [attr.aria-label]="profilePointsCardAriaLabel()" (click)="open('points')"><span><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span><div><strong>{{ ecoPoints | number }}</strong><small>{{ t(copy.ecoPoints) }}</small></div></button><button class="mt-card" type="button" [attr.aria-label]="profilePassportCardAriaLabel()" (click)="open('passport')"><span><ion-icon aria-hidden="true" name="book-outline"></ion-icon></span><div><b>{{ t(copy.digitalPassport) }}</b><strong>{{ passportStatusLabel }}</strong><i><u [style.width]="passportProgressWidth"></u></i></div></button></section>
       <button class="mt-card challenge-banner" type="button" [attr.aria-label]="profileChallengeBannerAriaLabel()" (click)="open('challenges')"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ challengeBannerTitleLabel }}</b><small class="mt-multiline">{{ challengeBannerCopyLabel }}</small></span></button>
       <section class="mt-card settings-list"><h2>{{ t(copy.accountSettings) }}</h2><button *ngFor="let item of menuItems" type="button" [class.signout]="item.action === 'signout'" [attr.aria-label]="profileMenuItemAriaLabel(item)" (click)="handleMenu(item)"><ion-icon aria-hidden="true" [name]="item.icon"></ion-icon><span><b>{{ t(item.title) }}</b><small>{{ menuDescription(item) }}</small></span><ion-icon aria-hidden="true" name="chevron-forward" *ngIf="item.action !== 'signout'"></ion-icon></button></section>
@@ -21,20 +37,87 @@
 
     <ng-container *ngIf="view === 'points'">
       <section class="mt-card balance-card"><span><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span><div><small>{{ t(copy.currentBalance) }}</small><strong>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</strong></div><p class="mt-multiline">{{ t(copy.balanceCardCopy) }}</p></section>
+
+      <!-- Prominent Sign-in Prompt when not logged in -->
+      <section class="mt-card auth-cta-card points-auth-cta" *ngIf="!isAuthenticated">
+        <div class="auth-cta-content">
+          <div class="auth-cta-icon points-icon">
+            <ion-icon aria-hidden="true" name="gift-outline"></ion-icon>
+          </div>
+          <div class="auth-cta-text">
+            <h3>{{ language === 'BM' ? 'Sila Log Masuk untuk Meneruskan / Dapatkan Lebih Ganjaran' : 'Please Sign-in to Continue / Get more Rewards' }}</h3>
+            <p>{{ language === 'BM' ? 'Log masuk untuk mula meraih Mata Eko daripada perjalanan pengangkutan awam lestari, pengesahan laluan dan membuka ganjaran VM2026.' : 'Sign in to start earning Eco-Points from sustainable transit rides, route verifications, and unlock exciting rewards.' }}</p>
+          </div>
+        </div>
+        <button class="mt-primary signin-action-btn" type="button" (click)="goToLogin()">
+          <ion-icon aria-hidden="true" name="log-in-outline"></ion-icon>
+          <span>{{ language === 'BM' ? 'Log Masuk / Daftar' : 'Sign In / Register' }}</span>
+        </button>
+      </section>
+
       <section class="mt-card season-card"><div><h2>{{ seasonCardTitleLabel }}</h2><p>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</p><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><button type="button" [attr.aria-label]="seasonCardButtonAriaLabel()" (click)="open('challenges')">{{ seasonCardActionLabel }}</button></div><img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"></section>
       <div class="segment-row" role="group" [attr.aria-label]="t(copy.transactionFiltersAria)"><button type="button" [class.active]="transactionFilter === 'All'" [attr.aria-label]="transactionFilterAriaLabel('All')" [attr.aria-pressed]="transactionFilter === 'All'" (click)="selectTransactionFilter('All')">{{ t(copy.filterAll) }}</button><button type="button" [class.active]="transactionFilter === 'Earned'" [attr.aria-label]="transactionFilterAriaLabel('Earned')" [attr.aria-pressed]="transactionFilter === 'Earned'" (click)="selectTransactionFilter('Earned')">{{ t(copy.filterEarned) }}</button><button type="button" [class.active]="transactionFilter === 'Pending'" [attr.aria-label]="transactionFilterAriaLabel('Pending')" [attr.aria-pressed]="transactionFilter === 'Pending'" (click)="selectTransactionFilter('Pending')">{{ t(copy.filterPending) }}</button></div>
-      <section class="mt-card transaction-card"><h2>{{ t(copy.transactionHistory) }}</h2><div *ngFor="let transaction of filteredTransactions"><span [style.background]="transaction.accent"><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span><div><b>{{ t(transaction.title) }}</b><small>{{ t(transaction.subtitle) }}</small></div><strong>{{ transaction.points }}</strong></div><p class="empty-state" *ngIf="filteredTransactions.length === 0">{{ t(copy.noTransactions).replace('{filter}', transactionFilterLabel(transactionFilter).toLowerCase()) }}</p></section>
+      <section class="mt-card transaction-card">
+        <h2>{{ t(copy.transactionHistory) }}</h2>
+        <div *ngIf="isAuthenticated">
+          <div *ngFor="let transaction of filteredTransactions"><span [style.background]="transaction.accent"><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span><div><b>{{ t(transaction.title) }}</b><small>{{ t(transaction.subtitle) }}</small></div><strong>{{ transaction.points }}</strong></div>
+          <p class="empty-state" *ngIf="filteredTransactions.length === 0">{{ t(copy.noTransactions).replace('{filter}', transactionFilterLabel(transactionFilter).toLowerCase()) }}</p>
+        </div>
+        <div *ngIf="!isAuthenticated" class="unauth-trans-state">
+          <p class="empty-state">{{ language === 'BM' ? 'Sila log masuk untuk melihat rekod transaksi Mata Eko anda.' : 'Please sign in to view your Eco-Points transaction history.' }}</p>
+        </div>
+      </section>
       <section class="mt-card earn-card"><h2>{{ t(copy.howToEarn) }}</h2><div><span><b>{{ t(copy.earnTransit) }}</b><small>{{ t(copy.earnTransitCopy) }}</small></span><span><b>{{ t(copy.earnVisits) }}</b><small>{{ t(copy.earnVisitsCopy) }}</small></span><span><b>{{ t(copy.earnCommunity) }}</b><small>{{ t(copy.earnCommunityCopy) }}</small></span><span><b>{{ t(copy.earnVerification) }}</b><small>{{ t(copy.earnVerificationCopy) }}</small></span></div></section>
     </ng-container>
 
     <ng-container *ngIf="view === 'passport'">
       <section class="mt-card passport-progress"><span><ion-icon aria-hidden="true" name="book-outline"></ion-icon></span><div><strong>{{ passportStatusLabel }}</strong><small>{{ t(copy.digitalPassport) }}</small><div class="mt-progress"><span [style.width]="passportProgressWidth"></span></div></div><button type="button" [attr.aria-label]="passportRewardsButtonAriaLabel()" (click)="open('reward')">{{ t(copy.viewRewards) }}</button></section>
+
+      <!-- Prominent Sign-in Prompt when not logged in -->
+      <section class="mt-card auth-cta-card passport-auth-cta" *ngIf="!isAuthenticated">
+        <div class="auth-cta-content">
+          <div class="auth-cta-icon locked-icon">
+            <ion-icon aria-hidden="true" name="lock-closed"></ion-icon>
+          </div>
+          <div class="auth-cta-text">
+            <h3>{{ language === 'BM' ? 'Sila Log Masuk untuk Meneruskan' : 'Please Sign-in to Continue' }}</h3>
+            <p>{{ language === 'BM' ? 'Pasport Digital anda dikunci. Sila log masuk atau daftar akaun untuk mula mengumpul cop negeri di seluruh Malaysia.' : 'Your Digital Passport is locked. Please sign in or register to begin collecting state stamps across Malaysia.' }}</p>
+          </div>
+        </div>
+        <button class="mt-primary signin-action-btn" type="button" (click)="goToLogin()">
+          <ion-icon aria-hidden="true" name="log-in-outline"></ion-icon>
+          <span>{{ language === 'BM' ? 'Log Masuk / Daftar' : 'Sign In / Register' }}</span>
+        </button>
+      </section>
+
       <ng-container *ngIf="passportProviderConnected">
         <div class="passport-tabs" role="group" [attr.aria-label]="t(copy.passportFiltersAria)"><button type="button" [class.active]="passportFilter === 'All'" [attr.aria-label]="passportFilterAriaLabel('All')" [attr.aria-pressed]="passportFilter === 'All'" (click)="selectPassportFilter('All')">{{ t(copy.passportAll) }} ({{ passportTotalCount }})</button><button type="button" [class.active]="passportFilter === 'States'" [attr.aria-label]="passportFilterAriaLabel('States')" [attr.aria-pressed]="passportFilter === 'States'" (click)="selectPassportFilter('States')">{{ t(copy.passportStates) }} ({{ passportStateCount }})</button><button type="button" [class.active]="passportFilter === 'Federal Territories'" [attr.aria-label]="passportFilterAriaLabel('Federal Territories')" [attr.aria-pressed]="passportFilter === 'Federal Territories'" (click)="selectPassportFilter('Federal Territories')">{{ t(copy.passportFederal) }} ({{ passportFederalCount }})</button></div><h2 class="section-label">{{ passportSectionLabel }}</h2>
         <div class="stamp-grid" *ngIf="filteredStamps.length > 0"><button *ngFor="let stamp of filteredStamps" type="button" [class.active]="stamp.active" [class.selected]="selectedStamp?.name === stamp.name" [attr.aria-label]="passportStampAriaLabel(stamp)" [attr.aria-pressed]="selectedStamp?.name === stamp.name" (click)="selectStamp(stamp)"><span><img [src]="stamp.image" alt="" aria-hidden="true"></span><small>{{ stamp.name }}</small><i *ngIf="stamp.active" aria-hidden="true">✓</i></button></div>
       </ng-container>
       <section class="mt-card empty-data-card" *ngIf="!passportProviderConnected || filteredStamps.length === 0"><h2>{{ t(copy.noPassportData) }}</h2><p>{{ passportEmptyStateCopyLabel }}</p></section>
-      <section class="mt-card stamp-feature" *ngIf="passportProviderConnected && selectedStamp"><div><span><img [src]="selectedStamp.image" [alt]="selectedStamp.name + ' passport seal'"></span><h2>{{ selectedStamp.name }}</h2><b>{{ t(selectedStamp.label) }}</b><p>{{ t(selectedStamp.description) }}</p></div><img [src]="selectedStamp.heroImage" [alt]="selectedStamp.name + ' feature'"></section>
+      <section class="mt-card stamp-feature" *ngIf="passportProviderConnected && selectedStamp">
+        <div>
+          <span><img [src]="selectedStamp.image" [alt]="selectedStamp.name + ' passport seal'"></span>
+          <h2>{{ selectedStamp.name }}</h2>
+          <b>{{ t(selectedStamp.label) }}</b>
+          <p>{{ t(selectedStamp.description) }}</p>
+          <div class="stamp-action-row" *ngIf="!selectedStamp.active">
+            <button *ngIf="isAuthenticated" class="unlock-stamp-btn" type="button" (click)="unlockSelectedStamp()">
+              <ion-icon aria-hidden="true" name="sparkles-outline"></ion-icon>
+              {{ language === 'BM' ? 'Buka Cop Ini (+50 Mata)' : 'Unlock Stamp (+50 Pts)' }}
+            </button>
+            <button *ngIf="!isAuthenticated" class="unlock-stamp-btn signin-required-btn" type="button" (click)="goToLogin()">
+              <ion-icon aria-hidden="true" name="lock-closed-outline"></ion-icon>
+              {{ language === 'BM' ? 'Sila Log Masuk untuk Buka Cop' : 'Please Sign-in to Unlock' }}
+            </button>
+          </div>
+          <div class="stamp-collected-badge" *ngIf="selectedStamp.active">
+            <ion-icon aria-hidden="true" name="checkmark-circle"></ion-icon>
+            <span>{{ language === 'BM' ? 'Cop Dikumpul' : 'Stamp Collected' }}</span>
+          </div>
+        </div>
+        <img [src]="selectedStamp.heroImage" [alt]="selectedStamp.name + ' feature'">
+      </section>
       <section class="mt-card guide-card"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ t(copy.manjaGuide) }}</b><small>{{ t(copy.manjaGuideCopy) }}</small></span></section>
     </ng-container>
 

@@ -131,6 +131,12 @@ ion-content::part(scroll)::-webkit-scrollbar {
   color: var(--mt-ink);
 }
 
+.home-hero, .home-body, .home-scroll-shell {
+  width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
 .mt-topbar {
   min-height: clamp(45px, calc(45px * var(--mt-text-scale)), 58px);
   display: grid;
@@ -661,7 +667,7 @@ input, select, textarea, button { min-width: 0; }
 
 @media (min-width: 480px) and (max-width: 839px) {
   .mt-screen { width: min(100%, 760px) !important; }
-  .home-scroll-shell { max-width: 760px; }
+  .home-hero, .home-body, .home-scroll-shell { width: 100% !important; max-width: none !important; margin-inline: 0 !important; }
   .mt-screen { padding-inline: var(--mt-topbar-inset); }
   .home-body { padding-inline: clamp(20px, 4vw, 34px) !important; }
   .quick-grid { gap: clamp(10px, 2vw, 18px) !important; }

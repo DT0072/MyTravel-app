@@ -55,7 +55,7 @@ const LOGIN_COPY = {
   signInTab: { EN: 'Sign In', BM: 'Log Masuk' },
   registerTab: { EN: 'Create Account', BM: 'Daftar Akaun' },
   fullName: { EN: 'Full name', BM: 'Nama penuh' },
-  fullNamePlaceholder: { EN: 'e.g. Kelvin Kan', BM: 'cth. Kelvin Kan' },
+  fullNamePlaceholder: { EN: 'e.g. John Doe', BM: 'cth. John Doe' },
   email: { EN: 'Email address', BM: 'Alamat e-mel' },
   emailPlaceholder: { EN: 'traveller@example.com', BM: 'pengembara@example.com' },
   password: { EN: 'Password', BM: 'Kata laluan' },

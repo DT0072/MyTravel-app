@@ -1,9 +1,9 @@
 export class ManagedTimeouts {
-  private readonly handles = new Map<string, ReturnType<typeof window.setTimeout>>();
+  private readonly handles = new Map<string, any>();
 
   schedule(key: string, callback: () => void, delay: number): void {
     this.clear(key);
-    const handle = window.setTimeout(() => {
+    const handle = setTimeout(() => {
       this.handles.delete(key);
       callback();
     }, delay);
@@ -17,12 +17,12 @@ export class ManagedTimeouts {
       return;
     }
 
-    window.clearTimeout(handle);
+    clearTimeout(handle);
     this.handles.delete(key);
   }
 
   clearAll(): void {
-    this.handles.forEach((handle) => window.clearTimeout(handle));
+    this.handles.forEach((handle) => clearTimeout(handle));
     this.handles.clear();
   }
 }

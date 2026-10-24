@@ -1,6 +1,6 @@
 <header [class]="classes.join(' ')">
   <img class="mt-brand" src="assets/mytravel/tourism-malaysia-logo.png" [alt]="brandLogoAlt">
-  <div class="mt-wordmark" aria-hidden="true"></div>
+  <div class="mt-wordmark" aria-hidden="true">MyTravel</div>
   <div class="mt-top-actions">
     <button *ngIf="showLanguageToggle" class="mt-language" type="button" [attr.aria-label]="languageToggleAriaLabel" (click)="toggleLanguage()">
       <span aria-hidden="true" [class.selected]="language === 'BM'">BM</span>

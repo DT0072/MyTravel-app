@@ -114,6 +114,9 @@ const LOGIN_COPY = {
     BM: 'Akaun dicipta! Disahkan sebagai Pelancong Luar Negara.',
   },
   successGuest: { EN: 'Exploring as guest', BM: 'Meneroka sebagai tetamu' },
+  googleAction: { EN: 'Continue with Google', BM: 'Teruskan dengan Google' },
+  successLoginGoogle: { EN: 'Signed in with Google!', BM: 'Log masuk dengan Google berjaya!' },
+  googlePopupClosed: { EN: 'Google sign-in was cancelled.', BM: 'Log masuk Google dibatalkan.' },
   missingFields: { EN: 'Please complete all required fields.', BM: 'Sila lengkapkan semua ruangan yang diperlukan.' },
   passwordShort: { EN: 'Password must be at least 6 characters.', BM: 'Kata laluan mestilah sekurang-kurangnya 6 aksara.' },
   authFailed: { EN: 'Invalid email or password. Please try again.', BM: 'E-mel atau kata laluan tidak sah. Sila cuba lagi.' },
@@ -243,6 +246,29 @@ export class LoginPage {
         this.errorMessage = this.t(this.copy.networkError);
       } else if (errorMsg === 'auth/too-many-requests') {
         this.errorMessage = this.t(this.copy.tooManyRequests);
+      } else {
+        this.errorMessage = this.t(this.copy.authFailed);
+      }
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async signInWithGoogle(): Promise<void> {
+    this.errorMessage = '';
+    this.loading = true;
+    try {
+      await this.auth.loginWithGoogle();
+      this.showToast(this.t(this.copy.successLoginGoogle));
+      setTimeout(() => {
+        void this.router.navigate(['/tabs/tab4']);
+      }, 500);
+    } catch (err: unknown) {
+      const errorMsg = (err as { code?: string })?.code || '';
+      if (errorMsg === 'auth/popup-closed-by-user') {
+        this.errorMessage = this.t(this.copy.googlePopupClosed);
+      } else if (errorMsg === 'auth/network-request-failed') {
+        this.errorMessage = this.t(this.copy.networkError);
       } else {
         this.errorMessage = this.t(this.copy.authFailed);
       }

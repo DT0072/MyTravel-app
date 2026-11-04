@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import {
+  GoogleAuthProvider,
   User,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
 } from 'firebase/auth';
@@ -23,6 +25,7 @@ export interface UserProfile {
   isGuest: boolean;
   createdAt: string;
   photoURL?: string | null;
+  provider?: string;
   travelerType?: TravelerType;
   idNumber?: string;
   nationality?: string;
@@ -46,6 +49,11 @@ export class AuthService {
 
   constructor() {
     this.initAuthListener();
+    this.appState.state$?.subscribe((state) => {
+      if (this.isAuthenticated && this.currentUser && state.ecoPoints > this.currentUser.ecoPoints) {
+        void this.updateEcoPoints(state.ecoPoints);
+      }
+    });
   }
 
   get currentUser(): UserProfile | null {
@@ -63,10 +71,14 @@ export class AuthService {
       if (firebaseUser) {
         this.clearGuestUser();
         const profile = await this.fetchOrCreateProfile(firebaseUser);
-        this.currentUserSubject.next(profile);
-        if (profile.ecoPoints > 0) {
-          this.appState.awardEcoPoints(0, { title: 'Account Sync', subtitle: 'Firebase profile synced' });
+        const localPoints = this.appState.getSnapshot().ecoPoints;
+        if (localPoints > profile.ecoPoints) {
+          profile.ecoPoints = localPoints;
+          void this.updateEcoPoints(localPoints);
+        } else if (profile.ecoPoints > localPoints) {
+          this.appState.syncEcoPoints(profile.ecoPoints);
         }
+        this.currentUserSubject.next(profile);
       } else {
         const guest = this.loadGuestUser();
         this.currentUserSubject.next(guest);
@@ -76,7 +88,16 @@ export class AuthService {
 
   async login(email: string, pass: string): Promise<UserProfile> {
     const cred = await signInWithEmailAndPassword(this.fb.auth, email, pass);
-    const profile = await this.fetchOrCreateProfile(cred.user);
+    const profile = await this.fetchOrCreateProfile(cred.user, 'password');
+    this.currentUserSubject.next(profile);
+    return profile;
+  }
+
+  async loginWithGoogle(): Promise<UserProfile> {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const cred = await signInWithPopup(this.fb.auth, provider);
+    const profile = await this.fetchOrCreateProfile(cred.user, 'google.com');
     this.currentUserSubject.next(profile);
     return profile;
   }
@@ -99,14 +120,18 @@ export class AuthService {
 
     const initials = this.computeInitials(displayName || email);
     const travelerType = verificationData?.travelerType || 'malaysian';
+    const localPoints = this.appState.getSnapshot().ecoPoints;
+    const initialPoints = localPoints > 0 ? localPoints + 50 : 120;
+    this.appState.syncEcoPoints(initialPoints);
     const newProfile: UserProfile = {
       uid: cred.user.uid,
       email: cred.user.email,
       displayName: displayName.trim() || 'Traveler',
       initials,
-      ecoPoints: this.appState.getSnapshot().ecoPoints || 120,
+      ecoPoints: initialPoints,
       isGuest: false,
       createdAt: new Date().toISOString(),
+      provider: 'password',
       travelerType,
       idNumber: verificationData?.idNumber?.trim() || '',
       nationality: travelerType === 'malaysian' ? 'Malaysia' : (verificationData?.nationality?.trim() || 'International'),
@@ -173,8 +198,9 @@ export class AuthService {
     }
   }
 
-  private async fetchOrCreateProfile(user: User): Promise<UserProfile> {
+  private async fetchOrCreateProfile(user: User, providerId?: string): Promise<UserProfile> {
     const userDocRef = doc(this.fb.db, 'users', user.uid);
+    const resolvedProvider = providerId || user.providerData?.[0]?.providerId || 'password';
     try {
       const snap = await getDoc(userDocRef);
       if (snap.exists()) {
@@ -187,7 +213,8 @@ export class AuthService {
           ecoPoints: typeof data.ecoPoints === 'number' ? data.ecoPoints : 100,
           isGuest: false,
           createdAt: data.createdAt || new Date().toISOString(),
-          photoURL: user.photoURL || null,
+          photoURL: user.photoURL || data.photoURL || null,
+          provider: data.provider || resolvedProvider,
           travelerType: data.travelerType || 'malaysian',
           idNumber: data.idNumber || '',
           nationality: data.nationality || (data.travelerType === 'foreign' ? 'International' : 'Malaysia'),
@@ -210,6 +237,7 @@ export class AuthService {
       isGuest: false,
       createdAt: new Date().toISOString(),
       photoURL: user.photoURL || null,
+      provider: resolvedProvider,
       travelerType: 'malaysian',
       idNumber: '',
       nationality: 'Malaysia',

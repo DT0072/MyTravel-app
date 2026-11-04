@@ -80,21 +80,21 @@ describe('Tab1Page', () => {
     fixture.detectChanges();
   });
 
-  it('should create with provider-ready empty home events', () => {
+  it('should create with seeded home events and verification tasks', () => {
     expect(component).toBeTruthy();
-    expect(component.events.length).toBe(0);
-    expect(component.verificationTask).toBeNull();
+    expect(component.events.length).toBe(3);
+    expect(component.verificationTask?.id).toBe('verification-kl-sentral-access');
     expect(component.savedNoticeCount).toBe(0);
-    expect(component.challengeProgressWidth).toBe('0%');
-    expect(component.weeklyMissionTitleLabel).toBe('Rewards provider pending');
-    expect(component.weeklyMissionActionLabel).toBe('View\nstatus');
-    expect(component.passportProgressSummary()).toBe('Passport stamps will appear here when your Firestore passport provider is connected.');
-    expect(component.weeklyMissionSummary()).toBe('Challenge progress will appear here when your Firestore rewards provider is connected.');
-    expect(component.verificationCardSummary()).toBe('Verification checkpoints will appear here when your Firestore verification provider is connected.');
-    expect(component.verificationCardBadge()).toBe('Awaiting\nprovider');
+    expect(component.challengeProgressWidth).toBe('29%');
+    expect(component.weeklyMissionTitleLabel).toBe('Weekly Mission with Wira');
+    expect(component.weeklyMissionActionLabel).toBe('View\nmission');
+    expect(component.passportProgressSummary()).toBe('3/4 stamps unlocked');
+    expect(component.weeklyMissionSummary()).toBe('2 of 7 challenge steps completed this season.');
+    expect(component.verificationCardSummary()).toBe('Next checkpoint: KL Sentral station. 0/2 completed.');
+    expect(component.verificationCardBadge()).toBe('+40\nEco-Points');
   });
 
-  it('keeps verification empty-state copy even when completed ids exist locally', () => {
+  it('advances to the next verification task when completed ids exist locally', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
       savedNoticeIds: ['notice-kelana-jaya-delay', 'notice-melaka-heat'],
@@ -103,12 +103,12 @@ describe('Tab1Page', () => {
 
     component.ionViewWillEnter();
 
-    expect(component.verificationTask).toBeNull();
+    expect(component.verificationTask?.id).toBe('verification-pasar-seni-access');
     expect(component.savedNoticeCount).toBe(2);
-    expect(component.verificationCardSummary()).toBe('Verification checkpoints will appear here when your Firestore verification provider is connected.');
+    expect(component.verificationCardSummary()).toBe('Next checkpoint: Pasar Seni station. 1/2 completed.');
   });
 
-  it('keeps the events feed empty when the language changes', () => {
+  it('localizes the events feed and dashboard summaries when the language changes', () => {
     accessibilityPreferencesService.setLanguage.and.returnValue({
       ...preferences,
       language: 'BM',
@@ -117,16 +117,16 @@ describe('Tab1Page', () => {
     component.updateLanguage('BM');
 
     expect(component.language).toBe('BM');
-    expect(component.events).toEqual([]);
-    expect(component.weeklyMissionTitleLabel).toBe('Penyedia ganjaran belum disambungkan');
-    expect(component.weeklyMissionActionLabel).toBe('Lihat\nstatus');
-    expect(component.passportProgressSummary()).toBe('Cop pasport akan dipaparkan di sini apabila penyedia pasport Firestore anda disambungkan.');
-    expect(component.weeklyMissionSummary()).toBe('Kemajuan cabaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.');
-    expect(component.verificationCardSummary()).toBe('Pusat semakan pengesahan akan dipaparkan di sini apabila penyedia pengesahan Firestore anda disambungkan.');
-    expect(component.verificationCardBadge()).toBe('Menunggu\npenyedia');
+    expect(component.events.length).toBe(3);
+    expect(component.weeklyMissionTitleLabel).toBe('Misi Mingguan bersama Wira');
+    expect(component.weeklyMissionActionLabel).toBe('Lihat\nmisi');
+    expect(component.passportProgressSummary()).toBe('3/4 cop dibuka');
+    expect(component.weeklyMissionSummary()).toBe('2 daripada 7 langkah cabaran selesai musim ini.');
+    expect(component.verificationCardSummary()).toBe('Pusat semakan seterusnya: Stesen KL Sentral. 0/2 selesai.');
+    expect(component.verificationCardBadge()).toBe('+40\nMata Eko');
   });
 
-  it('keeps passport and mission summaries provider-ready even when local travel activity exists', () => {
+  it('updates passport and mission summaries when local travel activity exists', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
       ecoPoints: 80,
@@ -184,21 +184,30 @@ describe('Tab1Page', () => {
 
     component.ionViewWillEnter();
 
-    expect(component.challengeProgressWidth).toBe('0%');
-    expect(component.weeklyMissionTitleLabel).toBe('Rewards provider pending');
-    expect(component.weeklyMissionActionLabel).toBe('View\nstatus');
-    expect(component.passportProgressSummary()).toBe('Passport stamps will appear here when your Firestore passport provider is connected.');
-    expect(component.weeklyMissionSummary()).toBe('Challenge progress will appear here when your Firestore rewards provider is connected.');
-    expect(component.verificationCardSummary()).toBe('Verification checkpoints will appear here when your Firestore verification provider is connected.');
+    expect(component.challengeProgressWidth).toBe('71%');
+    expect(component.weeklyMissionTitleLabel).toBe('Weekly Mission with Wira');
+    expect(component.weeklyMissionActionLabel).toBe('View\nmission');
+    expect(component.passportProgressSummary()).toBe('4/4 stamps unlocked');
+    expect(component.weeklyMissionSummary()).toBe('5 of 7 challenge steps completed this season.');
+    expect(component.verificationCardSummary()).toBe('Next checkpoint: Pasar Seni station. 1/2 completed.');
   });
 
   it('ignores verification submission when no provider-backed task exists', () => {
     appStateService.getSnapshot.and.returnValues(
-      createState(),
+      {
+        ...createState(),
+        completedVerificationIds: [
+          'verification-kl-sentral-access',
+          'verification-pasar-seni-access',
+        ],
+      },
       {
         ...createState(),
         ecoPoints: 160,
-        completedVerificationIds: ['verification-kl-sentral-access'],
+        completedVerificationIds: [
+          'verification-kl-sentral-access',
+          'verification-pasar-seni-access',
+        ],
       },
     );
 
@@ -217,7 +226,13 @@ describe('Tab1Page', () => {
   it('keeps verification submit feedback stable when refresh clears the active task', () => {
     appStateService.getSnapshot.and.returnValues(
       createState(),
-      createState(),
+      {
+        ...createState(),
+        completedVerificationIds: [
+          'verification-kl-sentral-access',
+          'verification-pasar-seni-access',
+        ],
+      },
     );
 
     fixture = TestBed.createComponent(Tab1Page);
@@ -245,7 +260,7 @@ describe('Tab1Page', () => {
     expect(component.toast).toBe('+20 Eco-Points earned. Thank you!');
   });
 
-  it('keeps the provider-ready empty-state when all historical verification ids are present', () => {
+  it('shows the all-done state when all historical verification ids are present', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
       completedVerificationIds: [
@@ -257,8 +272,8 @@ describe('Tab1Page', () => {
     component.ionViewWillEnter();
 
     expect(component.verificationTask).toBeNull();
-    expect(component.verificationCardSummary()).toBe('Verification checkpoints will appear here when your Firestore verification provider is connected.');
-    expect(component.verificationCardBadge()).toBe('Awaiting\nprovider');
+    expect(component.verificationCardSummary()).toBe('All 2 nearby checkpoints are completed.');
+    expect(component.verificationCardBadge()).toBe('All\ndone');
   });
 
   it('opens travel notices directly from the topbar notification action', () => {
@@ -272,24 +287,18 @@ describe('Tab1Page', () => {
     );
   });
 
-  it('renders the events quick action as provider-pending instead of opening a dead-end sheet', () => {
+  it('opens the events sheet when clicking the events quick action', () => {
     fixture.detectChanges();
 
     const eventsButton = fixture.nativeElement.querySelector('.events-quick-action') as HTMLButtonElement;
-    const pendingNote = fixture.nativeElement.querySelector('.quick-grid-note') as HTMLElement;
 
     eventsButton.click();
     fixture.detectChanges();
 
-    expect(eventsButton.disabled).toBeTrue();
-    expect(eventsButton.getAttribute('aria-label')).toBe('Events and Activities unavailable. Events provider pending.');
-    expect(eventsButton.textContent).toContain('Soon');
-    expect(component.toast).toBe('');
-    expect(component.activeSheet).toBeNull();
-    expect(pendingNote.textContent).toContain('Events provider pending');
-    expect(pendingNote.textContent).toContain('Events & Activities will unlock here when your Firestore events provider is connected.');
-    expect(component.eventsEmptyStateTitle()).toBe('Events provider pending');
-    expect(component.eventsEmptyStateCopy()).toBe('Events will appear here when your Firestore events provider is connected.');
+    expect(eventsButton.disabled).toBeFalse();
+    expect(eventsButton.getAttribute('aria-label')).toBe('Events & Activities');
+    expect(component.activeSheet).toBe('events');
+    expect(component.events.length).toBe(3);
   });
 
   it('adds contextual accessible names to home dashboard action cards', () => {
@@ -308,13 +317,13 @@ describe('Tab1Page', () => {
 
     expect(destinationButton.getAttribute('aria-label')).toBe('Featured destination. Open Navigation.');
     expect(summaryButtons[0].getAttribute('aria-label')).toBe('120 Eco-Points. Open Profile.');
-    expect(summaryButtons[1].getAttribute('aria-label')).toBe('Digital Passport. Passport stamps will appear here when your Firestore passport provider is connected. Open Profile.');
+    expect(summaryButtons[1].getAttribute('aria-label')).toBe('Digital Passport. 3/4 stamps unlocked. Open Profile.');
     expect(quickButtons[1].getAttribute('aria-label')).toBe('Explore Malaysia. Open Navigation.');
     expect(quickButtons[2].getAttribute('aria-label')).toBe('MyTravel Verification. Open MyTravel Verification panel.');
     expect(quickButtons[3].getAttribute('aria-label')).toBe('Travel Notices. Open Community.');
     expect(journeyButton.getAttribute('aria-label')).toBe('Plan your next journey. Choose a route, departure time, and accessibility preference in Navigation. Open Navigation.');
-    expect(verificationButton.getAttribute('aria-label')).toBe('MyTravel Verification. Verification checkpoints will appear here when your Firestore verification provider is connected. Awaiting provider. Open MyTravel Verification panel.');
-    expect(missionButton.getAttribute('aria-label')).toBe('Rewards provider pending. Challenge progress will appear here when your Firestore rewards provider is connected. View status. Open Profile.');
+    expect(verificationButton.getAttribute('aria-label')).toBe('MyTravel Verification. Next checkpoint: KL Sentral station. 0/2 completed. +40 Eco-Points. Open MyTravel Verification panel.');
+    expect(missionButton.getAttribute('aria-label')).toBe('Weekly Mission with Wira. 2 of 7 challenge steps completed this season. View mission. Open Profile.');
   });
 
   it('marks decorative home and sheet icons as hidden from assistive technology', () => {
@@ -359,6 +368,8 @@ describe('Tab1Page', () => {
   });
 
   it('keeps home helper typography above the tiny-text readability floor', () => {
+    component.eventsProviderConnected = false;
+    component.verificationTask = null;
     fixture.detectChanges();
 
     const quickStatus = fixture.nativeElement.querySelector('.quick-status') as HTMLElement;
@@ -622,7 +633,7 @@ describe('Tab1Page', () => {
     expect(component.destinationPillAriaLabel()).toBe('Destinasi pilihan. Buka Navigasi.');
     expect(component.quickExploreAriaLabel()).toBe('Teroka Malaysia. Buka Navigasi.');
     expect(component.quickVerificationAriaLabel()).toBe('Pengesahan MyTravel. Buka panel Pengesahan MyTravel.');
-    expect(component.passportSummaryAriaLabel()).toBe('Pasport Digital. Cop pasport akan dipaparkan di sini apabila penyedia pasport Firestore anda disambungkan. Buka Profil.');
-    expect(component.weeklyMissionAriaLabel()).toBe('Penyedia ganjaran belum disambungkan. Kemajuan cabaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan. Lihat status. Buka Profil.');
+    expect(component.passportSummaryAriaLabel()).toBe('Pasport Digital. 3/4 cop dibuka. Buka Profil.');
+    expect(component.weeklyMissionAriaLabel()).toBe('Misi Mingguan bersama Wira. 2 daripada 7 langkah cabaran selesai musim ini. Lihat misi. Buka Profil.');
   });
 });

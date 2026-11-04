@@ -748,8 +748,12 @@ input, select, textarea, button { min-width: 0; }
 }
 
 .mt-tabbar-scroll-screen {
+  height: 100dvh;
   min-height: 100%;
-  padding-bottom: max(150px, calc(var(--mt-floating-tabbar-clearance) + 24px));
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding-bottom: max(170px, calc(var(--mt-floating-tabbar-clearance) + 24px));
+  -webkit-overflow-scrolling: touch;
 }
 
 .community-screen .notice-stats { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px }

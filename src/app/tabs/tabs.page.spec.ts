@@ -51,6 +51,11 @@ describe('TabsPage', () => {
     fixture = TestBed.createComponent(TabsPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    fixture.nativeElement.querySelectorAll('ion-tabs, ion-tab-bar, ion-tab-button').forEach((el: HTMLElement) => {
+      if (el.shadowRoot && !el.shadowRoot.querySelector('slot')) {
+        el.shadowRoot.innerHTML = '<slot name="bottom"></slot><slot></slot>';
+      }
+    });
   });
 
   it('should create', () => {

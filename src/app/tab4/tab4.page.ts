@@ -14,6 +14,10 @@ import { AppStateService, PointTransaction } from '../services/app-state.service
 import { AuthService, UserProfile } from '../services/auth.service';
 import { PassportService, ProfileStamp } from '../services/passport.service';
 import { ManagedTimeouts } from '../shared/utils/managed-timeouts';
+import {
+  buildChallengeProgress,
+  buildTravelProgress,
+} from '../shared/utils/travel-progress';
 
 type LocalizedText = Record<AppLanguage, string>;
 type ProfileView = 'profile' | 'points' | 'passport' | 'accessibility' | 'challenges' | 'reward';
@@ -334,7 +338,6 @@ export class Tab4Page implements OnDestroy {
   }
 
   get menuItems(): ProfileMenuItem[] {
-    const isAuth = this.isAuthenticated;
     return [
       { id: 'contributions', title: this.copy.menuContributions, description: this.copy.menuContributionsCopy, icon: 'chatbubbles-outline', action: 'route', target: '/tabs/profile/my-contributions' },
       { id: 'journey-history', title: this.copy.menuJourneyHistory, description: this.copy.menuJourneyHistoryCopy, icon: 'time-outline', action: 'route', target: '/tabs/profile/journey-history' },
@@ -343,9 +346,7 @@ export class Tab4Page implements OnDestroy {
       { id: 'accessibility', title: this.copy.menuAccessibility, description: this.copy.menuAccessibilityCopy, icon: 'accessibility-outline', action: 'view', target: 'accessibility' },
       { id: 'privacy', title: this.copy.menuPrivacy, description: this.copy.menuPrivacyCopy, icon: 'shield-outline', action: 'route', target: '/tabs/profile/privacy' },
       { id: 'help', title: this.copy.menuHelp, description: this.copy.menuHelpCopy, icon: 'help-circle-outline', action: 'route', target: '/tabs/profile/help' },
-      isAuth
-        ? { id: 'signout', title: this.copy.menuSignOut, description: this.copy.menuSignOutCopy, icon: 'log-out-outline', action: 'signout', target: '' }
-        : { id: 'signin', title: { EN: 'Sign In / Register', BM: 'Log Masuk / Daftar' }, description: { EN: 'Connect account to sync stamps & rewards', BM: 'Sambung akaun untuk segerakkan cop & ganjaran' }, icon: 'log-in-outline', action: 'route', target: '/login' },
+      { id: 'signout', title: this.copy.menuSignOut, description: this.copy.menuSignOutCopy, icon: 'log-out-outline', action: 'signout', target: '' },
     ];
   }
   stamps: ProfileStamp[] = [];
@@ -425,9 +426,6 @@ export class Tab4Page implements OnDestroy {
   }
 
   get passportCollectedCount(): number {
-    if (!this.isAuthenticated) {
-      return 0;
-    }
     return this.stamps.filter((stamp) => stamp.active).length;
   }
 
@@ -440,7 +438,7 @@ export class Tab4Page implements OnDestroy {
   }
 
   get passportProgressWidth(): string {
-    if (!this.isAuthenticated || this.passportTotalCount === 0) {
+    if (!this.passportProviderConnected || this.passportTotalCount === 0) {
       return '0%';
     }
 
@@ -450,10 +448,6 @@ export class Tab4Page implements OnDestroy {
   get passportStatusLabel(): string {
     if (!this.passportProviderConnected || this.passportTotalCount === 0) {
       return this.t(this.copy.passportProviderPendingLabel);
-    }
-
-    if (!this.isAuthenticated) {
-      return '0/16';
     }
 
     return `${this.passportCollectedCount}/${this.passportTotalCount}`;
@@ -687,7 +681,7 @@ export class Tab4Page implements OnDestroy {
       this.refreshAppState();
       this.view = 'profile';
       this.showToast(this.t(this.copy.signOutComplete));
-      void this.router.navigate(['/login']);
+      void this.router.navigate(['/tabs/tab1']);
       return;
     }
 
@@ -913,8 +907,10 @@ export class Tab4Page implements OnDestroy {
     const state = this.appStateService.getSnapshot();
     this.currentUser = this.authService.currentUser;
     const isAuth = this.isAuthenticated;
-    this.ecoPoints = isAuth ? (this.currentUser?.ecoPoints ?? state.ecoPoints) : 0;
-    this.transactions = isAuth ? state.transactions.map((transaction) => this.mapTransaction(transaction)) : [];
+    this.ecoPoints = isAuth
+      ? Math.max(state.ecoPoints, this.currentUser?.ecoPoints ?? 0)
+      : state.ecoPoints;
+    this.transactions = state.transactions.map((transaction) => this.mapTransaction(transaction));
     this.approvedContributionCount = state.contributions.filter((contribution) => contribution.status === 'Approved').length;
     this.pendingContributionCount = state.contributions.filter((contribution) => contribution.status !== 'Approved').length;
     this.journeyHistoryCount = state.journeyHistory.length;
@@ -924,7 +920,7 @@ export class Tab4Page implements OnDestroy {
     this.passportProviderConnected = passportData.connected;
     this.stamps = passportData.items;
     this.syncSelectedStamp();
-    const rewardsData = this.loadRewardsProgressData();
+    const rewardsData = this.loadRewardsProgressData(state, this.passportCollectedCount);
     this.rewardsProviderConnected = rewardsData.connected;
     this.challengeMissions = rewardsData.missions;
     this.unlockSteps = rewardsData.unlockSteps;
@@ -984,12 +980,71 @@ export class Tab4Page implements OnDestroy {
     this.selectedStamp = previousSelection ?? this.stamps.find((stamp) => stamp.active) ?? this.stamps[0] ?? null;
   }
 
-  private loadRewardsProgressData(): RewardsProgressData {
+  private loadRewardsProgressData(
+    state: ReturnType<AppStateService['getSnapshot']>,
+    unlockedStampCount: number,
+  ): RewardsProgressData {
+    const progress = buildTravelProgress({
+      ...state,
+      ecoPoints: this.ecoPoints,
+    });
+
     return {
-      connected: false,
-      missions: [],
-      unlockSteps: [],
+      connected: true,
+      missions: this.buildChallengeMissions(progress, unlockedStampCount),
+      unlockSteps: [
+        { number: '1', title: this.copy.unlockOne, description: this.copy.unlockOneCopy },
+        { number: '2', title: this.copy.unlockTwo, description: this.copy.unlockTwoCopy },
+        { number: '3', title: this.copy.unlockThree, description: this.copy.unlockThreeCopy },
+      ],
     };
+  }
+
+  private buildChallengeMissions(
+    progress: ReturnType<typeof buildTravelProgress>,
+    unlockedStampCount: number,
+  ): ChallengeMission[] {
+    const challengeProgress = buildChallengeProgress(progress, unlockedStampCount);
+
+    return [
+      {
+        title: this.copy.missionHeritage,
+        description: this.copy.missionHeritageCopy,
+        progress: this.progressLabel(challengeProgress.heritageProgress, challengeProgress.heritageTarget),
+        reward: this.pointRewardLabel(120),
+        image: 'assets/mytravel/wira-ui.png',
+        progressWidth: this.progressWidth(challengeProgress.heritageProgress, challengeProgress.heritageTarget),
+      },
+      {
+        title: this.copy.missionCommunity,
+        description: this.copy.missionCommunityCopy,
+        progress: this.progressLabel(challengeProgress.communityProgress, challengeProgress.communityTarget),
+        reward: this.pointRewardLabel(80),
+        image: 'assets/mytravel/manja-ui.png',
+        progressWidth: this.progressWidth(challengeProgress.communityProgress, challengeProgress.communityTarget),
+      },
+      {
+        title: this.copy.missionExplore,
+        description: this.copy.missionExploreCopy,
+        progress: this.progressLabel(challengeProgress.passportProgress, challengeProgress.passportTarget),
+        reward: this.pointRewardLabel(60),
+        image: 'assets/mytravel/manja-ui.png',
+        progressWidth: this.progressWidth(challengeProgress.passportProgress, challengeProgress.passportTarget),
+      },
+    ];
+  }
+
+  private pointRewardLabel(points: number): LocalizedText {
+    return {
+      EN: `+${points} points`,
+      BM: `+${points} mata`,
+    };
+  }
+
+  private progressLabel(current: number, target: number): string {
+    return this.language === 'BM'
+      ? `${current} / ${target} selesai`
+      : `${current} / ${target} complete`;
   }
 
   private progressWidth(current: number, target: number): string {

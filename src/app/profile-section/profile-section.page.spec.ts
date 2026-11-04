@@ -205,9 +205,9 @@ describe('ProfileSectionPage', () => {
     expect(component.content.summaryValue).toBe('2');
     expect(component.content.summaryCopy).toContain('2 saved notices');
     expect(component.content.primaryAction).toBe('Open notice board');
-    expect(component.content.items[0].title).toBe('Saved travel notice');
-    expect(component.content.items[0].subtitle).toBe('This saved notice will show provider-backed details after Firestore notices are connected.');
-    expect(component.content.items[1].meta).toBe('notice-melaka-heat');
+    expect(component.content.items[0].title).toBe('Kelana Jaya Line delay alert');
+    expect(component.content.items[0].subtitle).toBe('Transit disruption between KLCC and Ampang Park.');
+    expect(component.content.items[1].meta).toBe('Weather advisory');
     expect(component.content.items[0].action).toBe('notices');
   });
 

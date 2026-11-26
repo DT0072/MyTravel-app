@@ -78,17 +78,33 @@ describe('Tab2Page', () => {
       'AccessibilityPreferencesService',
       ['getPreferences', 'setLanguage'],
     );
-    appStateService = jasmine.createSpyObj<AppStateService>('AppStateService', ['startJourney', 'getSnapshot', 'recordRecentLocations', 'removeRecentLocation']);
+    appStateService = jasmine.createSpyObj<AppStateService>('AppStateService', [
+      'startJourney',
+      'completeActiveJourney',
+      'cancelActiveJourney',
+      'getSnapshot',
+      'recordRecentLocations',
+      'removeRecentLocation',
+    ]);
     navigationService = jasmine.createSpyObj<NavigationService>(
       'NavigationService',
-      ['getModes', 'getServiceStatuses', 'getRecentLocations', 'buildPlan', 'swapLocations'],
+      ['getModes', 'getServiceStatuses', 'getAllServiceStatuses', 'getRecentLocations', 'buildPlan', 'swapLocations', 'findLocationCoords', 'getLocationSuggestions'],
     );
 
     accessibilityPreferencesService.getPreferences.and.returnValue(preferences);
     accessibilityPreferencesService.setLanguage.and.returnValue(preferences);
     navigationService.getModes.and.returnValue(['MRT', 'Bus']);
     navigationService.getServiceStatuses.and.returnValue(of<ServiceStatus[]>([]));
+    navigationService.getAllServiceStatuses.and.returnValue([]);
     navigationService.getRecentLocations.and.returnValue(of<RecentLocation[]>([]));
+    navigationService.getLocationSuggestions.and.returnValue([]);
+    navigationService.findLocationCoords.and.returnValue({
+      name: 'KL Sentral',
+      subtitle: 'Transit Hub',
+      state: 'Kuala Lumpur',
+      lat: 3.1342,
+      lng: 101.6861,
+    });
     navigationService.buildPlan.and.returnValue(of<RouteOption[]>([createRoute('MRT')]));
     appStateService.getSnapshot.and.returnValue(createState());
 
@@ -437,36 +453,106 @@ describe('Tab2Page', () => {
     expect(component.toast).toBe('Service updates will appear here when your Firestore transport-status provider is connected.');
   });
 
-  it('renders accessible pressed states for transport mode options', () => {
+  it('omits pre-search transport mode picker and displays multi-modal search hint', () => {
     fixture.detectChanges();
 
-    const modeButtons = Array.from(
-      fixture.nativeElement.querySelectorAll('.mode-row button'),
-    ) as HTMLButtonElement[];
+    const modeRow = fixture.nativeElement.querySelector('.mode-row');
+    const multimodalHint = fixture.nativeElement.querySelector('.multimodal-hint') as HTMLElement;
 
-    expect(modeButtons[0].getAttribute('aria-pressed')).toBe('true');
-    expect(modeButtons[0].getAttribute('aria-label')).toBe('Select transport mode MRT');
-
-    component.selectMode('Bus');
-    fixture.detectChanges();
-
-    expect(modeButtons[0].getAttribute('aria-pressed')).toBe('false');
-    expect(modeButtons[1].getAttribute('aria-pressed')).toBe('true');
+    expect(modeRow).toBeNull();
+    expect(multimodalHint).toBeTruthy();
+    expect(multimodalHint.textContent).toContain('Multi-modal search');
   });
 
-  it('wraps all transport mode options instead of clipping compact layouts', () => {
-    component.modes = ['MRT', 'LRT', 'KTM', 'Bus', 'Walk'];
+  it('renders Image 1 leg breadcrumb pills and Image 2 vertical connected timeline with expandable stops', () => {
+    const detailedRoute: RouteOption = {
+      ...createRoute('LRT'),
+      depart: '07:08 PM',
+      arrive: '08:19 PM',
+      duration: '1 hr 11 min',
+      firstBoardingText: '07:28 PM from Sunmed',
+      legs: [
+        {
+          type: 'walk',
+          icon: 'walk-outline',
+          badgeLabel: 'Walk',
+          badgeColor: '#2563eb',
+          fromName: 'Sunway University',
+          toName: 'Sunmed',
+          departTime: '07:08 PM',
+          arriveTime: '07:20 PM',
+          durationText: 'About 12 min',
+          distanceText: '850 m',
+          coords: [[3.0672, 101.6038], [3.065, 101.6095]],
+        },
+        {
+          type: 'transit',
+          icon: 'bus-outline',
+          badgeLabel: 'BRT Sunway Line',
+          badgeColor: '#115e59',
+          headsign: 'From USJ 7 to Sunway-Setia Jaya',
+          fromName: 'Sunmed',
+          toName: 'Sunway-Setia Jaya',
+          departTime: '07:28 PM',
+          arriveTime: '07:34 PM',
+          durationText: '6 min',
+          stopCount: 3,
+          intermediateStops: ['Sunway Lagoon', 'Mentari'],
+          isAccessible: true,
+          coords: [[3.065, 101.6095], [3.083, 101.611]],
+        },
+      ],
+    };
+
+    component.view = 'results';
+    component.from = 'Sunway University';
+    component.to = 'Mid Valley Megamall';
+    component.routes = [detailedRoute, createRoute('MRT')];
     fixture.detectChanges();
 
-    const modeRow = fixture.nativeElement.querySelector('.mode-row') as HTMLElement;
-    const modeButtons = Array.from(
-      fixture.nativeElement.querySelectorAll('.mode-row button'),
-    ) as HTMLButtonElement[];
+    const linePill = fixture.nativeElement.querySelector('.leg-line-pill') as HTMLElement;
+    expect(linePill).toBeTruthy();
+    expect(linePill.textContent?.trim()).toBe('BRT Sunway Line');
 
-    expect(modeButtons.length).toBe(5);
-    expect(getComputedStyle(modeRow).flexWrap).toBe('wrap');
-    expect(getComputedStyle(modeRow).overflowX).toBe('visible');
-    expect(modeButtons.every((button) => parseFloat(getComputedStyle(button).minHeight) >= 44)).toBeTrue();
+    component.openRouteDetails(detailedRoute, 0);
+    fixture.detectChanges();
+
+    const timeline = fixture.nativeElement.querySelector('.transit-timeline') as HTMLElement;
+    const stopItems = fixture.nativeElement.querySelectorAll('.intermediate-stops-list li');
+    expect(timeline).toBeTruthy();
+    expect(stopItems.length).toBe(2);
+  });
+
+  it('locks destination search while active navigation is in progress until exited', () => {
+    component.activeJourney = {
+      id: 'active-1',
+      from: 'KL Sentral',
+      to: 'KLCC',
+      mode: 'LRT',
+      detail: 'Kelana Jaya Line',
+      depart: '09:00 AM',
+      arrive: '09:14 AM',
+      duration: '14 min',
+      fare: 'RM2.40',
+      walk: '180 m',
+      isAccessible: true,
+      travelDate: '2026-11-24',
+      travelTime: '09:00',
+      startedAt: '2026-11-24T09:00:00.000Z',
+      completedAt: null,
+      points: 20,
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.active-nav-lock-banner')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.planner-card')).toBeNull();
+
+    component.exitActiveNavigation();
+    fixture.detectChanges();
+
+    expect(appStateService.cancelActiveJourney).toHaveBeenCalled();
+    expect(component.activeJourney).toBeNull();
+    expect(fixture.nativeElement.querySelector('.planner-card')).toBeTruthy();
   });
 
   it('keeps navigation planner helper typography above the tiny-text readability floor', () => {
@@ -492,7 +578,6 @@ describe('Tab2Page', () => {
     const swapButton = fixture.nativeElement.querySelector('.swap-button') as HTMLElement;
     const dateCaption = fixture.nativeElement.querySelector('.date-row label span') as HTMLElement;
     const dateInput = fixture.nativeElement.querySelector('.date-row label input') as HTMLElement;
-    const modeButton = fixture.nativeElement.querySelector('.mode-row button') as HTMLElement;
     const sectionTitle = fixture.nativeElement.querySelector('.service-card .section-title b') as HTMLElement;
     const sectionAction = fixture.nativeElement.querySelector('.service-card .section-title button') as HTMLElement;
     const serviceLabel = fixture.nativeElement.querySelector('.service-row b') as HTMLElement;
@@ -510,8 +595,6 @@ describe('Tab2Page', () => {
     expect(parseFloat(getComputedStyle(dateCaption).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(dateInput).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(dateInput).minHeight)).toBeGreaterThanOrEqual(44);
-    expect(parseFloat(getComputedStyle(modeButton).fontSize)).toBeGreaterThanOrEqual(10);
-    expect(parseFloat(getComputedStyle(modeButton).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(sectionTitle).fontSize)).toBeGreaterThanOrEqual(11);
     expect(parseFloat(getComputedStyle(sectionAction).fontSize)).toBeGreaterThanOrEqual(10);
     expect(parseFloat(getComputedStyle(sectionAction).minHeight)).toBeGreaterThanOrEqual(44);
@@ -613,11 +696,11 @@ describe('Tab2Page', () => {
     fixture.detectChanges();
 
     const swapIcon = fixture.nativeElement.querySelector('.swap-button ion-icon') as HTMLElement;
-    const modeIcon = fixture.nativeElement.querySelector('.mode-row button ion-icon') as HTMLElement;
+    const hintIcon = fixture.nativeElement.querySelector('.multimodal-hint ion-icon') as HTMLElement;
     const findRouteIcon = fixture.nativeElement.querySelector('.find-route ion-icon') as HTMLElement;
 
     expect(swapIcon.getAttribute('aria-hidden')).toBe('true');
-    expect(modeIcon.getAttribute('aria-hidden')).toBe('true');
+    expect(hintIcon.getAttribute('aria-hidden')).toBe('true');
     expect(findRouteIcon.getAttribute('aria-hidden')).toBe('true');
 
     component.recentLocations = [

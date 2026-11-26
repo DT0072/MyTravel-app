@@ -124,16 +124,16 @@ describe('Tab4Page', () => {
     expect(component.view).toBe('points');
   });
 
-  it('keeps passport, challenge, and reward data empty until a provider is connected', () => {
-    expect(component.passportProviderConnected).toBeFalse();
-    expect(component.rewardsProviderConnected).toBeFalse();
-    expect(component.stamps).toEqual([]);
-    expect(component.passportTotalCount).toBe(0);
-    expect(component.selectedStamp).toBeNull();
+  it('initializes passport, challenge, and reward data from connected services', () => {
+    expect(component.passportProviderConnected).toBeTrue();
+    expect(component.rewardsProviderConnected).toBeTrue();
+    expect(component.stamps.length).toBe(16);
+    expect(component.passportTotalCount).toBe(16);
+    expect(component.selectedStamp?.name).toBe('Perlis');
     expect(component.passportProgressWidth).toBe('0%');
-    expect(component.passportStatusLabel).toBe('Provider pending');
-    expect(component.challengeMissions).toEqual([]);
-    expect(component.unlockSteps).toEqual([]);
+    expect(component.passportStatusLabel).toBe('0/16');
+    expect(component.challengeMissions.length).toBe(3);
+    expect(component.unlockSteps.length).toBe(3);
     expect(component.seasonProgressWidth).toBe('0%');
     expect(component.rewardProgressSummaryLabel).toBe('0/1,000 points');
   });
@@ -164,6 +164,7 @@ describe('Tab4Page', () => {
   });
 
   it('keeps challenge and reward promo labels provider-ready when rewards data is unavailable', () => {
+    component.rewardsProviderConnected = false;
     expect(component.rewardsProviderConnected).toBeFalse();
     expect(component.challengeBannerTitleLabel).toBe('Rewards provider pending');
     expect(component.challengeBannerCopyLabel).toBe('Challenge and reward details will appear here when your Firestore rewards provider is connected.');
@@ -412,6 +413,11 @@ describe('Tab4Page', () => {
   });
 
   it('shows provider boundary messaging instead of passport and challenge controls when Firestore data is unavailable', () => {
+    component.passportProviderConnected = false;
+    component.stamps = [];
+    component.rewardsProviderConnected = false;
+    component.challengeMissions = [];
+    component.unlockSteps = [];
     component.view = 'passport';
     fixture.detectChanges();
 
@@ -444,9 +450,9 @@ describe('Tab4Page', () => {
     ) as HTMLButtonElement[];
 
     expect(statButtons[0].getAttribute('aria-label')).toBe('Open Eco-Points. 0 points');
-    expect(statButtons[1].getAttribute('aria-label')).toBe('Open Digital Passport. Provider pending');
+    expect(statButtons[1].getAttribute('aria-label')).toBe('Open Digital Passport. 0/16');
     expect(challengeButton.getAttribute('aria-label')).toBe(
-      'Open Rewards provider pending. Challenge and reward details will appear here when your Firestore rewards provider is connected.',
+      'Open VM2026 challenges & rewards. Complete verified travel, community and passport missions.',
     );
     expect(settingsButtons[0].getAttribute('aria-label')).toBe(
       'Open My contributions. Tips, verifications & shared information',
@@ -469,14 +475,14 @@ describe('Tab4Page', () => {
 
     const seasonCardButton = fixture.nativeElement.querySelector('.season-card button') as HTMLButtonElement;
 
-    expect(seasonCardButton.getAttribute('aria-label')).toBe('View status. Rewards provider pending.');
+    expect(seasonCardButton.getAttribute('aria-label')).toBe('View all missions. VM2026 Challenge Season.');
 
     component.view = 'passport';
     fixture.detectChanges();
 
     const passportRewardsButton = fixture.nativeElement.querySelector('.passport-progress button') as HTMLButtonElement;
 
-    expect(passportRewardsButton.getAttribute('aria-label')).toBe('View rewards. Digital Passport. Provider pending.');
+    expect(passportRewardsButton.getAttribute('aria-label')).toBe('View rewards. Digital Passport. 0/16.');
 
     component.rewardsProviderConnected = true;
     component.challengeMissions = [
@@ -766,10 +772,10 @@ describe('Tab4Page', () => {
   it('localizes reward-navigation aria labels in BM', () => {
     component.language = 'BM';
 
-    expect(component.seasonCardButtonAriaLabel()).toBe('Lihat status. Penyedia ganjaran belum disambungkan.');
-    expect(component.passportRewardsButtonAriaLabel()).toBe('Lihat ganjaran. Pasport Digital. Penyedia belum sedia.');
+    expect(component.seasonCardButtonAriaLabel()).toBe('Lihat semua misi. Musim Cabaran VM2026.');
+    expect(component.passportRewardsButtonAriaLabel()).toBe('Lihat ganjaran. Pasport Digital. 0/16.');
     expect(component.nextRewardButtonAriaLabel()).toBe('Lihat ganjaran. Lencana Wira & Manja.');
-    expect(component.rewardBackButtonAriaLabel()).toBe('Kembali ke cabaran. Status ganjaran.');
+    expect(component.rewardBackButtonAriaLabel()).toBe('Kembali ke cabaran. Misi aktif.');
   });
 
   it('renders state-aware profile menu summaries', () => {
@@ -908,16 +914,16 @@ describe('Tab4Page', () => {
 
     component.ionViewWillEnter();
 
-    expect(component.passportProviderConnected).toBeFalse();
-    expect(component.rewardsProviderConnected).toBeFalse();
+    expect(component.passportProviderConnected).toBeTrue();
+    expect(component.rewardsProviderConnected).toBeTrue();
     expect(component.passportCollectedCount).toBe(0);
-    expect(component.stamps).toEqual([]);
-    expect(component.passportStatusLabel).toBe('Provider pending');
+    expect(component.stamps.length).toBe(16);
+    expect(component.passportStatusLabel).toBe('0/16');
     expect(component.passportEmptyStateCopyLabel).toBe('You already have 2 completed local journeys. Passport stamps will appear here when your Firestore passport provider is connected.');
-    expect(component.challengeMissions).toEqual([]);
-    expect(component.unlockSteps).toEqual([]);
+    expect(component.challengeMissions.length).toBe(3);
+    expect(component.unlockSteps.length).toBe(3);
     expect(component.seasonProgressWidth).toBe('8%');
-    expect(component.challengeHeroStatusLabel).toBe('Local points progress');
+    expect(component.challengeHeroStatusLabel).toBe('Season progress');
     expect(component.challengeEmptyStateCopyLabel).toBe('You already have 80 local Eco-Points. Challenge missions will appear here when your Firestore rewards provider is connected.');
     expect(component.rewardEmptyStateCopyLabel).toBe('You already have 80 of 1,000 local Eco-Points recorded. Reward details will appear here when your Firestore rewards provider is connected.');
   });
@@ -950,7 +956,7 @@ describe('Tab4Page', () => {
 
     expect(descriptions).toContain('Simpan notis perjalanan di Komuniti untuk akses pantas di sini.');
     expect(descriptions).toContain('Bahasa Melayu (BM) · 2 bantuan kebolehcapaian aktif');
-    expect(component.challengeMissions).toEqual([]);
+    expect(component.challengeMissions.length).toBe(3);
   });
 
   it('routes privacy and help menu items to dedicated profile sections', () => {

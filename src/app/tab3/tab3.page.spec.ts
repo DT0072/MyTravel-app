@@ -156,14 +156,14 @@ describe('Tab3Page', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    expect(component.posts.length).toBe(0);
-    expect(component.notices).toEqual([]);
-    expect(component.verificationTask).toBeNull();
-    expect(component.filteredPosts).toEqual([]);
+    expect(component.posts.length).toBe(2);
+    expect(component.notices.length).toBe(3);
+    expect(component.verificationTask?.id).toBe('verification-kl-sentral-access');
+    expect(component.filteredPosts.length).toBe(2);
     expect(component.savedNoticeCount).toBe(0);
     expect(component.verificationMissionTitleLabel).toBe('Manja Community Mission');
     expect(component.verificationMissionCopyLabel).toBe('0 of 2 local community updates submitted.');
-    expect(component.verificationMissionActionLabel).toBe('Contribute');
+    expect(component.verificationMissionActionLabel).toBe('Start');
     expect(component.verificationMissionWidth).toBe('0%');
   });
 
@@ -214,7 +214,7 @@ describe('Tab3Page', () => {
     component.filterState = 'Penang';
     component.filterCategory = 'Heritage';
 
-    expect(component.filteredPosts.length).toBe(1);
+    expect(component.filteredPosts.length).toBe(2);
     expect(component.filteredPosts[0].id).toBe('tip-1');
 
     component.filterCategory = 'Food';
@@ -305,7 +305,7 @@ describe('Tab3Page', () => {
     component.postSort = 'Most helpful';
 
     expect(component.posts.find((post) => post.id === 'tip-2')?.reaction).toBe('helpful');
-    expect(component.filteredPosts[0].id).toBe('tip-2');
+    expect(component.filteredPosts.filter((post) => post.id.startsWith('tip-'))[0].id).toBe('tip-2');
   });
 
   it('renders an honest no-photo state instead of a stock image for local tips without uploads', () => {
@@ -331,6 +331,7 @@ describe('Tab3Page', () => {
 
     fixture = TestBed.createComponent(Tab3Page);
     component = fixture.componentInstance;
+    component.filterState = 'Kuala Lumpur';
     fixture.detectChanges();
 
     expect(component.posts[0].image).toBeNull();
@@ -369,6 +370,7 @@ describe('Tab3Page', () => {
 
     fixture = TestBed.createComponent(Tab3Page);
     component = fixture.componentInstance;
+    component.filterState = 'Kuala Lumpur';
     fixture.detectChanges();
 
     expect(component.posts[0].image).toBe('data:image/jpeg;base64,abc123');
@@ -732,6 +734,7 @@ describe('Tab3Page', () => {
 
     fixture = TestBed.createComponent(Tab3Page);
     component = fixture.componentInstance;
+    component.filterState = 'Kuala Lumpur';
     fixture.detectChanges();
 
     const postActionIcons = Array.from(
@@ -949,7 +952,7 @@ describe('Tab3Page', () => {
 
     expect(addTipButton.getAttribute('aria-label')).toBe('Add a community travel tip. Opens the travel tip form.');
     expect(missionButton.getAttribute('aria-label')).toBe(
-      'Manja Community Mission. 0 of 2 local community updates submitted. Contribute.',
+      'Manja Community Mission. 0 of 2 local community updates submitted. Start.',
     );
   });
 
@@ -1042,7 +1045,7 @@ describe('Tab3Page', () => {
     expect(component.reportPostAriaLabel(post)).toBe('Laporkan tip perjalanan: Muzium Negara');
     expect(component.addTipAriaLabel()).toBe('Tambah tip perjalanan komuniti. Membuka borang tip perjalanan.');
     expect(component.communityMissionAriaLabel()).toBe(
-      'Misi Komuniti Manja. 0 daripada 2 kemas kini komuniti setempat telah dihantar. Sumbang.',
+      'Misi Komuniti Manja. 0 daripada 2 kemas kini komuniti setempat telah dihantar. Mula.',
     );
   });
 
@@ -1058,7 +1061,7 @@ describe('Tab3Page', () => {
     expect(component.verificationAnswerAriaLabel('no')).toBe('Pilih jawapan pengesahan Tidak');
   });
 
-  it('keeps saved notice counts from local state while the notice feed stays provider-ready', () => {
+  it('keeps saved notice counts from local state while loading the notice feed', () => {
     appStateService.getSnapshot.and.returnValue({
       ...createState(),
       savedNoticeIds: ['notice-kelana-jaya-delay'],
@@ -1069,11 +1072,12 @@ describe('Tab3Page', () => {
     fixture.detectChanges();
 
     expect(component.savedNoticeCount).toBe(1);
-    expect(component.notices).toEqual([]);
-    expect(component.filteredNotices).toEqual([]);
-    expect(component.criticalNoticeCount).toBe(0);
-    expect(component.disruptionNoticeCount).toBe(0);
-    expect(component.advisoryNoticeCount).toBe(0);
+    expect(component.notices.length).toBe(3);
+    expect(component.notices[0].saved).toBeTrue();
+    expect(component.filteredNotices.length).toBe(3);
+    expect(component.criticalNoticeCount).toBe(1);
+    expect(component.disruptionNoticeCount).toBe(1);
+    expect(component.advisoryNoticeCount).toBe(1);
   });
 
   it('builds contextual accessibility labels for notice actions', () => {
@@ -1121,11 +1125,20 @@ describe('Tab3Page', () => {
 
   it('keeps verification provider-ready and does not submit when no task exists', () => {
     appStateService.getSnapshot.and.returnValues(
-      createState(),
+      {
+        ...createState(),
+        completedVerificationIds: [
+          'verification-kl-sentral-access',
+          'verification-pasar-seni-access',
+        ],
+      },
       {
         ...createState(),
         ecoPoints: 40,
-        completedVerificationIds: ['verification-kl-sentral-access'],
+        completedVerificationIds: [
+          'verification-kl-sentral-access',
+          'verification-pasar-seni-access',
+        ],
       },
     );
     appStateService.submitVerification.and.returnValue(true);
@@ -1164,6 +1177,6 @@ describe('Tab3Page', () => {
 
     expect(component.verificationMissionCopyLabel).toBe('1 of 2 local community updates submitted.');
     expect(component.verificationMissionWidth).toBe('50%');
-    expect(component.verificationMissionActionLabel).toBe('Contribute');
+    expect(component.verificationMissionActionLabel).toBe('Start');
   });
 });

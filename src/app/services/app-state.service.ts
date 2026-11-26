@@ -357,6 +357,18 @@ export class AppStateService {
     }));
   }
 
+  syncEcoPoints(points: number): void {
+    const normalizedPoints = Math.max(0, points);
+    if (this.stateSubject.value.ecoPoints === normalizedPoints) {
+      return;
+    }
+
+    this.updateState((state) => ({
+      ...state,
+      ecoPoints: normalizedPoints,
+    }));
+  }
+
   private updateState(updater: (state: PersistedAppState) => PersistedAppState): void {
     const nextState = updater(this.getSnapshot());
     this.stateSubject.next(nextState);

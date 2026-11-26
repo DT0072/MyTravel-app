@@ -23,6 +23,7 @@
               {{ getUserTypeBadgeLabel() }}
             </span>
             <b *ngIf="!isAuthenticated">{{ language === 'BM' ? 'Ketik untuk log masuk' : 'Tap to sign in' }}</b>
+            <!-- <span class="visually-hidden">{{ t(copy.profileProviderTitle) }} {{ t(copy.profileProviderStatus) }}</span> -->
           </div>
         </div>
       </section>
@@ -59,11 +60,11 @@
       <div class="segment-row" role="group" [attr.aria-label]="t(copy.transactionFiltersAria)"><button type="button" [class.active]="transactionFilter === 'All'" [attr.aria-label]="transactionFilterAriaLabel('All')" [attr.aria-pressed]="transactionFilter === 'All'" (click)="selectTransactionFilter('All')">{{ t(copy.filterAll) }}</button><button type="button" [class.active]="transactionFilter === 'Earned'" [attr.aria-label]="transactionFilterAriaLabel('Earned')" [attr.aria-pressed]="transactionFilter === 'Earned'" (click)="selectTransactionFilter('Earned')">{{ t(copy.filterEarned) }}</button><button type="button" [class.active]="transactionFilter === 'Pending'" [attr.aria-label]="transactionFilterAriaLabel('Pending')" [attr.aria-pressed]="transactionFilter === 'Pending'" (click)="selectTransactionFilter('Pending')">{{ t(copy.filterPending) }}</button></div>
       <section class="mt-card transaction-card">
         <h2>{{ t(copy.transactionHistory) }}</h2>
-        <div *ngIf="isAuthenticated">
+        <div *ngIf="isAuthenticated || filteredTransactions.length > 0">
           <div *ngFor="let transaction of filteredTransactions"><span [style.background]="transaction.accent"><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span><div><b>{{ t(transaction.title) }}</b><small>{{ t(transaction.subtitle) }}</small></div><strong>{{ transaction.points }}</strong></div>
           <p class="empty-state" *ngIf="filteredTransactions.length === 0">{{ t(copy.noTransactions).replace('{filter}', transactionFilterLabel(transactionFilter).toLowerCase()) }}</p>
         </div>
-        <div *ngIf="!isAuthenticated" class="unauth-trans-state">
+        <div *ngIf="!isAuthenticated && filteredTransactions.length === 0" class="unauth-trans-state">
           <p class="empty-state">{{ language === 'BM' ? 'Sila log masuk untuk melihat rekod transaksi Mata Eko anda.' : 'Please sign in to view your Eco-Points transaction history.' }}</p>
         </div>
       </section>

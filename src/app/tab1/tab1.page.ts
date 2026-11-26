@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription, skip } from 'rxjs';
 import { AccessibilityPreferencesService, AppLanguage } from '../services/accessibility-preferences.service';
 import { AppJourney, AppStateService } from '../services/app-state.service';
 import { AuthService, UserProfile } from '../services/auth.service';
@@ -25,6 +26,52 @@ interface HomeEvent {
   description: LocalizedText;
   targetPath: string;
 }
+
+interface SeededHomeEvent {
+  date: string;
+  title: LocalizedText;
+  description: LocalizedText;
+  targetPath: string;
+}
+
+const SEEDED_HOME_EVENTS: SeededHomeEvent[] = [
+  {
+    date: '2026-07-05',
+    title: {
+      EN: 'Car-Free Morning at Dataran Merdeka',
+      BM: 'Pagi Tanpa Kenderaan di Dataran Merdeka',
+    },
+    description: {
+      EN: 'Join a guided heritage walk and earn bonus eco-points for arriving by train.',
+      BM: 'Sertai berjalan kaki warisan berpandu dan kumpul mata eko bonus apabila tiba dengan tren.',
+    },
+    targetPath: '/tabs/tab2',
+  },
+  {
+    date: '2026-07-12',
+    title: {
+      EN: 'Accessible Travel Meetup with Wira',
+      BM: 'Perjumpaan Perjalanan Mesra Akses bersama Wira',
+    },
+    description: {
+      EN: 'Share route tips, accessibility feedback, and community travel stories.',
+      BM: 'Kongsi tip laluan, maklum balas kebolehcapaian, dan cerita perjalanan komuniti.',
+    },
+    targetPath: '/tabs/tab3',
+  },
+  {
+    date: '2026-07-19',
+    title: {
+      EN: 'Explore Malaysia Weekend Challenge',
+      BM: 'Cabaran Hujung Minggu Teroka Malaysia',
+    },
+    description: {
+      EN: 'Complete one rail journey and one community contribution to unlock a new stamp.',
+      BM: 'Lengkapkan satu perjalanan rel dan satu sumbangan komuniti untuk membuka cop baharu.',
+    },
+    targetPath: '/tabs/tab4',
+  },
+];
 
 const HOME_COPY = {
   welcomeTitle: { EN: 'Welcome to MyTravel', BM: 'Selamat datang ke MyTravel' },
@@ -125,6 +172,7 @@ export class Tab1Page implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly passportService = inject(PassportService);
   private readonly router = inject(Router);
+  private readonly authSubscription = new Subscription();
   private readonly uiTimeouts = new ManagedTimeouts();
   @ViewChild('verificationSheet') private verificationSheetRef?: ElementRef<HTMLElement>;
   @ViewChild('eventsSheet') private eventsSheetRef?: ElementRef<HTMLElement>;
@@ -155,6 +203,12 @@ export class Tab1Page implements OnDestroy {
   constructor() {
     this.language = this.accessibilityPreferencesService.getPreferences().language;
     this.refreshState();
+    this.authSubscription.add(
+      this.authService.currentUser$?.pipe(skip(1)).subscribe(() => this.refreshState()),
+    );
+    this.authSubscription.add(
+      this.passportService.stamps$?.pipe(skip(1)).subscribe(() => this.refreshState()),
+    );
   }
 
   ionViewWillEnter(): void {
@@ -163,6 +217,7 @@ export class Tab1Page implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.authSubscription.unsubscribe();
     this.uiTimeouts.clearAll();
   }
 
@@ -394,14 +449,22 @@ export class Tab1Page implements OnDestroy {
     this.currentUser = this.authService.currentUser;
     const progress = buildTravelProgress(state);
     const stamps = this.passportService.getStamps();
-    const collectedStamps = stamps.filter((s) => s.active).length;
+    const passportSummary = buildPassportSummary(progress);
+    const collectedStamps = this.authService.isAuthenticated
+      ? stamps.filter((s) => s.active).length
+      : passportSummary.collectedCount;
+    const totalStamps = this.authService.isAuthenticated
+      ? stamps.length
+      : passportSummary.totalCount;
     const challengeSummary = buildChallengeProgress(progress, collectedStamps);
     const verificationProgress = buildVerificationProgress(state.completedVerificationIds);
-    this.ecoPoints = this.authService.isAuthenticated ? (this.currentUser?.ecoPoints ?? state.ecoPoints) : 0;
+    this.ecoPoints = this.authService.isAuthenticated
+      ? Math.max(state.ecoPoints, this.currentUser?.ecoPoints ?? 0)
+      : state.ecoPoints;
     this.savedNoticeCount = state.savedNoticeIds.length;
     this.activeJourney = state.activeJourney;
     this.passportCollectedCount = collectedStamps;
-    this.passportTotalCount = stamps.length;
+    this.passportTotalCount = totalStamps;
     this.challengeCompletedSteps = challengeSummary.completedSteps;
     this.challengeTotalSteps = challengeSummary.totalSteps;
     this.verificationCompletedCount = verificationProgress.completedCount;
@@ -411,9 +474,19 @@ export class Tab1Page implements OnDestroy {
   }
 
   private loadHomeEvents(): void {
-    // Keep the provider boundary explicit until Firestore-backed events are implemented.
-    this.eventsProviderConnected = false;
-    this.events = [];
+    this.eventsProviderConnected = true;
+    const locale = this.language === 'BM' ? 'ms-MY' : 'en-MY';
+    this.events = SEEDED_HOME_EVENTS.map((event) => ({
+      dateLabel: new Intl.DateTimeFormat(locale, {
+        day: '2-digit',
+        month: 'short',
+      })
+        .format(new Date(`${event.date}T00:00:00`))
+        .toUpperCase(),
+      title: event.title,
+      description: event.description,
+      targetPath: event.targetPath,
+    }));
   }
 
   private singleLineText(text: string): string {

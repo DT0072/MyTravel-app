@@ -35,7 +35,12 @@ ion-tab-button {
   --padding-top: 7px;
   --padding-bottom: 7px;
   --ripple-color: rgba(7, 84, 204, 0.16);
+  height: 54px;
   min-height: 54px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   margin: 0 2px;
   border-radius: 18px;
   transition: background-color 0.18s ease, transform 0.18s ease, color 0.18s ease;
@@ -63,6 +68,7 @@ ion-tab-button ion-label {
   line-height: 1.2;
   font-weight: 800;
   letter-spacing: 0.01em;
+  opacity: 0.92;
 }
 
 ion-tab-button.tab-selected {

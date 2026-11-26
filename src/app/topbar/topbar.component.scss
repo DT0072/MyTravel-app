@@ -109,6 +109,9 @@
 .home-topbar .mt-language span.selected,
 .home-topbar .mt-language strong.selected {
   color: var(--mt-blue);
+  background: rgba(255, 255, 255, 0.94);
+  padding: clamp(8px, calc(8px * var(--mt-text-scale)), 10px) clamp(7px, calc(7px * var(--mt-text-scale)), 9px);
+  border-radius: clamp(14px, calc(14px * var(--mt-text-scale)), 18px);
   font-weight: 800;
   opacity: 1;
 }

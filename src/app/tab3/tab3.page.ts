@@ -231,6 +231,105 @@ interface CommunityNotice {
   saved: boolean;
 }
 
+const SEEDED_POSTS: Omit<CommunityPost, 'reaction'>[] = [
+  {
+    id: 'seeded-george-town',
+    state: 'Penang',
+    author: 'Aisyah',
+    initials: 'AY',
+    place: {
+      EN: 'George Town Heritage Walk',
+      BM: 'Jalan Warisan George Town',
+    },
+    copy: {
+      EN: 'Start early before 9 AM for cooler streets, easier trishaw pickups, and shorter queues at the clan jetties.',
+      BM: 'Mulakan awal sebelum 9 pagi untuk jalan yang lebih nyaman, mudah mendapatkan beca, dan barisan lebih pendek di jeti warisan.',
+    },
+    category: 'Heritage',
+    points: 20,
+    image: 'assets/mytravel/george-town.png',
+    date: {
+      EN: '28 Jun 2026',
+      BM: '28 Jun 2026',
+    },
+    createdAt: '2026-06-28T09:30:00.000Z',
+    helpfulCount: 18,
+    status: 'Approved',
+  },
+  {
+    id: 'seeded-raban-lake',
+    state: 'Sarawak',
+    author: 'Daniel',
+    initials: 'DL',
+    place: {
+      EN: 'Tasik Raban boardwalk access',
+      BM: 'Akses pelantar Tasik Raban',
+    },
+    copy: {
+      EN: 'The lakeside route is smoother from the visitor centre entrance, with shaded rest stops every few hundred metres.',
+      BM: 'Laluan tepi tasik lebih lancar dari pintu masuk pusat pelawat, dengan tempat rehat berbumbung setiap beberapa ratus meter.',
+    },
+    category: 'Nature',
+    points: 20,
+    image: 'assets/mytravel/raban-lake.png',
+    date: {
+      EN: '26 Jun 2026',
+      BM: '26 Jun 2026',
+    },
+    createdAt: '2026-06-26T08:00:00.000Z',
+    helpfulCount: 11,
+    status: 'Approved',
+  },
+];
+
+const SEEDED_NOTICES: Omit<CommunityNotice, 'saved'>[] = [
+  {
+    id: 'notice-kelana-jaya-delay',
+    level: 'CRITICAL',
+    color: '#cf3d2e',
+    title: {
+      EN: 'Kelana Jaya Line delays between KLCC and Ampang Park',
+      BM: 'Kelewatan Laluan Kelana Jaya antara KLCC dan Ampang Park',
+    },
+    place: {
+      EN: 'Expect 15 to 20 minute delays during evening peak service.',
+      BM: 'Jangkakan kelewatan 15 hingga 20 minit semasa perkhidmatan puncak petang.',
+    },
+    time: '5:40 PM',
+    category: 'Transit',
+  },
+  {
+    id: 'notice-melaka-heat',
+    level: 'ADVISORY',
+    color: '#e39b22',
+    title: {
+      EN: 'Melaka heritage zone heat advisory',
+      BM: 'Nasihat cuaca panas zon warisan Melaka',
+    },
+    place: {
+      EN: 'Bring water and plan indoor museum stops between 12 PM and 3 PM.',
+      BM: 'Bawa air dan rancang hentian muzium dalaman antara 12 tengah hari hingga 3 petang.',
+    },
+    time: '11:15 AM',
+    category: 'Weather',
+  },
+  {
+    id: 'notice-sabah-boardwalk',
+    level: 'DISRUPTION',
+    color: '#0d7a69',
+    title: {
+      EN: 'Temporary closure at Tanjung Aru boardwalk entrance',
+      BM: 'Penutupan sementara di pintu masuk pelantar Tanjung Aru',
+    },
+    place: {
+      EN: 'Use the southern accessible ramp while resurfacing works continue.',
+      BM: 'Gunakan tanjakan mesra akses di bahagian selatan sementara kerja baik pulih diteruskan.',
+    },
+    time: '2:05 PM',
+    category: 'Destinations',
+  },
+];
+
 @Component({
   selector: 'app-tab3',
   templateUrl: 'tab3.page.html',
@@ -723,17 +822,31 @@ export class Tab3Page implements OnDestroy {
     const state = this.appStateService.getSnapshot();
     const reactions = this.reactionMap(state.postReactions);
     const savedTips = state.communityTips.map((tip) => this.mapSavedTip(tip, reactions));
-    this.posts = savedTips;
+    this.posts = [
+      ...savedTips,
+      ...this.buildSeededPosts(reactions),
+    ];
     this.tipDraft = state.tipDraft ? { ...state.tipDraft } : this.appStateService.getEmptyTipDraft();
     this.selectedPhotoName = this.tipDraft.imageName ?? '';
     this.selectedPhotoPreview = this.tipDraft.imagePreview ?? '';
     this.savedNoticeCount = state.savedNoticeIds.length;
-    this.notices = [];
+    const savedNoticeIds = new Set(state.savedNoticeIds);
+    this.notices = SEEDED_NOTICES.map((notice) => ({
+      ...notice,
+      saved: savedNoticeIds.has(notice.id),
+    }));
     this.verificationTask = getNextVerificationTask(state.completedVerificationIds);
     this.communityMissionCompletedCount = Math.min(
       state.contributions.filter((contribution) => contribution.type === 'Travel tip' || contribution.type === 'Verification').length,
       this.communityMissionTargetCount,
     );
+  }
+
+  private buildSeededPosts(reactions: Map<string, CommunityPost['reaction']>): CommunityPost[] {
+    return SEEDED_POSTS.map((post) => ({
+      ...post,
+      reaction: reactions.get(post.id) ?? null,
+    }));
   }
 
   private focusCommunityTab(tab: CommunityTab): void {

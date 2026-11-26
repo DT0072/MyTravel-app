@@ -1,0 +1,198 @@
+<ion-content [fullscreen]="true" class="admin-content">
+  <div class="admin-shell">
+    <!-- Top Navy Admin Header matching Figma 12-Administration -->
+    <header class="admin-topbar">
+      <div class="admin-brand">
+        <img src="assets/mytravel/tourism-malaysia-logo.png" alt="Tourism Malaysia">
+        <div>
+          <strong>MyTravel Administration</strong>
+          <small>{{ language === 'BM' ? 'Pengesahan Lokasi & Moderasi Komuniti' : 'Location Verification & Platform Governance' }}</small>
+        </div>
+      </div>
+      <div class="admin-top-actions">
+        <button type="button" class="admin-lang-btn" (click)="toggleLanguage()">{{ language }}</button>
+        <button type="button" class="admin-back-btn" (click)="goBackToApp()">
+          <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
+          {{ language === 'BM' ? 'Kembali ke Aplikasi' : 'Back to App' }}
+        </button>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <!-- Navigation Rail / Tabs -->
+      <nav class="admin-sidebar" aria-label="Admin sections">
+        <button type="button" [class.active]="activeSection === 'locations'" (click)="activeSection = 'locations'">
+          <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
+          <span>{{ language === 'BM' ? 'Pengesahan Lokasi' : 'Location Verification' }}</span>
+          <em *ngIf="needsReviewCount > 0">{{ needsReviewCount }}</em>
+        </button>
+        <button type="button" [class.active]="activeSection === 'community'" (click)="activeSection = 'community'">
+          <ion-icon name="chatbubbles-outline" aria-hidden="true"></ion-icon>
+          <span>{{ language === 'BM' ? 'Moderasi Komuniti' : 'Community Moderation' }}</span>
+          <em *ngIf="communityTips.length > 0">{{ communityTips.length }}</em>
+        </button>
+        <button type="button" [class.active]="activeSection === 'verifications'" (click)="activeSection = 'verifications'">
+          <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
+          <span>{{ language === 'BM' ? 'Rekod Pengakap' : 'Scout Submissions' }}</span>
+          <em *ngIf="verificationSubmissions.length > 0">{{ verificationSubmissions.length }}</em>
+        </button>
+      </nav>
+
+      <!-- Main Workspace -->
+      <div class="admin-main">
+        <!-- Section 1: Location Verification -->
+        <ng-container *ngIf="activeSection === 'locations'">
+          <div class="admin-heading">
+            <h1>{{ language === 'BM' ? 'Pengesahan Lokasi' : 'Location Verification' }}</h1>
+            <p>{{ language === 'BM' ? 'Semak penemuan AI Auto-Crawler dan laporan pengakap komuniti sebelum diterbitkan.' : 'Review AI Auto-Crawler discoveries and community scout reports before publishing live.' }}</p>
+          </div>
+
+          <section class="kpi-grid">
+            <article class="kpi-card kpi-amber">
+              <small>{{ language === 'BM' ? 'Perlu Semakan' : 'Needs Review' }}</small>
+              <strong>{{ needsReviewCount }}</strong>
+            </article>
+            <article class="kpi-card kpi-green">
+              <small>{{ language === 'BM' ? 'Lokasi Disahkan' : 'Verified Locations' }}</small>
+              <strong>{{ verifiedCount }}</strong>
+            </article>
+            <article class="kpi-card kpi-red">
+              <small>{{ language === 'BM' ? 'Konflik Data' : 'Conflicts' }}</small>
+              <strong>{{ conflictCount }}</strong>
+            </article>
+            <article class="kpi-card kpi-blue">
+              <small>{{ language === 'BM' ? 'Penemuan AI' : 'AI Discovered' }}</small>
+              <strong>{{ aiDiscoveredCount }}</strong>
+            </article>
+          </section>
+
+          <div class="admin-toolbar">
+            <input
+              type="search"
+              [(ngModel)]="searchQuery"
+              [placeholder]="language === 'BM' ? 'Cari lokasi, negeri atau kategori...' : 'Search location, state, or category...'"
+            >
+            <select [(ngModel)]="statusFilter" aria-label="Filter by status">
+              <option value="All">{{ language === 'BM' ? 'Semua status' : 'All statuses' }}</option>
+              <option value="Needs Review">Needs Review</option>
+              <option value="Verified">Verified</option>
+              <option value="Conflict">Conflict</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div class="admin-split">
+            <!-- Locations Table -->
+            <section class="admin-table-card">
+              <div class="loc-row" *ngFor="let loc of filteredLocations" [class.selected]="selectedLocation.id === loc.id" (click)="selectLocation(loc)">
+                <div class="loc-main">
+                  <strong>{{ loc.name }}</strong>
+                  <small>{{ loc.state }} · {{ loc.category }} · {{ loc.source }} ({{ loc.confidence }}%)</small>
+                </div>
+                <span class="status-pill" [attr.data-status]="loc.status">{{ loc.status }}</span>
+              </div>
+              <p class="admin-empty" *ngIf="filteredLocations.length === 0">
+                {{ language === 'BM' ? 'Tiada lokasi sepadan dengan carian anda.' : 'No locations match your filter.' }}
+                <button type="button" class="mt-secondary sheet-clear-btn" (click)="searchQuery = ''; statusFilter = 'All'">
+                  {{ language === 'BM' ? 'Kosongkan penapis' : 'Clear filters' }}
+                </button>
+              </p>
+            </section>
+
+            <!-- Selected Location Inspector -->
+            <aside class="admin-inspector" *ngIf="selectedLocation">
+              <div class="inspector-head">
+                <span class="status-pill" [attr.data-status]="selectedLocation.status">{{ selectedLocation.status }}</span>
+                <small>{{ selectedLocation.updatedAt }}</small>
+              </div>
+              <h2>{{ selectedLocation.name }}</h2>
+              <p class="inspector-meta">{{ selectedLocation.state }} · {{ selectedLocation.category }}</p>
+
+              <dl class="inspector-details">
+                <div><dt>{{ language === 'BM' ? 'Sumber Data' : 'Source' }}</dt><dd>{{ selectedLocation.source }} ({{ selectedLocation.confidence }}%)</dd></div>
+                <div><dt>{{ language === 'BM' ? 'Waktu Operasi' : 'Operating Hours' }}</dt><dd>{{ selectedLocation.hours }}</dd></div>
+                <div><dt>{{ language === 'BM' ? 'Hab Transit' : 'Transit Hub' }}</dt><dd>{{ selectedLocation.transitHub }}</dd></div>
+                <div><dt>{{ language === 'BM' ? 'Koordinat' : 'Coordinates' }}</dt><dd>{{ selectedLocation.coords }}</dd></div>
+              </dl>
+
+              <div class="inspector-note">
+                <b>{{ language === 'BM' ? 'Nota Semakan' : 'Verification Notes' }}</b>
+                <p>{{ selectedLocation.notes }}</p>
+              </div>
+
+              <div class="inspector-actions">
+                <button type="button" class="btn-approve" (click)="updateLocationStatus(selectedLocation, 'Verified')">
+                  ✓ {{ language === 'BM' ? 'Luluskan' : 'Approve' }}
+                </button>
+                <button type="button" class="btn-conflict" (click)="updateLocationStatus(selectedLocation, 'Conflict')">
+                  ! {{ language === 'BM' ? 'Konflik' : 'Flag Conflict' }}
+                </button>
+                <button type="button" class="btn-reject" (click)="updateLocationStatus(selectedLocation, 'Rejected')">
+                  × {{ language === 'BM' ? 'Tolak' : 'Reject' }}
+                </button>
+              </div>
+            </aside>
+          </div>
+        </ng-container>
+
+        <!-- Section 2: Community Moderation -->
+        <ng-container *ngIf="activeSection === 'community'">
+          <div class="admin-heading">
+            <h1>{{ language === 'BM' ? 'Moderasi Tip Komuniti' : 'Community Tip Moderation' }}</h1>
+            <p>{{ language === 'BM' ? 'Luluskan tip pelancong yang dihantar dari Tab Komuniti untuk menganugerahkan +20 Mata Eko.' : 'Approve traveler tips submitted from the Community tab to publish them and award +20 Eco-Points.' }}</p>
+          </div>
+
+          <section class="moderation-list">
+            <article class="mod-card" *ngFor="let tip of communityTips">
+              <div class="mod-top">
+                <div>
+                  <strong>{{ tip.location }}</strong>
+                  <small>{{ tip.state }} · {{ tip.category }} · {{ tip.author || 'Traveler' }}</small>
+                </div>
+                <span class="status-pill" [attr.data-status]="tip.status === 'Approved' ? 'Verified' : 'Needs Review'">{{ tip.status }}</span>
+              </div>
+              <p>{{ tip.tip }}</p>
+              <div class="mod-actions">
+                <button type="button" class="btn-approve" [disabled]="tip.status === 'Approved'" (click)="approveTip(tip)">
+                  ✓ {{ tip.status === 'Approved' ? (language === 'BM' ? 'Diluluskan' : 'Approved') : (language === 'BM' ? 'Luluskan (+20 Mata)' : 'Approve (+20 Pts)') }}
+                </button>
+                <button type="button" class="btn-conflict" *ngIf="tip.status === 'Approved'" (click)="markTipInReview(tip)">
+                  {{ language === 'BM' ? 'Semak Semula' : 'Return to Review' }}
+                </button>
+              </div>
+            </article>
+            <p class="admin-empty" *ngIf="communityTips.length === 0">
+              {{ language === 'BM' ? 'Belum ada tip komuniti dihantar. Tip baharu daripada Tab Komuniti akan dipaparkan di sini untuk moderasi.' : 'No traveler tips submitted yet. New tips from the Community tab will appear here for moderation.' }}
+            </p>
+          </section>
+        </ng-container>
+
+        <!-- Section 3: Scout Verification Submissions -->
+        <ng-container *ngIf="activeSection === 'verifications'">
+          <div class="admin-heading">
+            <h1>{{ language === 'BM' ? 'Rekod Pengesahan Pengakap' : 'Scout Verification Logs' }}</h1>
+            <p>{{ language === 'BM' ? 'Rekod jawapan pengesahan lokasi yang dihantar oleh pengguna MyTravel.' : 'Live log of checkpoint verification answers submitted by MyTravel users.' }}</p>
+          </div>
+
+          <section class="moderation-list">
+            <article class="mod-card" *ngFor="let sub of verificationSubmissions">
+              <div class="mod-top">
+                <div>
+                  <strong>{{ sub.title }}</strong>
+                  <small>{{ language === 'BM' ? 'Jawapan' : 'Answer' }}: {{ sub.answer.toUpperCase() }} · {{ sub.submittedAt | date:'medium' }}</small>
+                </div>
+                <span class="status-pill" data-status="Verified">{{ sub.status }}</span>
+              </div>
+              <p *ngIf="sub.note">{{ sub.note }}</p>
+            </article>
+            <p class="admin-empty" *ngIf="verificationSubmissions.length === 0">
+              {{ language === 'BM' ? 'Belum ada rekod pengesahan dihantar.' : 'No scout verification submissions recorded yet.' }}
+            </p>
+          </section>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
+</ion-content>

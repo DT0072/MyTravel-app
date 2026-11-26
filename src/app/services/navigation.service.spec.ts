@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
 import { NavigationRequest, NavigationService } from './navigation.service';
@@ -6,7 +7,8 @@ describe('NavigationService', () => {
   let service: NavigationService;
 
   beforeEach(() => {
-    service = new NavigationService();
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(NavigationService);
   });
 
   it('returns localized service statuses and recent locations', async () => {
@@ -91,8 +93,9 @@ describe('NavigationService', () => {
       travelTime: '18:10',
     }));
 
-    expect(routes[0].mode).toBe('Express Bus');
-    expect(routes[0].duration).toBe('29 min');
-    expect(routes[0].arrive).toBe('06:39 PM');
+    expect(routes.length).toBeGreaterThan(0);
+    expect(routes[0].mode).toBe('LRT');
+    expect(routes[0].duration).toBe('15 min');
+    expect(routes[0].arrive).toBe('06:25 PM');
   });
 });

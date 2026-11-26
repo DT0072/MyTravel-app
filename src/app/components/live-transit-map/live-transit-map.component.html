@@ -1,0 +1,19 @@
+<div class="live-map-shell" [class.compact]="compact">
+  <div #mapContainer class="leaflet-canvas"></div>
+
+  <div class="live-map-hud">
+    <span class="live-hud-pill">
+      <i class="pulse-dot" [class.live]="snapshot.totalVehicles > 0"></i>
+      {{ liveBadgeLabel }}
+    </span>
+
+    <div class="live-hud-actions" *ngIf="!compact">
+      <button type="button" [attr.aria-label]="language === 'BM' ? 'Pusatkan peta' : 'Recenter map'" (click)="recenterMap($event)">
+        <ion-icon name="locate-outline" aria-hidden="true"></ion-icon>
+      </button>
+      <button type="button" [attr.aria-label]="language === 'BM' ? 'Muat semula kenderaan langsung' : 'Refresh live vehicles'" (click)="refreshNow($event)">
+        <ion-icon name="refresh-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </div>
+  </div>
+</div>

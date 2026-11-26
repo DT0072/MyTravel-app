@@ -1,6 +1,6 @@
 <ion-content #navigationContent [fullscreen]="true">
-  <!-- Plans journeys and presents available public-transport routes. -->
-  <div class="mt-screen nav-screen mt-tabbar-scroll-screen" [class.results-active]="view === 'results'">
+  <!-- Plans journeys, tracks active navigation, and presents real-time GTFS routes. -->
+  <div class="mt-screen nav-screen mt-tabbar-scroll-screen" [class.results-active]="!activeJourney && view === 'results'">
     <app-topbar
       [language]="language"
       [notificationCount]="savedNoticeCount"
@@ -8,59 +8,374 @@
       (notificationClick)="openNotifications()"
     ></app-topbar>
 
-    <ng-container *ngIf="view === 'planner'; else resultsView">
-      <div class="mt-page-heading"><h1>{{ t(copy.pageTitle) }}</h1><p>{{ t(copy.pageSubtitle) }}</p></div>
+    <!-- Active Navigation Lock Mode (must exit/complete before searching another destination) -->
+    <ng-container *ngIf="activeJourney; else plannerAndResultsFlow">
+      <div class="mt-page-heading">
+        <h1>{{ t(copy.pageTitle) }}</h1>
+        <p>{{ t(copy.activeNavLockNotice) }}</p>
+      </div>
 
-      <section class="mt-card planner-card mt-reveal">
-        <label>{{ t(copy.from) }}<input [(ngModel)]="from" (ngModelChange)="plannerError = ''" [attr.aria-label]="t(copy.fromAria)" autocomplete="street-address"><ion-icon aria-hidden="true" name="location"></ion-icon></label>
-        <button class="swap-button" type="button" [attr.aria-label]="t(copy.swapLocations)" (click)="swap()"><ion-icon aria-hidden="true" name="swap-vertical"></ion-icon></button>
-        <label>{{ t(copy.to) }}<input [(ngModel)]="to" (ngModelChange)="plannerError = ''" [attr.aria-label]="t(copy.toAria)" autocomplete="street-address"><ion-icon aria-hidden="true" class="red" name="location"></ion-icon></label>
-        <div class="date-row">
-          <label><span>{{ t(copy.date) }}</span><input type="date" name="plannerDate" [(ngModel)]="plannerDate" [attr.aria-label]="t(copy.travelDate)"></label>
-          <label><span>{{ t(copy.time) }}</span><input type="time" name="plannerTime" [(ngModel)]="plannerTime" [attr.aria-label]="t(copy.departureTime)"></label>
+      <section class="mt-card active-nav-lock-banner mt-reveal" role="status">
+        <span class="lock-dot"></span>
+        <div>
+          <strong>{{ t(copy.activeNavKicker) }}</strong>
+          <small>{{ t(copy.activeNavLockNotice) }}</small>
         </div>
-        <p>{{ t(copy.transportMode) }}</p>
-        <div class="mode-row" role="group" [attr.aria-label]="t(copy.transportModeAria)"><button *ngFor="let mode of modes" type="button" [class.active]="activeMode === mode" [attr.aria-label]="modeButtonAriaLabel(mode)" [attr.aria-pressed]="activeMode === mode" (click)="selectMode(mode)"><ion-icon aria-hidden="true" [name]="modeIconName(mode)"></ion-icon>{{ modeLabel(mode) }}</button></div>
-        <p *ngIf="preferAccessibleRoutes" class="planner-note"><ion-icon aria-hidden="true" name="accessibility-outline"></ion-icon> {{ t(copy.accessibleRoutesNote) }}</p>
-        <p *ngIf="plannerError" class="planner-error" role="alert">{{ plannerError }}</p>
-        <button class="mt-primary find-route" type="button" [attr.aria-label]="findRouteButtonAriaLabel()" (click)="findRoute()"><ion-icon aria-hidden="true" name="search"></ion-icon> {{ t(copy.findRoute) }}</button>
       </section>
 
-      <section class="mt-card service-card mt-reveal">
-        <div class="section-title"><b>{{ t(copy.serviceStatus) }}</b><button type="button" [attr.aria-label]="serviceStatusOverviewAriaLabel()" (click)="openServiceStatus()">{{ t(copy.viewAll) }} ›</button></div>
-        <button class="service-row" *ngFor="let line of serviceStatuses" type="button" [attr.aria-label]="serviceStatusAriaLabel(line)" (click)="openServiceStatus(line)"><span [style.background]="line.color"><ion-icon aria-hidden="true" name="train-outline"></ion-icon></span><div><b>{{ line.line }}</b><small>{{ line.route }}</small></div><em>● {{ line.state }}</em><ion-icon aria-hidden="true" name="chevron-forward"></ion-icon></button>
-        <p class="recent-empty" *ngIf="serviceStatuses.length === 0">{{ t(copy.noServiceStatuses) }}</p>
+      <section class="mt-card active-nav-map-card mt-reveal">
+        <div class="active-nav-map-wrap">
+          <app-live-transit-map
+            [fromName]="activeJourney.from"
+            [toName]="activeJourney.to"
+            [waypoints]="activeJourney.waypoints || []"
+            [legs]="activeJourney.legs || []"
+            [routeColor]="activeJourney.color || '#0b57d0'"
+            [language]="language"
+          ></app-live-transit-map>
+        </div>
+
+        <div class="active-nav-summary">
+          <div class="active-nav-endpoints">
+            <div>
+              <small>{{ t(copy.from) }}</small>
+              <strong>{{ activeJourney.from }}</strong>
+              <span>{{ activeJourney.depart }}</span>
+            </div>
+            <ion-icon name="arrow-forward" aria-hidden="true"></ion-icon>
+            <div class="right">
+              <small>{{ t(copy.to) }}</small>
+              <strong>{{ activeJourney.to }}</strong>
+              <span>{{ activeJourney.arrive }}</span>
+            </div>
+          </div>
+
+          <div class="leg-breadcrumb-chain active-nav-breadcrumbs" *ngIf="activeJourney.legs && activeJourney.legs.length > 0">
+            <ng-container *ngFor="let leg of activeJourney.legs; let lastLeg = last">
+              <span class="leg-crumb-walk" *ngIf="leg.type === 'walk'">
+                <ion-icon name="walk-outline" aria-hidden="true"></ion-icon>
+              </span>
+              <span class="leg-crumb-transit" *ngIf="leg.type === 'transit'">
+                <ion-icon [name]="leg.icon" aria-hidden="true"></ion-icon>
+                <em class="leg-line-pill" [style.background]="leg.badgeColor">{{ leg.badgeLabel }}</em>
+              </span>
+              <ion-icon *ngIf="!lastLeg" class="leg-crumb-sep" name="chevron-forward" aria-hidden="true"></ion-icon>
+            </ng-container>
+          </div>
+
+          <div class="active-nav-chips">
+            <span><ion-icon [name]="modeIconName(activeJourney.mode)" aria-hidden="true"></ion-icon> {{ modeLabel(activeJourney.mode) }}</span>
+            <span>{{ activeJourney.duration }}</span>
+            <span>{{ activeJourney.fare }}</span>
+            <span class="eco">+{{ activeJourney.points }} Eco-Points</span>
+          </div>
+        </div>
       </section>
 
-      <section class="mt-card map-card mt-reveal"><b>{{ t(copy.transitMap) }}</b><div class="map-wrap"><img src="assets/mytravel/transit-map.png" [alt]="t(copy.transitMapAlt)"><aside><img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)"><strong>{{ t(copy.wiraTip) }}</strong><small>{{ t(copy.greenRoute) }}</small></aside></div></section>
-      <section class="mt-card recent-card"><div class="section-title"><b>{{ t(copy.recentLocations) }}</b><button type="button" [attr.aria-label]="manageRecentLocationsAriaLabel()" (click)="manageRecentLocations()">{{ managingRecentLocations ? t(copy.done) : t(copy.manage) + ' ›' }}</button></div><div class="recent-row" *ngFor="let location of recentLocations"><button type="button" [attr.aria-label]="recentLocationAriaLabel(location)" (click)="useRecentLocation(location)"><b>{{ location.label }}</b><small>{{ location.description }}</small></button><button *ngIf="managingRecentLocations" class="recent-remove" type="button" [attr.aria-label]="removeRecentLocationAriaLabel(location)" (click)="removeRecentLocation(location)"><ion-icon aria-hidden="true" name="trash-outline"></ion-icon></button></div><p class="recent-empty" *ngIf="recentLocations.length === 0">{{ t(copy.noRecentLocations) }}</p></section>
+      <section class="mt-card active-nav-steps-card" *ngIf="activeJourney.steps && activeJourney.steps.length > 0">
+        <b>{{ t(copy.routeStepsTitle) }}</b>
+        <ol class="route-steps-list">
+          <li *ngFor="let step of activeJourney.steps">{{ step }}</li>
+        </ol>
+      </section>
+
+      <div class="active-nav-actions">
+        <button class="mt-primary complete-nav-btn" type="button" (click)="completeActiveNavigation()">
+          ✓ {{ t(copy.completeActiveNav) }} (+{{ activeJourney.points }} Eco-Points)
+        </button>
+        <button class="mt-secondary exit-nav-btn" type="button" (click)="exitActiveNavigation()">
+          <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
+          {{ t(copy.exitActiveNav) }}
+        </button>
+        <button class="mt-secondary route-cancel" type="button" (click)="openActiveJourneyGoogleMaps()">
+          <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
+          {{ t(copy.openInGoogleMaps) }}
+        </button>
+      </div>
     </ng-container>
 
-    <ng-template #resultsView>
-      <div #resultsHeading class="results-heading" tabindex="-1"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToPlanner)" (click)="view = 'planner'"><ion-icon aria-hidden="true" name="arrow-back"></ion-icon></button><div><h1>{{ t(copy.journeyOptions) }}</h1><p>{{ t(copy.journeyOptionsCopy) }}</p></div></div>
-      <section class="mt-card route-summary"><span><ion-icon aria-hidden="true" [name]="resultsSummaryIconName()"></ion-icon></span><div><b>{{ from }}</b><small>{{ journeyDepartureSummary() }}</small></div><ion-icon aria-hidden="true" name="arrow-forward"></ion-icon><span class="destination"><ion-icon aria-hidden="true" name="location"></ion-icon></span><div><b>{{ to }}</b><small>{{ journeyArrivalSummary() }}</small></div></section>
-      <div class="sort-row" role="group" [attr.aria-label]="t(copy.sortRoutesAria)"><button *ngFor="let item of ['Fastest','Less walking','Accessible']" type="button" [class.active]="sort === item" [attr.aria-label]="sortButtonAriaLabel(item)" [attr.aria-pressed]="sort === item" (click)="selectSort(item)">{{ sortLabel(item) }}</button></div>
-      <p *ngIf="preferAccessibleRoutes" class="sort-note"><ion-icon aria-hidden="true" name="accessibility-outline"></ion-icon> {{ t(copy.sortAccessibleNote) }}</p>
-      <section *ngIf="isLoadingRoutes" class="mt-card route-loading"><b>{{ t(copy.loadingTitle) }}</b><small>{{ t(copy.loadingCopy) }}</small></section>
-      <section *ngIf="!isLoadingRoutes && routes.length === 0" class="mt-card route-loading">
-        <b>{{ t(copy.noRoutesTitle) }}</b>
-        <small>{{ t(copy.noRoutesCopy) }}</small>
-      </section>
-      <section class="mt-card route-card" *ngFor="let route of routes; let first = first">
-        <div class="route-name"><span [style.background]="route.color"><ion-icon aria-hidden="true" [name]="modeIconName(route.mode)"></ion-icon></span><div><b>{{ modeLabel(route.mode) }}</b><small [style.color]="route.color">{{ route.detail }}</small></div><img *ngIf="first" src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)"></div>
-        <div class="route-time"><strong>{{ route.depart }}</strong><span>{{ route.duration }}</span><strong>{{ route.arrive }}</strong></div><div class="route-bar" [style.background]="route.color"></div>
-        <div class="route-meta"><span><small>{{ t(copy.walk) }}</small><b>{{ route.walk }}</b></span><span><small>{{ t(copy.fare) }}</small><b class="fare">{{ route.fare }}</b></span><span><small>{{ t(copy.transfers) }}</small><b>{{ route.transfers }}</b></span><span><small>{{ t(copy.accessible) }}</small><b>{{ route.isAccessible ? t(copy.yes) : t(copy.limited) }}</b></span><button type="button" [attr.aria-label]="routeDetailsAriaLabel(route)" (click)="openRouteDetails(route)"><ion-icon aria-hidden="true" name="chevron-forward"></ion-icon></button></div>
-      </section>
-      <section class="mt-card info-note"><ion-icon aria-hidden="true" name="information-circle-outline"></ion-icon><span><b>{{ t(copy.routeInfoTitle) }}</b><small>{{ t(copy.routeInfoCopy) }}</small></span></section>
+    <!-- Standard Multi-Modal Search Planner & Results Flow -->
+    <ng-template #plannerAndResultsFlow>
+      <ng-container *ngIf="view === 'planner'; else resultsView">
+        <div class="mt-page-heading"><h1>{{ t(copy.pageTitle) }}</h1><p>{{ t(copy.pageSubtitle) }}</p></div>
+
+        <section class="mt-card planner-card mt-reveal">
+          <div class="input-field-wrap">
+            <label>
+              {{ t(copy.from) }}
+              <input
+                [(ngModel)]="from"
+                [placeholder]="t(copy.fromPlaceholder)"
+                (focus)="onLocationInputFocus('from')"
+                (blur)="onLocationInputBlur()"
+                (ngModelChange)="onLocationInputChange('from', $event)"
+                [attr.aria-label]="t(copy.fromAria)"
+                autocomplete="off"
+              >
+              <ion-icon aria-hidden="true" name="location"></ion-icon>
+            </label>
+            <button
+              class="gps-button"
+              type="button"
+              [attr.aria-label]="t(copy.useMyLocation)"
+              (click)="useCurrentLocation()"
+            >
+              <ion-icon aria-hidden="true" name="locate-outline"></ion-icon>
+            </button>
+            <ul class="location-suggestions" *ngIf="activeInputField === 'from' && locationSuggestions.length > 0" role="listbox">
+              <li *ngFor="let suggestion of locationSuggestions">
+                <button type="button" (mousedown)="pickLocationSuggestion('from', suggestion)">
+                  <strong>{{ suggestion.name }}</strong>
+                  <small>{{ suggestion.subtitle }} · {{ suggestion.state }}</small>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="swap-row">
+            <span class="swap-divider" aria-hidden="true"></span>
+            <button class="swap-button" type="button" [attr.aria-label]="t(copy.swapLocations)" (click)="swap()">
+              <ion-icon aria-hidden="true" name="swap-vertical"></ion-icon>
+            </button>
+          </div>
+
+          <div class="input-field-wrap">
+            <label>
+              {{ t(copy.to) }}
+              <input
+                [(ngModel)]="to"
+                [placeholder]="t(copy.toPlaceholder)"
+                (focus)="onLocationInputFocus('to')"
+                (blur)="onLocationInputBlur()"
+                (ngModelChange)="onLocationInputChange('to', $event)"
+                [attr.aria-label]="t(copy.toAria)"
+                autocomplete="off"
+              >
+              <ion-icon aria-hidden="true" class="red" name="location"></ion-icon>
+            </label>
+            <ul class="location-suggestions" *ngIf="activeInputField === 'to' && locationSuggestions.length > 0" role="listbox">
+              <li *ngFor="let suggestion of locationSuggestions">
+                <button type="button" (mousedown)="pickLocationSuggestion('to', suggestion)">
+                  <strong>{{ suggestion.name }}</strong>
+                  <small>{{ suggestion.subtitle }} · {{ suggestion.state }}</small>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="date-row">
+            <label><span>{{ t(copy.date) }}</span><input type="date" name="plannerDate" [(ngModel)]="plannerDate" [attr.aria-label]="t(copy.travelDate)"></label>
+            <label><span>{{ t(copy.time) }}</span><input type="time" name="plannerTime" [(ngModel)]="plannerTime" [attr.aria-label]="t(copy.departureTime)"></label>
+          </div>
+
+          <p class="multimodal-hint">
+            <ion-icon aria-hidden="true" name="sparkles-outline"></ion-icon>
+            {{ t(copy.allModesHint) }}
+          </p>
+          <p *ngIf="preferAccessibleRoutes" class="planner-note"><ion-icon aria-hidden="true" name="accessibility-outline"></ion-icon> {{ t(copy.accessibleRoutesNote) }}</p>
+          <p *ngIf="plannerError" class="planner-error" role="alert">{{ plannerError }}</p>
+          <button class="mt-primary find-route" type="button" [attr.aria-label]="findRouteButtonAriaLabel()" (click)="findRoute()">
+            <ion-icon aria-hidden="true" name="search"></ion-icon> {{ t(copy.findRoute) }}
+          </button>
+        </section>
+
+        <section class="mt-card service-card mt-reveal">
+          <div class="section-title"><b>{{ t(copy.serviceStatus) }}</b><button type="button" [attr.aria-label]="serviceStatusOverviewAriaLabel()" (click)="openServiceStatus()">{{ t(copy.viewAll) }} ›</button></div>
+          <div class="gtfs-live-strip">
+            <span class="gtfs-dot" [class.active]="rtSnapshot.totalVehicles > 0"></span>
+            <small *ngIf="rtSnapshot.loading">{{ t(copy.gtfsSyncing) }}</small>
+            <small *ngIf="!rtSnapshot.loading && rtSnapshot.totalVehicles > 0">
+              <strong>{{ t(copy.gtfsLiveFeed) }}</strong> · {{ rtSnapshot.totalVehicles | number }} {{ t(copy.gtfsVehiclesActive) }}
+            </small>
+            <small *ngIf="!rtSnapshot.loading && rtSnapshot.totalVehicles === 0">
+              <strong>GTFS Static</strong> · {{ language === 'BM' ? 'Jadual rasmi Prasarana & KTMB' : 'Official Prasarana & KTMB schedules' }}
+            </small>
+            <button type="button" class="gtfs-refresh-btn" [attr.aria-label]="t(copy.refreshLiveFeed)" (click)="refreshLiveGtfs()">
+              <ion-icon name="refresh-outline" aria-hidden="true"></ion-icon>
+            </button>
+          </div>
+          <button class="service-row" *ngFor="let line of serviceStatuses" type="button" [attr.aria-label]="serviceStatusAriaLabel(line)" (click)="openServiceStatus(line)">
+            <span [style.background]="line.color"><ion-icon aria-hidden="true" name="train-outline"></ion-icon></span>
+            <div><b>{{ line.line }}</b><small>{{ line.route }}</small></div>
+            <em>● {{ line.state }}</em>
+            <ion-icon aria-hidden="true" name="chevron-forward"></ion-icon>
+          </button>
+          <p class="recent-empty" *ngIf="serviceStatuses.length === 0">{{ t(copy.noServiceStatuses) }}</p>
+        </section>
+
+        <section class="mt-card map-card mt-reveal">
+          <div class="section-title">
+            <b>{{ t(copy.transitMap) }}</b>
+            <button type="button" (click)="openInteractiveMap()">{{ t(copy.exploreLiveMap) }} ›</button>
+          </div>
+          <div class="inline-live-map-wrap">
+            <div class="inline-live-map-canvas">
+              <app-live-transit-map
+                [fromName]="from"
+                [toName]="to"
+                [centerLat]="selectedMapLocation.lat"
+                [centerLng]="selectedMapLocation.lng"
+                [compact]="true"
+                [language]="language"
+              ></app-live-transit-map>
+            </div>
+            <aside class="wira-map-tip" (click)="openInteractiveMap()">
+              <img class="mt-mascot-walk" src="assets/mytravel/wira-walk.png" [alt]="t(copy.wiraMascotAlt)">
+              <strong>{{ t(copy.wiraTip) }}</strong>
+              <small>{{ t(copy.greenRoute) }}</small>
+            </aside>
+          </div>
+        </section>
+
+        <section class="mt-card recent-card">
+          <div class="section-title">
+            <b>{{ t(copy.recentLocations) }}</b>
+            <button type="button" [attr.aria-label]="manageRecentLocationsAriaLabel()" (click)="manageRecentLocations()">{{ managingRecentLocations ? t(copy.done) : t(copy.manage) + ' ›' }}</button>
+          </div>
+          <div class="recent-row" *ngFor="let location of recentLocations">
+            <button type="button" [attr.aria-label]="recentLocationAriaLabel(location)" (click)="useRecentLocation(location)">
+              <b>{{ location.label }}</b><small>{{ location.description }}</small>
+            </button>
+            <button *ngIf="managingRecentLocations" class="recent-remove" type="button" [attr.aria-label]="removeRecentLocationAriaLabel(location)" (click)="removeRecentLocation(location)">
+              <ion-icon aria-hidden="true" name="trash-outline"></ion-icon>
+            </button>
+          </div>
+          <p class="recent-empty" *ngIf="recentLocations.length === 0">{{ t(copy.noRecentLocations) }}</p>
+        </section>
+      </ng-container>
+
+      <ng-template #resultsView>
+        <div #resultsHeading class="results-heading" [class.detail-open]="!!selectedRoute" tabindex="-1">
+          <button class="mt-back" type="button" [attr.aria-label]="t(copy.backToPlanner)" (click)="closeRouteDetails(); view = 'planner'">
+            <ion-icon aria-hidden="true" name="arrow-back"></ion-icon>
+          </button>
+          <div><h1>{{ t(copy.journeyOptions) }}</h1><p>{{ t(copy.journeyOptionsCopy) }}</p></div>
+        </div>
+
+        <div class="results-workspace">
+          <div class="results-left-pane" [class.detail-open]="!!selectedRoute">
+            <section class="mt-card route-summary">
+              <span><ion-icon aria-hidden="true" [name]="resultsSummaryIconName()"></ion-icon></span>
+              <div><b>{{ from }}</b><small>{{ journeyDepartureSummary() }}</small></div>
+              <ion-icon aria-hidden="true" name="arrow-forward"></ion-icon>
+              <span class="destination"><ion-icon aria-hidden="true" name="location"></ion-icon></span>
+              <div><b>{{ to }}</b><small>{{ journeyArrivalSummary() }}</small></div>
+            </section>
+
+            <div class="sort-row" role="group" [attr.aria-label]="t(copy.sortRoutesAria)">
+              <button
+                *ngFor="let item of ['Fastest','Less walking','Accessible']"
+                type="button"
+                [class.active]="sort === item"
+                [attr.aria-label]="sortButtonAriaLabel(item)"
+                [attr.aria-pressed]="sort === item"
+                (click)="selectSort(item)"
+              >{{ sortLabel(item) }}</button>
+            </div>
+            <p *ngIf="preferAccessibleRoutes" class="sort-note"><ion-icon aria-hidden="true" name="accessibility-outline"></ion-icon> {{ t(copy.sortAccessibleNote) }}</p>
+
+            <section *ngIf="isLoadingRoutes" class="mt-card route-loading">
+              <b>{{ t(copy.loadingTitle) }}</b>
+              <small>{{ t(copy.loadingCopy) }}</small>
+            </section>
+            <section *ngIf="!isLoadingRoutes && routes.length === 0" class="mt-card route-loading">
+              <b>{{ t(copy.noRoutesTitle) }}</b>
+              <small>{{ t(copy.noRoutesCopy) }}</small>
+            </section>
+
+            <!-- Image 1 Multi-Option Transit Route Cards -->
+            <section
+              class="mt-card route-card"
+              *ngFor="let route of routes; let idx = index; let first = first"
+              [class.selected-option]="idx === highlightedRouteIndex"
+              (click)="highlightRoute(idx)"
+            >
+              <div class="route-gmaps-head">
+                <div class="route-gmaps-times">
+                  <span class="route-mode-glyph" [style.background]="route.color">
+                    <ion-icon aria-hidden="true" [name]="modeIconName(route.mode)"></ion-icon>
+                  </span>
+                  <strong>{{ route.depart }} – {{ route.arrive }}</strong>
+                </div>
+                <div class="route-gmaps-duration">
+                  <strong>{{ route.duration }}</strong>
+                  <img *ngIf="first" class="mt-mascot-walk" src="assets/mytravel/wira-walk.png" [alt]="t(copy.wiraMascotAlt)">
+                </div>
+              </div>
+
+              <!-- Visual Leg Breadcrumb Chain (Walk › [BRT Sunway Line] › [Port Klang Line] › Walk) -->
+              <div class="leg-breadcrumb-chain" *ngIf="route.legs && route.legs.length > 0">
+                <ng-container *ngFor="let leg of route.legs; let lastLeg = last">
+                  <span class="leg-crumb-walk" *ngIf="leg.type === 'walk'">
+                    <ion-icon name="walk-outline" aria-hidden="true"></ion-icon>
+                  </span>
+                  <span class="leg-crumb-transit" *ngIf="leg.type === 'transit'">
+                    <ion-icon [name]="leg.icon" aria-hidden="true"></ion-icon>
+                    <em class="leg-line-pill" [style.background]="leg.badgeColor">{{ leg.badgeLabel }}</em>
+                  </span>
+                  <ion-icon *ngIf="!lastLeg" class="leg-crumb-sep" name="chevron-forward" aria-hidden="true"></ion-icon>
+                </ng-container>
+              </div>
+
+              <div class="route-name">
+                <div>
+                  <b>{{ modeLabel(route.mode) }}</b>
+                  <small class="route-boarding-copy" *ngIf="route.firstBoardingText">{{ route.firstBoardingText }}</small>
+                  <small [style.color]="route.color">{{ route.detail }}</small>
+                </div>
+              </div>
+
+              <div class="route-meta">
+                <span><small>{{ t(copy.walk) }}</small><b>{{ route.walk }}</b></span>
+                <span><small>{{ t(copy.fare) }}</small><b class="fare">{{ route.fare }}</b></span>
+                <span><small>{{ t(copy.transfers) }}</small><b>{{ route.transfers }}</b></span>
+                <span><small>{{ t(copy.accessible) }}</small><b>{{ route.isAccessible ? t(copy.yes) : t(copy.limited) }}</b></span>
+                <button
+                  type="button"
+                  class="route-details-btn"
+                  [attr.aria-label]="routeDetailsAriaLabel(route)"
+                  (click)="$event.stopPropagation(); openRouteDetails(route, idx)"
+                >
+                  <span class="details-text">{{ t(copy.detailsAction) }}</span>
+                  <ion-icon aria-hidden="true" name="chevron-forward"></ion-icon>
+                </button>
+              </div>
+            </section>
+
+            <section class="mt-card info-note">
+              <ion-icon aria-hidden="true" name="information-circle-outline"></ion-icon>
+              <span><b>{{ t(copy.routeInfoTitle) }}</b><small>{{ t(copy.routeInfoCopy) }}</small></span>
+            </section>
+          </div>
+
+          <!-- Interactive Multi-Route Transit Map (Sticky right pane on desktop, top card on mobile) -->
+          <aside class="results-right-map-pane" *ngIf="routes.length > 0">
+            <div class="results-multi-map-card">
+              <app-live-transit-map
+                [fromName]="from"
+                [toName]="to"
+                [alternativeRoutes]="routes"
+                [activeRouteIndex]="highlightedRouteIndex"
+                [waypoints]="activePreviewRoute?.waypoints || []"
+                [legs]="activePreviewRoute?.legs || []"
+                [routeColor]="activePreviewRoute?.color || '#0b57d0'"
+                [language]="language"
+                (routeSelect)="highlightRoute($event)"
+              ></app-live-transit-map>
+            </div>
+          </aside>
+        </div>
+      </ng-template>
     </ng-template>
   </div>
 
   <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
 
-  <div class="sheet-backdrop" *ngIf="selectedRoute" (click)="closeRouteDetails()">
+  <!-- Image 2: Chosen Route Itinerary & Step-by-Step Connected Transit Timeline -->
+  <div class="sheet-backdrop route-detail-backdrop" *ngIf="selectedRoute" (click)="closeRouteDetails()">
     <section
       #routeSheet
-      class="route-sheet"
+      class="route-sheet itinerary-detail-sheet"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="routeDialogAriaLabel()"
@@ -69,26 +384,225 @@
       (keydown)="handleRouteSheetKeydown($event, routeSheet)"
     >
       <div class="sheet-handle"></div>
-      <button class="sheet-close" type="button" [attr.aria-label]="t(copy.closeRouteDetails)" (click)="closeRouteDetails()"><ion-icon aria-hidden="true" name="close"></ion-icon></button>
+      <div class="itinerary-topbar">
+        <button class="itinerary-back-btn" type="button" [attr.aria-label]="chooseAnotherRouteAriaLabel()" (click)="closeRouteDetails()">
+          <ion-icon aria-hidden="true" name="arrow-back"></ion-icon>
+        </button>
+        <div class="itinerary-endpoints-head">
+          <small>{{ t(copy.fromPrefix) }} <strong>{{ from }}</strong></small>
+          <small>{{ t(copy.toPrefix) }} <strong>{{ to }}</strong></small>
+        </div>
+        <button class="sheet-close" type="button" [attr.aria-label]="t(copy.closeRouteDetails)" (click)="closeRouteDetails()">
+          <ion-icon aria-hidden="true" name="close"></ion-icon>
+        </button>
+      </div>
+
       <p class="sheet-kicker">{{ t(copy.routeDetails) }}</p>
       <h2>{{ modeLabel(selectedRoute.mode) }}</h2>
-      <p>{{ selectedRoute.detail }}</p>
+
+      <div class="itinerary-hero-summary">
+        <div class="itinerary-hero-times">
+          <strong>{{ selectedRoute.depart }} – {{ selectedRoute.arrive }}</strong>
+          <span>({{ selectedRoute.duration }})</span>
+        </div>
+
+        <div class="leg-breadcrumb-chain" *ngIf="selectedRoute.legs && selectedRoute.legs.length > 0">
+          <ng-container *ngFor="let leg of selectedRoute.legs; let lastLeg = last">
+            <span class="leg-crumb-walk" *ngIf="leg.type === 'walk'">
+              <ion-icon name="walk-outline" aria-hidden="true"></ion-icon>
+            </span>
+            <span class="leg-crumb-transit" *ngIf="leg.type === 'transit'">
+              <ion-icon [name]="leg.icon" aria-hidden="true"></ion-icon>
+              <em class="leg-line-pill" [style.background]="leg.badgeColor">{{ leg.badgeLabel }}</em>
+            </span>
+            <ion-icon *ngIf="!lastLeg" class="leg-crumb-sep" name="chevron-forward" aria-hidden="true"></ion-icon>
+          </ng-container>
+        </div>
+
+        <p class="itinerary-hero-sub">
+          <span *ngIf="selectedRoute.firstBoardingText">{{ selectedRoute.firstBoardingText }} · </span>
+          <ion-icon name="walk-outline" aria-hidden="true"></ion-icon> {{ selectedRoute.walk }} · {{ selectedRoute.fare }}
+        </p>
+      </div>
+
+      <div class="route-preview-map-box">
+        <app-live-transit-map
+          [fromName]="from"
+          [toName]="to"
+          [waypoints]="selectedRoute.waypoints || []"
+          [legs]="selectedRoute.legs || []"
+          [routeColor]="selectedRoute.color"
+          [language]="language"
+        ></app-live-transit-map>
+      </div>
+
+      <!-- Vertical Connected Transit Timeline (Google Maps Image 2 Benchmark) -->
+      <section class="transit-timeline-card" *ngIf="selectedRoute.legs && selectedRoute.legs.length > 0; else legacyStepsBlock">
+        <div class="transit-timeline">
+          <ng-container *ngFor="let leg of selectedRoute.legs; let firstLeg = first">
+            <!-- Node / Station Row -->
+            <div class="timeline-node-row">
+              <span class="timeline-time">{{ leg.departTime }}</span>
+              <div class="timeline-rail-cell">
+                <span
+                  class="rail-node"
+                  [class.origin-node]="firstLeg"
+                  [style.border-color]="leg.type === 'transit' ? leg.badgeColor : '#2563eb'"
+                ></span>
+              </div>
+              <div class="timeline-station-title">
+                <strong>{{ leg.fromName }}</strong>
+              </div>
+            </div>
+
+            <!-- Segment / Leg Connector Row -->
+            <div class="timeline-segment-row" [class.is-walk]="leg.type === 'walk'" [class.is-transit]="leg.type === 'transit'">
+              <span class="timeline-mode-glyph">
+                <ion-icon [name]="leg.icon" aria-hidden="true"></ion-icon>
+              </span>
+              <div class="timeline-rail-cell">
+                <span *ngIf="leg.type === 'walk'" class="rail-line walk-dotted"></span>
+                <span *ngIf="leg.type === 'transit'" class="rail-line transit-solid" [style.background]="leg.badgeColor"></span>
+              </div>
+              <div class="timeline-segment-body">
+                <ng-container *ngIf="leg.type === 'walk'; else transitLegContent">
+                  <strong class="walk-title">{{ leg.badgeLabel }}</strong>
+                  <details class="timeline-disclosure">
+                    <summary>
+                      {{ leg.durationText }}<ng-container *ngIf="leg.distanceText">, {{ leg.distanceText }}</ng-container>
+                    </summary>
+                    <p class="disclosure-copy">{{ t(copy.walkFollowHint) }} {{ leg.toName }}</p>
+                  </details>
+                </ng-container>
+
+                <ng-template #transitLegContent>
+                  <div class="transit-badge-row">
+                    <span class="timeline-line-badge" [style.background]="leg.badgeColor">{{ leg.badgeLabel }}</span>
+                    <span class="timeline-headsign" *ngIf="leg.headsign">{{ leg.headsign }}</span>
+                    <span class="live-gps-chip" *ngIf="leg.liveTracked">● Live</span>
+                  </div>
+
+                  <details class="timeline-disclosure" *ngIf="leg.intermediateStops && leg.intermediateStops.length > 0; else directHopMeta">
+                    <summary>
+                      {{ leg.durationText }} ({{ leg.stopCount || (leg.intermediateStops.length + 1) }} {{ t(copy.stopsUnit) }})<span *ngIf="leg.isAccessible"> · ♿</span>
+                    </summary>
+                    <ul class="intermediate-stops-list">
+                      <li *ngFor="let stopName of leg.intermediateStops">{{ stopName }}</li>
+                    </ul>
+                  </details>
+                  <ng-template #directHopMeta>
+                    <div class="timeline-static-meta">
+                      {{ leg.durationText }}<ng-container *ngIf="leg.stopCount"> ({{ leg.stopCount }} {{ leg.stopCount === 1 ? t(copy.stopSingular) : t(copy.stopsUnit) }})</ng-container><span *ngIf="leg.isAccessible"> · ♿</span>
+                    </div>
+                  </ng-template>
+                </ng-template>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Final Destination Arrival Node -->
+          <div class="timeline-node-row final-node-row">
+            <span class="timeline-time">{{ selectedRoute.legs[selectedRoute.legs.length - 1].arriveTime || selectedRoute.arrive }}</span>
+            <div class="timeline-rail-cell">
+              <span class="rail-node dest-node"></span>
+            </div>
+            <div class="timeline-station-title">
+              <strong>{{ to || selectedRoute.legs[selectedRoute.legs.length - 1].toName }}</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <ng-template #legacyStepsBlock>
+        <section class="route-detail-note" *ngIf="selectedRoute.steps && selectedRoute.steps.length > 0">
+          <b>{{ t(copy.routeStepsTitle) }}</b>
+          <ol class="route-steps-list">
+            <li *ngFor="let step of selectedRoute.steps">{{ step }}</li>
+          </ol>
+        </section>
+      </ng-template>
+
       <div class="route-detail-grid">
         <span><small>{{ t(copy.departure) }}</small><strong>{{ selectedRoute.depart }}</strong></span>
         <span><small>{{ t(copy.arrival) }}</small><strong>{{ selectedRoute.arrive }}</strong></span>
         <span><small>{{ t(copy.duration) }}</small><strong>{{ selectedRoute.duration }}</strong></span>
         <span><small>{{ t(copy.fare) }}</small><strong>{{ selectedRoute.fare }}</strong></span>
       </div>
+
+      <section class="route-detail-note eco-impact-note" *ngIf="selectedRoute.co2Saved">
+        <b><ion-icon name="leaf-outline" aria-hidden="true"></ion-icon> {{ t(copy.ecoImpactLabel) }}</b>
+        <small>{{ selectedRoute.co2Saved }} · {{ selectedRoute.points || '+20' }} Eco-Points</small>
+      </section>
       <section class="route-detail-note">
         <b>{{ t(copy.accessibilitySupport) }}</b>
         <small>{{ selectedRoute.accessibilityNote }}</small>
       </section>
-      <section class="route-detail-note">
-        <b>{{ t(copy.walkingDistance) }}</b>
-        <small>{{ selectedRoute.walk }} · {{ t(copy.walkingDistanceCopy) }}</small>
-      </section>
       <button class="mt-primary" type="button" [attr.aria-label]="startJourneyButtonAriaLabel()" (click)="startJourney()">{{ t(copy.startJourney) }}</button>
+      <button class="mt-secondary route-gmaps-btn" type="button" (click)="openExternalGoogleMaps()">
+        <ion-icon name="map-outline" aria-hidden="true"></ion-icon> {{ t(copy.openInGoogleMaps) }}
+      </button>
       <button class="mt-secondary route-cancel" type="button" [attr.aria-label]="chooseAnotherRouteAriaLabel()" (click)="closeRouteDetails()">{{ t(copy.chooseAnotherRoute) }}</button>
+    </section>
+  </div>
+
+  <!-- Live Service Status Sheet -->
+  <div class="sheet-backdrop" *ngIf="activeOverlaySheet === 'service'" (click)="closeOverlaySheet()">
+    <section class="route-sheet" role="dialog" aria-modal="true" [attr.aria-label]="t(copy.serviceStatusTitle)" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" type="button" [attr.aria-label]="t(copy.closeServiceStatus)" (click)="closeOverlaySheet()"><ion-icon aria-hidden="true" name="close"></ion-icon></button>
+      <p class="sheet-kicker">{{ t(copy.serviceStatusKicker) }}</p>
+      <h2>{{ t(copy.serviceStatusTitle) }}</h2>
+      <div class="service-sheet-list">
+        <article class="service-detail-card" *ngFor="let status of allServiceStatuses" [class.highlighted]="status.line === highlightedLine">
+          <div class="service-detail-head">
+            <span class="line-dot" [style.background]="status.color"><ion-icon name="train-outline" aria-hidden="true"></ion-icon></span>
+            <div>
+              <strong>{{ status.line }}</strong>
+              <small>{{ status.route }}</small>
+            </div>
+            <em>{{ status.state }}</em>
+          </div>
+          <div class="service-detail-meta">
+            <span *ngIf="status.headway"><ion-icon name="time-outline" aria-hidden="true"></ion-icon> {{ status.headway }}</span>
+            <span *ngIf="status.crowding"><ion-icon name="people-outline" aria-hidden="true"></ion-icon> {{ status.crowding }}</span>
+          </div>
+          <p *ngIf="status.advisory">{{ status.advisory }}</p>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <!-- Interactive Live Map Sheet -->
+  <div class="sheet-backdrop" *ngIf="activeOverlaySheet === 'map'" (click)="closeOverlaySheet()">
+    <section class="route-sheet map-sheet" role="dialog" aria-modal="true" [attr.aria-label]="t(copy.liveMapTitle)" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" type="button" [attr.aria-label]="t(copy.closeInteractiveMap)" (click)="closeOverlaySheet()"><ion-icon aria-hidden="true" name="close"></ion-icon></button>
+      <p class="sheet-kicker">{{ t(copy.liveMapKicker) }}</p>
+      <h2>{{ selectedMapLocation.name }}</h2>
+      <p>{{ selectedMapLocation.subtitle }} · {{ selectedMapLocation.state }}</p>
+      <div class="map-hub-chips">
+        <button
+          *ngFor="let hub of mapHubs"
+          type="button"
+          [class.active]="hub.name === selectedMapLocation.name"
+          (click)="selectMapHub(hub)"
+        >
+          {{ hub.name }}
+        </button>
+      </div>
+      <div class="live-map-frame">
+        <app-live-transit-map
+          [centerLat]="selectedMapLocation.lat"
+          [centerLng]="selectedMapLocation.lng"
+          [language]="language"
+        ></app-live-transit-map>
+      </div>
+      <button class="mt-primary" type="button" (click)="useMapHubAsDestination(selectedMapLocation)">
+        {{ t(copy.to) }}: {{ selectedMapLocation.name }}
+      </button>
+      <button class="mt-secondary route-cancel" type="button" (click)="openExternalGoogleMaps()">
+        <ion-icon name="map-outline" aria-hidden="true"></ion-icon> {{ t(copy.openInGoogleMaps) }}
+      </button>
     </section>
   </div>
 </ion-content>

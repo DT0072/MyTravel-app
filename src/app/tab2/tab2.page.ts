@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import {
@@ -8,12 +8,15 @@ import {
   AppLanguage,
 } from '../services/accessibility-preferences.service';
 import {
+  MALAYSIA_TRANSIT_LOCATIONS,
   NavigationService,
   RecentLocation,
   RouteOption,
   ServiceStatus,
+  TransitLocationSuggestion,
 } from '../services/navigation.service';
-import { AppStateService } from '../services/app-state.service';
+import { AppJourney, AppStateService } from '../services/app-state.service';
+import { GtfsRealtimeService, GtfsRealtimeSnapshot } from '../services/gtfs-realtime.service';
 import { ManagedTimeouts } from '../shared/utils/managed-timeouts';
 import { getTransportModeIconName } from '../shared/utils/transport-mode-icon';
 import { getTransportModeLabel } from '../shared/utils/transport-mode-label';
@@ -46,7 +49,7 @@ const NAVIGATION_COPY = {
   openServiceStatusPrefix: { EN: 'Open service update', BM: 'Buka kemas kini perkhidmatan' },
   transitMap: { EN: 'Transit map', BM: 'Peta transit' },
   transitMapAlt: { EN: 'Kuala Lumpur transit map', BM: 'Peta transit Kuala Lumpur' },
-  wiraTip: { EN: 'Wira Tip', BM: 'Tip Wira' },
+  wiraTip: { EN: 'Wira tip', BM: 'Tip Wira' },
   greenRoute: { EN: 'Green route: +20 points', BM: 'Laluan hijau: +20 mata' },
   wiraMascotAlt: { EN: 'Wira travel guide mascot', BM: 'Maskot panduan perjalanan Wira' },
   recentLocations: { EN: 'Recent locations', BM: 'Lokasi terkini' },
@@ -104,6 +107,48 @@ const NAVIGATION_COPY = {
   recentRemoved: { EN: 'removed from recent locations', BM: 'dibuang daripada lokasi terkini' },
   allLinesShown: { EN: 'All line updates are shown in the service list below', BM: 'Semua kemas kini laluan dipaparkan dalam senarai perkhidmatan di bawah' },
   journeyStarted: { EN: 'journey started', BM: 'perjalanan dimulakan' },
+  fromPlaceholder: { EN: 'e.g. KL Sentral or current location', BM: 'cth. KL Sentral atau lokasi semasa' },
+  toPlaceholder: { EN: 'e.g. Pasar Seni, George Town, Melaka', BM: 'cth. Pasar Seni, George Town, Melaka' },
+  useMyLocation: { EN: 'Use my current location', BM: 'Guna lokasi semasa saya' },
+  locatingToast: { EN: 'Detecting nearest Malaysian transit hub...', BM: 'Mengesan hab transit Malaysia terdekat...' },
+  locatedToast: { EN: 'Current location set to nearest transit hub', BM: 'Lokasi semasa ditetapkan ke hab transit terdekat' },
+  exploreLiveMap: { EN: 'Open interactive map', BM: 'Buka peta interaktif' },
+  liveMapKicker: { EN: 'LIVE TRANSIT & TOURISM MAP', BM: 'PETA TRANSIT & PELANCONGAN LANGSUNG' },
+  liveMapTitle: { EN: 'Malaysia transit explorer', BM: 'Peneroka transit Malaysia' },
+  openInGoogleMaps: { EN: 'Open directions in Google Maps', BM: 'Buka arah dalam Google Maps' },
+  serviceStatusKicker: { EN: 'GTFS REALTIME & PRASARANA', BM: 'GTFS MASA NYATA & PRASARANA' },
+  serviceStatusTitle: { EN: 'Live transit service status', BM: 'Status perkhidmatan transit langsung' },
+  routeStepsTitle: { EN: 'Step-by-step transit guide', BM: 'Panduan transit langkah demi langkah' },
+  ecoImpactLabel: { EN: 'Eco impact', BM: 'Impak eko' },
+  closeServiceStatus: { EN: 'Close service status', BM: 'Tutup status perkhidmatan' },
+  closeInteractiveMap: { EN: 'Close interactive map', BM: 'Tutup peta interaktif' },
+  gtfsLiveFeed: { EN: 'GTFS-RT Live', BM: 'GTFS-RT Langsung' },
+  gtfsSyncing: { EN: 'Syncing live Malaysia GTFS-RT...', BM: 'Menyegerakkan GTFS-RT Malaysia...' },
+  gtfsVehiclesActive: { EN: 'live vehicles tracked', BM: 'kenderaan langsung dijejaki' },
+  refreshLiveFeed: { EN: 'Refresh live GTFS', BM: 'Muat semula GTFS langsung' },
+  activeNavKicker: { EN: 'ACTIVE NAVIGATION IN PROGRESS', BM: 'NAVIGASI AKTIF SEDANG BERJALAN' },
+  activeNavLockNotice: {
+    EN: 'Complete or exit your current navigation below before searching for another destination.',
+    BM: 'Selesaikan atau tamatkan navigasi semasa anda di bawah sebelum mencari destinasi lain.',
+  },
+  activeNavLockedToast: {
+    EN: 'End or complete your current navigation first before searching another destination.',
+    BM: 'Tamatkan atau selesaikan navigasi semasa anda dahulu sebelum mencari destinasi lain.',
+  },
+  completeActiveNav: { EN: 'Complete journey', BM: 'Selesaikan perjalanan' },
+  exitActiveNav: { EN: 'End current navigation', BM: 'Tamatkan navigasi semasa' },
+  activeNavCompletedToast: { EN: 'Journey completed! +20 Eco-Points earned.', BM: 'Perjalanan selesai! +20 Mata Eko diperoleh.' },
+  activeNavExitedToast: { EN: 'Navigation ended. You can now search a new destination.', BM: 'Navigasi ditamatkan. Anda kini boleh mencari destinasi baharu.' },
+  allModesHint: {
+    EN: 'Multi-modal search compares MRT, LRT, KTM, Monorail & Bus routes automatically.',
+    BM: 'Carian pelbagai mod membandingkan laluan MRT, LRT, KTM, Monorel & Bas secara automatik.',
+  },
+  detailsAction: { EN: 'Details', BM: 'Butiran' },
+  fromPrefix: { EN: 'from', BM: 'dari' },
+  toPrefix: { EN: 'to', BM: 'ke' },
+  stopsUnit: { EN: 'stops', BM: 'hentian' },
+  stopSingular: { EN: 'stop', BM: 'hentian' },
+  walkFollowHint: { EN: 'Follow pedestrian walkway to', BM: 'Ikut laluan pejalan kaki ke' },
 } as const;
 
 @Component({
@@ -116,10 +161,14 @@ export class Tab2Page implements OnDestroy {
   private readonly accessibilityPreferencesService = inject(AccessibilityPreferencesService);
   private readonly appStateService = inject(AppStateService);
   private readonly navigationService = inject(NavigationService);
+  private readonly gtfsRealtime = inject(GtfsRealtimeService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private routePlanSubscription?: Subscription;
   private localizedDataSubscription = new Subscription();
+  private queryParamsSubscription = new Subscription();
   private readonly uiTimeouts = new ManagedTimeouts();
+  rtSnapshot: GtfsRealtimeSnapshot = this.gtfsRealtime.snapshot;
   @ViewChild('navigationContent') private navigationContent?: any;
   @ViewChild('resultsHeading') private resultsHeadingRef?: ElementRef<HTMLElement>;
   @ViewChild('routeSheet') private routeSheetRef?: ElementRef<HTMLElement>;
@@ -130,15 +179,24 @@ export class Tab2Page implements OnDestroy {
   language: AppLanguage = 'EN';
   plannerDate = this.getToday();
   plannerTime = this.getCurrentTime();
-  activeMode = 'MRT';
+  activeMode = '';
   modes: string[] = [];
   sort = 'Fastest';
+  activeJourney: AppJourney | null = null;
   routes: RouteOption[] = [];
   serviceStatuses: ServiceStatus[] = [];
+  allServiceStatuses: ServiceStatus[] = [];
   recentLocations: RecentLocation[] = [];
   savedNoticeCount = 0;
   isLoadingRoutes = false;
   selectedRoute: RouteOption | null = null;
+  highlightedRouteIndex = 0;
+  activeOverlaySheet: 'service' | 'map' | null = null;
+  highlightedLine = '';
+  activeInputField: 'from' | 'to' | null = null;
+  locationSuggestions: TransitLocationSuggestion[] = [];
+  mapHubs = MALAYSIA_TRANSIT_LOCATIONS.slice(0, 6);
+  selectedMapLocation: TransitLocationSuggestion = MALAYSIA_TRANSIT_LOCATIONS[0];
   toast = '';
   plannerError = '';
   preferAccessibleRoutes = false;
@@ -151,16 +209,64 @@ export class Tab2Page implements OnDestroy {
     this.modes = this.navigationService.getModes();
     this.refreshLocalizedData();
     this.buildRoutes();
+    this.activeJourney = this.appStateService.getSnapshot().activeJourney;
+    if (this.appStateService.state$) {
+      this.queryParamsSubscription.add(
+        this.appStateService.state$.subscribe((state) => {
+          this.activeJourney = state.activeJourney;
+        }),
+      );
+    }
+    this.queryParamsSubscription.add(
+      this.gtfsRealtime.snapshot$.subscribe((snap) => {
+        this.rtSnapshot = snap;
+        this.refreshLocalizedData();
+      }),
+    );
+    void this.gtfsRealtime.refresh();
+    this.queryParamsSubscription.add(
+      this.route.queryParams.subscribe((params) => {
+        const queryTo = typeof params['to'] === 'string' ? params['to'].trim() : '';
+        const queryFrom = typeof params['from'] === 'string' ? params['from'].trim() : '';
+        if (this.appStateService.getSnapshot().activeJourney && (queryTo || queryFrom)) {
+          this.notify(this.t(this.copy.activeNavLockedToast));
+          return;
+        }
+        if (queryTo) {
+          this.to = queryTo;
+          if (!this.from.trim()) {
+            this.from = 'KL Sentral';
+          }
+          this.view = 'planner';
+          this.plannerError = '';
+          this.selectedMapLocation = this.navigationService.findLocationCoords(queryTo);
+        }
+        if (queryFrom) {
+          this.from = queryFrom;
+        }
+      }),
+    );
   }
 
   ionViewWillEnter(): void {
+    this.activeJourney = this.appStateService.getSnapshot().activeJourney;
     this.applyAccessibilityPreferences(this.accessibilityPreferencesService.getPreferences(), this.view === 'results');
     this.refreshLocalizedData();
+    void this.gtfsRealtime.refresh();
+  }
+
+  refreshLiveGtfs(): void {
+    void this.gtfsRealtime.refresh(true).then(() => {
+      if (this.view === 'results') {
+        this.buildRoutes();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.routePlanSubscription?.unsubscribe();
     this.localizedDataSubscription.unsubscribe();
+    this.queryParamsSubscription.unsubscribe();
     this.uiTimeouts.clearAll();
   }
 
@@ -172,6 +278,10 @@ export class Tab2Page implements OnDestroy {
   }
 
   findRoute(): void {
+    if (this.activeJourney) {
+      this.notify(this.t(this.copy.activeNavLockedToast));
+      return;
+    }
     this.plannerError = '';
 
     if (!this.from.trim() || !this.to.trim()) {
@@ -352,20 +462,137 @@ export class Tab2Page implements OnDestroy {
   }
 
   openServiceStatus(status?: ServiceStatus): void {
-    if (!status) {
-      if (this.serviceStatuses.length === 0) {
-        this.notify(this.t(this.copy.noServiceStatuses));
-        return;
-      }
-
-      this.notify(this.t(this.copy.allLinesShown));
+    this.allServiceStatuses = this.navigationService.getAllServiceStatuses(this.language);
+    if (this.allServiceStatuses.length === 0) {
+      this.notify(this.t(this.copy.noServiceStatuses));
       return;
     }
-
-    this.notify(`${status.line}: ${status.state}`);
+    this.highlightedLine = status?.line ?? '';
+    this.activeOverlaySheet = 'service';
   }
 
-  openRouteDetails(route: RouteOption): void {
+  openInteractiveMap(): void {
+    const focusQuery = this.to.trim() || this.from.trim() || 'KL Sentral';
+    this.selectedMapLocation = this.navigationService.findLocationCoords(focusQuery);
+    this.activeOverlaySheet = 'map';
+  }
+
+  selectMapHub(hub: TransitLocationSuggestion): void {
+    this.selectedMapLocation = hub;
+  }
+
+  useMapHubAsDestination(hub: TransitLocationSuggestion): void {
+    this.to = hub.name;
+    if (!this.from.trim()) {
+      this.from = 'KL Sentral';
+    }
+    this.plannerError = '';
+    this.closeOverlaySheet();
+    this.notify(`${hub.name} → ${this.t(this.copy.to)}`);
+  }
+
+  closeOverlaySheet(): void {
+    this.activeOverlaySheet = null;
+    this.highlightedLine = '';
+  }
+
+  onLocationInputFocus(field: 'from' | 'to'): void {
+    this.activeInputField = field;
+    const query = field === 'from' ? this.from : this.to;
+    this.locationSuggestions = this.navigationService.getLocationSuggestions(query);
+  }
+
+  onLocationInputChange(field: 'from' | 'to', value: string): void {
+    this.plannerError = '';
+    this.activeInputField = field;
+    this.locationSuggestions = this.navigationService.getLocationSuggestions(value);
+  }
+
+  onLocationInputBlur(): void {
+    this.uiTimeouts.schedule('blur-suggestions', () => {
+      this.activeInputField = null;
+    }, 180);
+  }
+
+  pickLocationSuggestion(field: 'from' | 'to', suggestion: TransitLocationSuggestion): void {
+    if (field === 'from') {
+      this.from = suggestion.name;
+    } else {
+      this.to = suggestion.name;
+    }
+    this.plannerError = '';
+    this.activeInputField = null;
+  }
+
+  useCurrentLocation(): void {
+    this.notify(this.t(this.copy.locatingToast));
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const nearest = this.findNearestTransitHub(pos.coords.latitude, pos.coords.longitude);
+          this.from = nearest.name;
+          this.plannerError = '';
+          this.notify(`${this.t(this.copy.locatedToast)}: ${nearest.name}`);
+        },
+        () => {
+          this.from = 'KL Sentral';
+          this.plannerError = '';
+          this.notify(`${this.t(this.copy.locatedToast)}: KL Sentral`);
+        },
+        { timeout: 3500 },
+      );
+    } else {
+      this.from = 'KL Sentral';
+      this.plannerError = '';
+      this.notify(`${this.t(this.copy.locatedToast)}: KL Sentral`);
+    }
+  }
+
+  openExternalGoogleMaps(): void {
+    const origin = encodeURIComponent(this.from.trim() || 'KL Sentral, Kuala Lumpur');
+    const destination = encodeURIComponent(this.to.trim() || this.selectedMapLocation.name);
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
+    if (typeof window !== 'undefined') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  private findNearestTransitHub(lat: number, lng: number): TransitLocationSuggestion {
+    let best = MALAYSIA_TRANSIT_LOCATIONS[0];
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (const loc of MALAYSIA_TRANSIT_LOCATIONS) {
+      const dist = Math.hypot(loc.lat - lat, loc.lng - lng);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = loc;
+      }
+    }
+    return best;
+  }
+
+  get activePreviewRoute(): RouteOption | null {
+    return this.selectedRoute ?? this.routes[this.highlightedRouteIndex] ?? this.routes[0] ?? null;
+  }
+
+  highlightRoute(index: number): void {
+    if (index < 0 || index >= this.routes.length) {
+      return;
+    }
+    this.highlightedRouteIndex = index;
+    if (this.selectedRoute) {
+      this.selectedRoute = this.routes[index];
+    }
+  }
+
+  openRouteDetails(route: RouteOption, index?: number): void {
+    if (typeof index === 'number' && index >= 0 && index < this.routes.length) {
+      this.highlightedRouteIndex = index;
+    } else {
+      const foundIdx = this.routes.indexOf(route);
+      if (foundIdx >= 0) {
+        this.highlightedRouteIndex = foundIdx;
+      }
+    }
     this.previousFocusedElement = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
@@ -380,6 +607,36 @@ export class Tab2Page implements OnDestroy {
     this.uiTimeouts.schedule('route-sheet-focus-restore', () => previousFocusedElement?.focus(), 0);
   }
 
+  completeActiveNavigation(): void {
+    const completed = this.appStateService.completeActiveJourney();
+    if (!completed) {
+      return;
+    }
+    this.activeJourney = null;
+    this.view = 'planner';
+    this.notify(this.t(this.copy.activeNavCompletedToast));
+  }
+
+  exitActiveNavigation(): void {
+    this.appStateService.cancelActiveJourney?.();
+    this.activeJourney = null;
+    this.view = 'planner';
+    this.notify(this.t(this.copy.activeNavExitedToast));
+  }
+
+  openActiveJourneyGoogleMaps(): void {
+    if (!this.activeJourney || typeof window === 'undefined') {
+      return;
+    }
+    const origin = encodeURIComponent(this.activeJourney.from);
+    const destination = encodeURIComponent(this.activeJourney.to);
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  }
+
   startJourney(): void {
     if (!this.selectedRoute) {
       return;
@@ -391,6 +648,7 @@ export class Tab2Page implements OnDestroy {
       travelDate: this.plannerDate,
       travelTime: this.plannerTime,
     });
+    this.activeJourney = journey;
     this.closeRouteDetails();
     this.notify(`${this.modeLabel(journey.mode)} ${this.t(this.copy.journeyStarted)}`);
     this.uiTimeouts.schedule('start-journey-nav', () => void this.router.navigate(['/tabs/tab1']), 500);
@@ -431,17 +689,22 @@ export class Tab2Page implements OnDestroy {
     this.routePlanSubscription = this.navigationService.buildPlan({
       from: this.from,
       to: this.to,
-      mode: this.activeMode,
+      mode: this.activeMode || undefined,
       sort: this.sort,
       travelDate: this.plannerDate,
       travelTime: this.plannerTime,
     }, this.language).subscribe({
       next: (routes) => {
         this.routes = routes;
+        this.highlightedRouteIndex = 0;
+        if (this.selectedRoute && routes.length > 0) {
+          this.selectedRoute = routes[0];
+        }
         this.isLoadingRoutes = false;
       },
       error: () => {
         this.routes = [];
+        this.highlightedRouteIndex = 0;
         this.isLoadingRoutes = false;
       },
     });

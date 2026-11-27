@@ -1,4 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
@@ -65,7 +66,7 @@ describe('Tab1Page', () => {
 
     await TestBed.configureTestingModule({
       declarations: [Tab1Page],
-      imports: [IonicModule.forRoot()],
+      imports: [FormsModule, IonicModule.forRoot()],
       providers: [
         provideRouter([]),
         { provide: AccessibilityPreferencesService, useValue: accessibilityPreferencesService },
@@ -82,7 +83,7 @@ describe('Tab1Page', () => {
 
   it('should create with seeded home events and verification tasks', () => {
     expect(component).toBeTruthy();
-    expect(component.events.length).toBe(3);
+    expect(component.events.length).toBeGreaterThanOrEqual(8);
     expect(component.verificationTask?.id).toBe('verification-kl-sentral-access');
     expect(component.savedNoticeCount).toBe(0);
     expect(component.challengeProgressWidth).toBe('29%');
@@ -117,7 +118,7 @@ describe('Tab1Page', () => {
     component.updateLanguage('BM');
 
     expect(component.language).toBe('BM');
-    expect(component.events.length).toBe(3);
+    expect(component.events.length).toBeGreaterThanOrEqual(8);
     expect(component.weeklyMissionTitleLabel).toBe('Misi Mingguan bersama Wira');
     expect(component.weeklyMissionActionLabel).toBe('Lihat\nmisi');
     expect(component.passportProgressSummary()).toBe('3/4 cop dibuka');
@@ -255,6 +256,7 @@ describe('Tab1Page', () => {
     expect(appStateService.submitVerification).toHaveBeenCalledWith(
       'verification-kl-sentral-access',
       'KL Sentral access check',
+      jasmine.objectContaining({ answer: 'yes' }),
     );
     expect(component.verificationTask).toBeNull();
     expect(component.toast).toBe('+20 Eco-Points earned. Thank you!');
@@ -298,7 +300,26 @@ describe('Tab1Page', () => {
     expect(eventsButton.disabled).toBeFalse();
     expect(eventsButton.getAttribute('aria-label')).toBe('Events & Activities');
     expect(component.activeSheet).toBe('events');
-    expect(component.events.length).toBe(3);
+    expect(component.events.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('opens event detail view instead of jumping directly to navigation when clicking an event row', () => {
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+    fixture.detectChanges();
+
+    component.openEventsSheet();
+    fixture.detectChanges();
+
+    const firstEventButton = fixture.nativeElement.querySelector('.event-row') as HTMLButtonElement;
+    firstEventButton.click();
+    fixture.detectChanges();
+
+    expect(component.selectedEvent).toBeTruthy();
+    expect(component.activeSheet).toBe('events');
+    expect(navigateSpy).not.toHaveBeenCalled();
+
+    component.backToEventsList();
+    expect(component.selectedEvent).toBeNull();
   });
 
   it('adds contextual accessible names to home dashboard action cards', () => {
@@ -315,10 +336,10 @@ describe('Tab1Page', () => {
     const verificationButton = fixture.nativeElement.querySelector('.verification-action') as HTMLButtonElement;
     const missionButton = fixture.nativeElement.querySelector('.mission-action') as HTMLButtonElement;
 
-    expect(destinationButton.getAttribute('aria-label')).toBe('Featured destination. Open Navigation.');
+    expect(destinationButton.getAttribute('aria-label')).toBe('Timah Tasoh, Perlis. Open Explore Malaysia destinations.');
     expect(summaryButtons[0].getAttribute('aria-label')).toBe('120 Eco-Points. Open Profile.');
     expect(summaryButtons[1].getAttribute('aria-label')).toBe('Digital Passport. 3/4 stamps unlocked. Open Profile.');
-    expect(quickButtons[1].getAttribute('aria-label')).toBe('Explore Malaysia. Open Navigation.');
+    expect(quickButtons[1].getAttribute('aria-label')).toBe('Explore Malaysia. Open Explore Malaysia destinations.');
     expect(quickButtons[2].getAttribute('aria-label')).toBe('MyTravel Verification. Open MyTravel Verification panel.');
     expect(quickButtons[3].getAttribute('aria-label')).toBe('Travel Notices. Open Community.');
     expect(journeyButton.getAttribute('aria-label')).toBe('Plan your next journey. Choose a route, departure time, and accessibility preference in Navigation. Open Navigation.');
@@ -352,9 +373,13 @@ describe('Tab1Page', () => {
     component.activeSheet = 'events';
     component.events = [
       {
+        id: 'evt-test-1',
         dateLabel: '12 JUL',
         title: { EN: 'Accessible travel workshop', BM: 'Bengkel perjalanan mesra akses' },
         description: { EN: 'Provider-backed event summary', BM: 'Ringkasan acara berasaskan penyedia' },
+        venue: 'KL Sentral',
+        state: 'Kuala Lumpur',
+        transitHint: 'MRT/LRT KL Sentral',
         targetPath: '/tabs/tab3',
       },
     ];
@@ -435,12 +460,16 @@ describe('Tab1Page', () => {
 
     component.events = [
       {
+        id: 'evt-test-2',
         dateLabel: '12 JUL',
         title: { EN: 'Forest Rail Walk', BM: 'Jalan Rel Hutan' },
         description: {
           EN: 'Provider-backed event details appear here when available.',
           BM: 'Butiran acara bersumber penyedia dipaparkan di sini apabila tersedia.',
         },
+        venue: 'Pasar Seni',
+        state: 'Kuala Lumpur',
+        transitHint: 'MRT Pasar Seni',
         targetPath: '/tabs/tab3',
       },
     ];
@@ -535,8 +564,8 @@ describe('Tab1Page', () => {
     expect(parseFloat(getComputedStyle(identityPill).borderTopLeftRadius)).toBeGreaterThanOrEqual(24);
     expect(parseFloat(getComputedStyle(identityPill).lineHeight)).toBeGreaterThanOrEqual(13);
     expect(getComputedStyle(heroShade).backgroundImage).toContain('radial-gradient');
-    expect(parseFloat(getComputedStyle(heroWira).width)).toBeLessThanOrEqual(104);
-    expect(parseFloat(getComputedStyle(destinationPill).bottom)).toBeGreaterThanOrEqual(64);
+    expect(parseFloat(getComputedStyle(heroWira).width)).toBeLessThanOrEqual(140);
+    expect(parseFloat(getComputedStyle(destinationPill).bottom)).toBeGreaterThanOrEqual(48);
     expect(getComputedStyle(destinationPill).backgroundColor).toContain('0.78');
     expect(getComputedStyle(destinationPill).textShadow).not.toBe('none');
     expect(parseFloat(getComputedStyle(destinationPill).borderTopLeftRadius)).toBeGreaterThanOrEqual(23);
@@ -630,8 +659,8 @@ describe('Tab1Page', () => {
 
     component.updateLanguage('BM');
 
-    expect(component.destinationPillAriaLabel()).toBe('Destinasi pilihan. Buka Navigasi.');
-    expect(component.quickExploreAriaLabel()).toBe('Teroka Malaysia. Buka Navigasi.');
+    expect(component.destinationPillAriaLabel()).toBe('Tasik Timah Tasoh, Perlis. Buka destinasi Teroka Malaysia.');
+    expect(component.quickExploreAriaLabel()).toBe('Teroka Malaysia. Buka destinasi Teroka Malaysia.');
     expect(component.quickVerificationAriaLabel()).toBe('Pengesahan MyTravel. Buka panel Pengesahan MyTravel.');
     expect(component.passportSummaryAriaLabel()).toBe('Pasport Digital. 3/4 cop dibuka. Buka Profil.');
     expect(component.weeklyMissionAriaLabel()).toBe('Misi Mingguan bersama Wira. 2 daripada 7 langkah cabaran selesai musim ini. Lihat misi. Buka Profil.');

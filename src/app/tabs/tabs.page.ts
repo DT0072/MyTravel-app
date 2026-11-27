@@ -1,4 +1,5 @@
 import { Component, OnDestroy, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import {
@@ -29,6 +30,7 @@ const TABS_COPY = {
 })
 export class TabsPage implements OnDestroy {
   private readonly accessibilityPreferencesService = inject(AccessibilityPreferencesService);
+  private readonly router = inject(Router, { optional: true });
   private readonly preferencesSubscription = new Subscription();
   readonly copy = TABS_COPY;
   language: AppLanguage = 'EN';
@@ -49,6 +51,24 @@ export class TabsPage implements OnDestroy {
 
   t(text: LocalizedText): string {
     return text[this.language];
+  }
+
+  onCommunityTabClick(event: Event): void {
+    if (!this.router) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    void this.router.navigate(['/tabs/tab3'], { queryParams: {} });
+  }
+
+  onProfileTabClick(event: Event): void {
+    if (!this.router) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    void this.router.navigate(['/tabs/tab4'], { queryParams: {} });
   }
 
   tabAriaLabel(tab: TabKey): string {

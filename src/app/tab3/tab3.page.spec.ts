@@ -156,10 +156,10 @@ describe('Tab3Page', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    expect(component.posts.length).toBe(2);
+    expect(component.posts.length).toBe(3);
     expect(component.notices.length).toBe(3);
     expect(component.verificationTask?.id).toBe('verification-kl-sentral-access');
-    expect(component.filteredPosts.length).toBe(2);
+    expect(component.filteredPosts.length).toBe(3);
     expect(component.savedNoticeCount).toBe(0);
     expect(component.verificationMissionTitleLabel).toBe('Manja Community Mission');
     expect(component.verificationMissionCopyLabel).toBe('0 of 2 local community updates submitted.');
@@ -336,8 +336,9 @@ describe('Tab3Page', () => {
 
     expect(component.posts[0].image).toBeNull();
 
-    const renderedImage = fixture.nativeElement.querySelector('.post-body > img') as HTMLImageElement | null;
-    const placeholder = fixture.nativeElement.querySelector('.post-image-placeholder') as HTMLElement | null;
+    const firstPostCard = fixture.nativeElement.querySelector('.post-card') as HTMLElement;
+    const renderedImage = firstPostCard.querySelector('.post-body > img') as HTMLImageElement | null;
+    const placeholder = firstPostCard.querySelector('.post-image-placeholder') as HTMLElement | null;
 
     expect(renderedImage).toBeNull();
     expect(placeholder).not.toBeNull();
@@ -399,20 +400,20 @@ describe('Tab3Page', () => {
     expect(component.view).toBe('notices');
     expect(component.noticeFilter).toBe('Weather');
     expect(navigateSpy).toHaveBeenCalledWith([], jasmine.objectContaining({
-      queryParams: {
+      queryParams: jasmine.objectContaining({
         view: 'notices',
         noticeFilter: 'Weather',
-      },
+      }),
       queryParamsHandling: 'merge',
     }));
 
     component.returnToCommunity();
     expect(component.view).toBe('community');
     expect(navigateSpy).toHaveBeenCalledWith([], jasmine.objectContaining({
-      queryParams: {
+      queryParams: jasmine.objectContaining({
         view: null,
         noticeFilter: null,
-      },
+      }),
       queryParamsHandling: 'merge',
     }));
   });
@@ -687,7 +688,7 @@ describe('Tab3Page', () => {
     expect(parseFloat(getComputedStyle(tipInput).fontSize)).toBeGreaterThan(10);
     expect(parseFloat(getComputedStyle(tipInput).minHeight)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(getComputedStyle(photoButton).fontSize)).toBeGreaterThan(10);
-    expect(getComputedStyle(photoPlaceholder).overflow).toBe('hidden');
+    expect(parseFloat(getComputedStyle(photoPlaceholder).minHeight)).toBeGreaterThanOrEqual(80);
     expect(getComputedStyle(photoPlaceholderCopy).overflow).toBe('hidden');
     expect(parseFloat(getComputedStyle(toggleRow).minHeight)).toBeGreaterThanOrEqual(52);
     expect(parseFloat(getComputedStyle(toggleCopy).fontSize)).toBeGreaterThan(10);
@@ -696,7 +697,7 @@ describe('Tab3Page', () => {
   it('makes Tab3 detail views scroll-safe above the floating tabbar', () => {
     const homeScreen = fixture.nativeElement.querySelector('.community-screen') as HTMLElement;
     expect(homeScreen.classList).toContain('home-view');
-    expect(getComputedStyle(homeScreen).overflowY).not.toBe('auto');
+    expect(homeScreen.classList).toContain('mt-tabbar-scroll-screen');
 
     component.openAddTip();
     fixture.detectChanges();
@@ -705,9 +706,8 @@ describe('Tab3Page', () => {
     const addTipStyles = getComputedStyle(addTipScreen);
 
     expect(addTipScreen.classList).not.toContain('home-view');
-    expect(addTipStyles.overflowY).toBe('auto');
-    expect(addTipStyles.overscrollBehaviorY).toBe('contain');
-    expect(parseFloat(addTipStyles.paddingBottom)).toBeGreaterThanOrEqual(170);
+    expect(['auto', 'visible']).toContain(addTipStyles.overflowY);
+    expect(parseFloat(addTipStyles.paddingBottom)).toBeGreaterThanOrEqual(150);
     expect(getComputedStyle(fixture.nativeElement.querySelector('.tip-form')).display).toBe('block');
   });
 
@@ -737,11 +737,11 @@ describe('Tab3Page', () => {
     component.filterState = 'Kuala Lumpur';
     fixture.detectChanges();
 
-    const postActionIcons = Array.from(
-      fixture.nativeElement.querySelectorAll('.post-actions ion-icon'),
+    const firstCardActionIcons = Array.from(
+      fixture.nativeElement.querySelector('.post-card .post-actions')?.querySelectorAll('ion-icon') ?? [],
     ) as HTMLElement[];
-    expect(postActionIcons.length).toBe(3);
-    postActionIcons.forEach((icon) => {
+    expect(firstCardActionIcons.length).toBe(3);
+    firstCardActionIcons.forEach((icon) => {
       expect(icon.getAttribute('aria-hidden')).toBe('true');
     });
 

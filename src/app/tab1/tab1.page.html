@@ -2,7 +2,11 @@
   <!-- Presents the Discover dashboard and its travel shortcuts. -->
   <div class="home-scroll-shell mt-tabbar-scroll-screen">
     <section class="home-hero">
-      <img class="hero-image" src="assets/mytravel/timah-tasoh-hero.png" [alt]="t(copy.featuredDestinationAlt)">
+      <img
+        class="hero-image"
+        [src]="activeHeroDestination.image || 'assets/mytravel/timah-tasoh-hero.png'"
+        [alt]="t(activeHeroDestination.tagline)"
+      >
       <div class="hero-shade"></div>
 
       <div class="home-hero-inner">
@@ -22,26 +26,53 @@
               <ion-icon *ngIf="!isAuthenticated" aria-hidden="true" name="person-outline"></ion-icon>
               <strong *ngIf="isAuthenticated && currentUser">{{ currentUser.initials }}</strong>
             </span>
-            <span>{{ isAuthenticated && currentUser ? currentUser.displayName : (language === 'BM' ? 'Log Masuk / Daftar' : 'Sign In / Register') }}</span>
+            <span>{{ isAuthenticated && currentUser ? currentUser.displayName : (language === 'BM' ? 'Log masuk' : 'Sign in') }}</span>
             <ion-icon class="pill-arrow" aria-hidden="true" name="chevron-forward"></ion-icon>
           </button>
         </div>
 
-        <img class="hero-wira" src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)">
-        <button class="destination-pill" type="button" [attr.aria-label]="destinationPillAriaLabel()" (click)="go('/tabs/tab2')">
-          <span><ion-icon aria-hidden="true" name="location"></ion-icon></span> {{ t(copy.destination) }}
+        <img class="hero-wira mt-mascot-wave" src="assets/mytravel/wira-wave.png" [alt]="t(copy.wiraMascotAlt)">
+        <button
+          class="destination-pill"
+          type="button"
+          [attr.aria-label]="destinationPillAriaLabel()"
+          (click)="openDestinationDetail(activeHeroDestination)"
+        >
+          <span><ion-icon aria-hidden="true" name="location"></ion-icon></span>
+          {{ t(activeHeroDestination.tagline) }}
         </button>
-        <div class="carousel-dots" aria-hidden="true"><i></i><i></i><i></i><i class="active"></i><i></i></div>
+        <div class="carousel-controls">
+          <div class="carousel-dots" role="tablist" [attr.aria-label]="t(copy.destination)">
+            <button
+              *ngFor="let dest of heroDestinations; let idx = index"
+              type="button"
+              role="tab"
+              [class.active]="idx === heroSlideIndex"
+              [attr.aria-selected]="idx === heroSlideIndex"
+              [attr.aria-label]="t(dest.tagline)"
+              (click)="selectHeroSlide(idx)"
+            ></button>
+          </div>
+          <button
+            *ngIf="heroDestinations.length > 1"
+            class="carousel-pause-btn"
+            type="button"
+            [attr.aria-label]="heroCarouselControlAriaLabel()"
+            (click)="toggleHeroCarousel()"
+          >
+            <ion-icon aria-hidden="true" [name]="heroCarouselPaused ? 'play' : 'pause'"></ion-icon>
+          </button>
+        </div>
       </div>
     </section>
 
-    <main class="home-body">
+    <div class="home-body">
       <section class="travel-summary mt-reveal">
-        <button type="button" [attr.aria-label]="ecoPointsSummaryAriaLabel()" (click)="go('/tabs/tab4')">
+        <button type="button" [attr.aria-label]="ecoPointsSummaryAriaLabel()" (click)="go('/tabs/tab4', { view: 'eco' })">
           <span class="summary-icon"><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span>
           <span><b>{{ ecoPoints | number }}</b><small>{{ t(copy.ecoPoints) }}</small></span>
         </button>
-        <button type="button" [attr.aria-label]="passportSummaryAriaLabel()" (click)="go('/tabs/tab4')">
+        <button type="button" [attr.aria-label]="passportSummaryAriaLabel()" (click)="go('/tabs/tab4', { view: 'passport' })">
           <span class="summary-icon"><ion-icon aria-hidden="true" name="book-outline"></ion-icon></span>
           <span><strong>{{ t(copy.digitalPassport) }}</strong><small>{{ passportProgressSummary() }}</small></span>
         </button>
@@ -59,9 +90,18 @@
           <span class="quick-label mt-multiline">{{ t(copy.quickEvents) }}</span>
           <small class="quick-status" *ngIf="!eventsProviderConnected">{{ t(copy.eventsQuickStatus) }}</small>
         </button>
-        <button type="button" [attr.aria-label]="quickExploreAriaLabel()" (click)="go('/tabs/tab2')"><span class="quick-icon"><ion-icon aria-hidden="true" name="sparkles-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickExplore) }}</span></button>
-        <button type="button" [attr.aria-label]="quickVerificationAriaLabel()" (click)="openVerificationSheet()"><span class="quick-icon"><ion-icon aria-hidden="true" name="checkmark"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickVerification) }}</span></button>
-        <button type="button" [attr.aria-label]="quickNoticesAriaLabel()" (click)="go('/tabs/tab3')"><span class="quick-icon"><ion-icon aria-hidden="true" name="alert-outline"></ion-icon></span><span class="quick-label mt-multiline">{{ t(copy.quickNotices) }}</span></button>
+        <button type="button" [attr.aria-label]="quickExploreAriaLabel()" (click)="openExploreSheet()">
+          <span class="quick-icon"><ion-icon aria-hidden="true" name="sparkles-outline"></ion-icon></span>
+          <span class="quick-label mt-multiline">{{ t(copy.quickExplore) }}</span>
+        </button>
+        <button type="button" [attr.aria-label]="quickVerificationAriaLabel()" (click)="openVerificationSheet()">
+          <span class="quick-icon"><ion-icon aria-hidden="true" name="checkmark"></ion-icon></span>
+          <span class="quick-label mt-multiline">{{ t(copy.quickVerification) }}</span>
+        </button>
+        <button type="button" [attr.aria-label]="quickNoticesAriaLabel()" (click)="openNotifications()">
+          <span class="quick-icon"><ion-icon aria-hidden="true" name="alert-outline"></ion-icon></span>
+          <span class="quick-label mt-multiline">{{ t(copy.quickNotices) }}</span>
+        </button>
       </section>
 
       <section class="quick-grid-note mt-reveal" *ngIf="!eventsProviderConnected" aria-live="polite">
@@ -72,14 +112,25 @@
         </span>
       </section>
 
-      <section class="journey-card mt-reveal" *ngIf="activeJourney; else noActiveJourney">
+      <section
+        class="journey-card journey-active-clickable mt-reveal"
+        *ngIf="activeJourney; else noActiveJourney"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="t(copy.currentJourney) + ': ' + activeJourney.from + ' ' + t(copy.journeyRouteConnector) + ' ' + activeJourney.to"
+        (click)="openActiveJourneySheet()"
+        (keydown)="onActiveJourneyCardKeydown($event)"
+      >
         <div class="journey-title"><b>{{ t(copy.currentJourney) }}</b><span><i></i> {{ t(copy.inTransit) }}</span></div>
         <div class="journey-stops">
           <div><strong>{{ activeJourney.from }}</strong><small>{{ t(copy.departs) }} {{ activeJourney.depart }}</small></div>
           <div><strong>{{ activeJourney.to }}</strong><small>{{ t(copy.arrives) }} {{ activeJourney.arrive }}</small></div>
         </div>
         <div class="route-line"><i></i><span><ion-icon aria-hidden="true" [name]="activeJourneyIconName()"></ion-icon></span><i></i></div>
-        <div class="journey-footer"><small>{{ activeJourneyModeLabel() }} · {{ activeJourney.duration }}</small><button type="button" [attr.aria-label]="completeJourneyAriaLabel()" (click)="completeJourney()">{{ t(copy.completeJourney) }}</button></div>
+        <div class="journey-footer">
+          <small>{{ activeJourneyModeLabel() }} · {{ activeJourney.duration }} <em class="journey-cue">{{ t(copy.activeJourneyDetailsCue) }}</em></small>
+          <button type="button" [attr.aria-label]="completeJourneyAriaLabel()" (click)="$event.stopPropagation(); completeJourney()">{{ t(copy.completeJourney) }}</button>
+        </div>
       </section>
       <ng-template #noActiveJourney>
         <button class="journey-card journey-empty mt-reveal" type="button" [attr.aria-label]="planJourneyAriaLabel()" (click)="go('/tabs/tab2')">
@@ -95,16 +146,49 @@
         <em class="mt-multiline">{{ verificationCardBadge() }}</em>
       </button>
 
-      <button class="action-card mission-action" type="button" [attr.aria-label]="weeklyMissionAriaLabel()" (click)="go('/tabs/tab4')">
-        <img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)">
+      <button class="action-card mission-action" type="button" [attr.aria-label]="weeklyMissionAriaLabel()" (click)="go('/tabs/tab4', { view: 'challenges' })">
+        <img class="mt-mascot-walk" src="assets/mytravel/wira-walk.png" [alt]="t(copy.wiraMascotAlt)">
         <span><b>{{ weeklyMissionTitleLabel }}</b><small class="mt-multiline">{{ weeklyMissionSummary() }}</small><i><u [style.width]="challengeProgressWidth"></u></i></span>
         <em class="mt-multiline">{{ weeklyMissionActionLabel }}</em>
       </button>
-    </main>
+
+      <!-- Tourism Malaysia Official Homepage Showcase: Featured Niche Experiences & Activities/Webinars -->
+      <section class="niche-showcase mt-reveal">
+        <div class="niche-header">
+          <div>
+            <small class="niche-kicker">{{ t(copy.vm2026Tagline) }}</small>
+            <h3>{{ t(copy.nicheSectionTitle) }}</h3>
+          </div>
+          <button type="button" class="niche-view-all" (click)="openExploreSheet()">{{ t(copy.nicheSectionAction) }}</button>
+        </div>
+        <div class="niche-scroll-track">
+          <button
+            type="button"
+            class="mt-card niche-card"
+            *ngFor="let niche of nicheExperiences"
+            (click)="openNicheExperience(niche)"
+          >
+            <span class="niche-icon"><ion-icon aria-hidden="true" [name]="niche.icon"></ion-icon></span>
+            <b>{{ t(niche.title) }}</b>
+            <small>{{ t(niche.quote) }}</small>
+          </button>
+        </div>
+      </section>
+
+      <button class="action-card webinar-banner-card mt-reveal" type="button" (click)="openActivitiesAndWebinars()">
+        <span class="action-icon webinar-icon"><ion-icon aria-hidden="true" name="videocam-outline"></ion-icon></span>
+        <span>
+          <b>{{ t(copy.activitiesBannerTitle) }}</b>
+          <small class="mt-multiline">{{ t(copy.activitiesBannerCopy) }}</small>
+        </span>
+        <em class="mt-multiline">{{ t(copy.activitiesBannerAction) }}</em>
+      </button>
+    </div>
   </div>
 
   <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
 
+  <!-- MyTravel Verification Sheet -->
   <div class="sheet-backdrop" *ngIf="activeSheet === 'verification'" (click)="handleSheetBackdropClick()">
     <section
       #verificationSheet
@@ -120,13 +204,30 @@
       <button class="sheet-close" type="button" [attr.aria-label]="t(copy.closeSheet)" (click)="closeActiveSheet()"><ion-icon aria-hidden="true" name="close"></ion-icon></button>
       <p class="sheet-kicker">{{ t(copy.verificationKicker) }}</p>
       <ng-container *ngIf="verificationTask; else noVerificationTask">
+        <div class="verification-place-banner">
+          <img [src]="verificationTask.image" [alt]="t(verificationTask.place)">
+          <div>
+            <span class="verification-badge">{{ t(verificationTask.badge) }}</span>
+            <strong>{{ t(verificationTask.place) }}</strong>
+            <small>{{ t(verificationTask.address) }} · {{ t(verificationTask.lastUpdated) }}</small>
+          </div>
+        </div>
         <h2 class="mt-multiline">{{ t(verificationTask.question) }}</h2>
         <p>{{ t(verificationTask.station) }}</p>
         <div class="answer-grid" role="group" [attr.aria-label]="t(copy.verificationAnswerGroupAria)">
           <button type="button" [class.active]="verificationAnswer === 'yes'" [attr.aria-label]="verificationAnswerAriaLabel('yes')" [attr.aria-pressed]="verificationAnswer === 'yes'" (click)="verificationAnswer = 'yes'">✓ {{ t(copy.answerYes) }}</button>
           <button type="button" [class.active]="verificationAnswer === 'no'" [attr.aria-label]="verificationAnswerAriaLabel('no')" [attr.aria-pressed]="verificationAnswer === 'no'" (click)="verificationAnswer = 'no'">× {{ t(copy.answerNo) }}</button>
         </div>
-        <div class="reward-row"><img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)"><span><b>{{ t(copy.verificationReviewTitle) }}</b><small>{{ t(copy.verificationReviewCopy) }}</small></span><strong>+{{ verificationTask.points }}<br>{{ language === 'EN' ? 'points' : 'mata' }}</strong></div>
+        <label class="verification-note-field">
+          <span>{{ t(copy.verificationNoteLabel) }}</span>
+          <input
+            type="text"
+            [(ngModel)]="verificationNote"
+            [placeholder]="t(copy.verificationNotePlaceholder)"
+            maxlength="160"
+          >
+        </label>
+        <div class="reward-row"><img class="mt-mascot-wave" src="assets/mytravel/wira-wave.png" [alt]="t(copy.wiraMascotAlt)"><span><b>{{ t(copy.verificationReviewTitle) }}</b><small>{{ t(copy.verificationReviewCopy) }}</small></span><strong>+{{ verificationTask.points }}<br>{{ language === 'EN' ? 'points' : 'mata' }}</strong></div>
         <button class="mt-primary" type="button" [disabled]="!verificationAnswer" (click)="submitVerification()">{{ t(copy.verificationSubmit) }}</button>
       </ng-container>
       <ng-template #noVerificationTask>
@@ -138,26 +239,363 @@
     </section>
   </div>
 
+  <!-- Events & Activities Sheet -->
   <div class="sheet-backdrop" *ngIf="activeSheet === 'events'" (click)="handleSheetBackdropClick()">
     <section
       #eventsSheet
       class="verification-sheet events-sheet"
       role="dialog"
       aria-modal="true"
-      [attr.aria-label]="t(copy.eventsTitle)"
+      [attr.aria-label]="selectedEvent ? t(selectedEvent.title) : t(copy.eventsTitle)"
       tabindex="-1"
       (click)="$event.stopPropagation()"
       (keydown)="handleSheetKeydown($event, eventsSheet)"
     >
       <div class="sheet-handle"></div>
       <button class="sheet-close" type="button" [attr.aria-label]="t(copy.closeEventsSheet)" (click)="closeActiveSheet()"><ion-icon aria-hidden="true" name="close"></ion-icon></button>
-      <p class="sheet-kicker">{{ t(copy.eventsKicker) }}</p>
-      <h2>{{ t(copy.eventsTitle) }}</h2>
-      <button class="event-row" *ngFor="let event of events" type="button" (click)="closeActiveSheet(); go(event.targetPath)"><span>{{ event.dateLabel }}</span><div><b>{{ t(event.title) }}</b><small>{{ t(event.description) }}</small></div><ion-icon aria-hidden="true" name="chevron-forward"></ion-icon></button>
-      <section class="route-loading" *ngIf="events.length === 0">
-        <b>{{ eventsEmptyStateTitle() }}</b>
-        <small>{{ eventsEmptyStateCopy() }}</small>
-      </section>
+
+      <!-- Event / Activity / Webinar Detail View -->
+      <ng-container *ngIf="selectedEvent; else eventsListView">
+        <div class="sheet-detail-nav">
+          <button type="button" class="sheet-back-pill" (click)="backToEventsList()">
+            <ion-icon aria-hidden="true" name="arrow-back"></ion-icon>
+            <span>{{ t(copy.backToEvents) }}</span>
+          </button>
+          <span class="event-type-chip" *ngIf="selectedEvent.categoryBadge">{{ t(selectedEvent.categoryBadge) }}</span>
+        </div>
+
+        <h2 class="sheet-detail-title mt-multiline">{{ t(selectedEvent.title) }}</h2>
+        <p class="sheet-detail-desc">{{ t(selectedEvent.description) }}</p>
+
+        <div class="sheet-detail-meta-grid">
+          <div>
+            <small><ion-icon aria-hidden="true" name="calendar-outline"></ion-icon> {{ t(copy.eventDateLabel) }}</small>
+            <strong>{{ selectedEvent.fullDateLabel }}</strong>
+          </div>
+          <div>
+            <small><ion-icon aria-hidden="true" name="location-outline"></ion-icon> {{ t(copy.eventVenueLabel) }}</small>
+            <strong>{{ selectedEvent.venue }}, {{ selectedEvent.state }}</strong>
+          </div>
+          <div *ngIf="selectedEvent.organizer">
+            <small><ion-icon aria-hidden="true" name="ribbon-outline"></ion-icon> {{ t(copy.eventOrganizerLabel) }}</small>
+            <strong>{{ selectedEvent.organizer }}</strong>
+          </div>
+          <div>
+            <small>
+              <ion-icon aria-hidden="true" [name]="selectedEvent.eventType === 'webinar' ? 'videocam-outline' : 'train-outline'"></ion-icon>
+              {{ selectedEvent.eventType === 'webinar' ? t(copy.webinarSessionLabel) : t(copy.eventTransitLabel) }}
+            </small>
+            <strong>{{ selectedEvent.transitHint }}</strong>
+          </div>
+        </div>
+
+        <section class="sheet-detail-highlights" *ngIf="selectedEvent.highlights && selectedEvent.highlights.length > 0">
+          <b>{{ t(copy.eventHighlightsTitle) }}</b>
+          <ul>
+            <li *ngFor="let item of selectedEvent.highlights">{{ t(item) }}</li>
+          </ul>
+        </section>
+
+        <div class="sheet-detail-actions">
+          <ng-container *ngIf="selectedEvent.eventType === 'webinar'; else physicalEventActions">
+            <button class="mt-primary" type="button" (click)="toggleSaveEvent(selectedEvent.id, $event)">
+              <ion-icon aria-hidden="true" [name]="isEventSaved(selectedEvent.id) ? 'bookmark' : 'bookmark-outline'"></ion-icon>
+              {{ isEventSaved(selectedEvent.id) ? t(copy.rsvpedWebinarAction) : t(copy.rsvpWebinarAction) }}
+            </button>
+            <div class="sheet-detail-secondary-row">
+              <button class="mt-secondary" type="button" (click)="openOfficialPortal(selectedEvent.officialUrl)">
+                <ion-icon aria-hidden="true" name="open-outline"></ion-icon>
+                {{ t(copy.visitOfficialPortal) }}
+              </button>
+              <button *ngIf="selectedEvent.destinationQuery" class="mt-secondary" type="button" (click)="openEventTarget(selectedEvent)">
+                <ion-icon aria-hidden="true" name="navigate-outline"></ion-icon>
+                {{ t(copy.planDestinationVisit) }} {{ selectedEvent.destinationQuery }}
+              </button>
+              <button class="mt-secondary" type="button" (click)="shareEvent(selectedEvent)">
+                <ion-icon aria-hidden="true" name="share-social-outline"></ion-icon>
+                {{ t(copy.shareAction) }}
+              </button>
+            </div>
+          </ng-container>
+
+          <ng-template #physicalEventActions>
+            <button class="mt-primary" type="button" (click)="openEventTarget(selectedEvent)">
+              <ion-icon aria-hidden="true" [name]="selectedEvent.targetPath === '/tabs/tab2' ? 'navigate-outline' : 'arrow-forward-outline'"></ion-icon>
+              {{ eventPrimaryActionLabel(selectedEvent) }}
+            </button>
+            <div class="sheet-detail-secondary-row">
+              <button class="mt-secondary" type="button" (click)="toggleSaveEvent(selectedEvent.id, $event)">
+                <ion-icon aria-hidden="true" [name]="isEventSaved(selectedEvent.id) ? 'bookmark' : 'bookmark-outline'"></ion-icon>
+                {{ isEventSaved(selectedEvent.id) ? t(copy.rsvpedEvent) : t(copy.rsvpEvent) }}
+              </button>
+              <button class="mt-secondary" type="button" (click)="openEventInGoogleMaps(selectedEvent)">
+                <ion-icon aria-hidden="true" name="map-outline"></ion-icon>
+                {{ t(copy.openVenueMaps) }}
+              </button>
+              <button *ngIf="selectedEvent.officialUrl" class="mt-secondary" type="button" (click)="openOfficialPortal(selectedEvent.officialUrl)">
+                <ion-icon aria-hidden="true" name="open-outline"></ion-icon>
+                {{ t(copy.visitOfficialPortal) }}
+              </button>
+              <button class="mt-secondary" type="button" (click)="shareEvent(selectedEvent)">
+                <ion-icon aria-hidden="true" name="share-social-outline"></ion-icon>
+                {{ t(copy.shareAction) }}
+              </button>
+            </div>
+          </ng-template>
+        </div>
+      </ng-container>
+
+      <!-- Events & Activities List View -->
+      <ng-template #eventsListView>
+        <p class="sheet-kicker">{{ t(copy.eventsKicker) }}</p>
+        <h2>{{ t(copy.eventsTitle) }}</h2>
+        <div class="explore-filters events-subtabs" role="tablist">
+          <button type="button" [class.active]="eventsFilterTab === 'all'" (click)="eventsFilterTab = 'all'">{{ t(copy.eventsTabAll) }}</button>
+          <button type="button" [class.active]="eventsFilterTab === 'events'" (click)="eventsFilterTab = 'events'">{{ t(copy.eventsTabProgrammes) }}</button>
+          <button type="button" [class.active]="eventsFilterTab === 'webinars'" (click)="eventsFilterTab = 'webinars'">{{ t(copy.eventsTabWebinars) }}</button>
+        </div>
+        <div class="sheet-search-pill">
+          <ion-icon aria-hidden="true" name="search-outline"></ion-icon>
+          <input type="search" [(ngModel)]="eventsSearchQuery" [placeholder]="t(copy.eventsSearchPlaceholder)">
+        </div>
+        <div class="events-list" *ngIf="filteredEvents.length > 0">
+          <article class="event-card" *ngFor="let event of filteredEvents">
+            <button class="event-row" type="button" (click)="openEventDetail(event)">
+              <span>{{ event.dateLabel }}</span>
+              <div>
+                <span class="event-type-chip" *ngIf="event.categoryBadge">{{ t(event.categoryBadge) }}</span>
+                <b>{{ t(event.title) }}</b>
+                <small>{{ t(event.description) }}</small>
+                <em class="event-transit-pill"><ion-icon [name]="event.eventType === 'webinar' ? 'videocam-outline' : 'train-outline'" aria-hidden="true"></ion-icon> {{ event.transitHint }}</em>
+              </div>
+              <ion-icon aria-hidden="true" name="chevron-forward"></ion-icon>
+            </button>
+            <div class="event-card-actions">
+              <button
+                class="event-save-btn"
+                type="button"
+                [class.saved]="isEventSaved(event.id)"
+                (click)="toggleSaveEvent(event.id, $event)"
+              >
+                <ion-icon [name]="isEventSaved(event.id) ? 'bookmark' : 'bookmark-outline'" aria-hidden="true"></ion-icon>
+                {{ isEventSaved(event.id) ? t(copy.rsvpedEvent) : t(copy.rsvpEvent) }}
+              </button>
+            </div>
+          </article>
+        </div>
+        <section class="route-loading" *ngIf="events.length === 0">
+          <b>{{ eventsEmptyStateTitle() }}</b>
+          <small>{{ eventsEmptyStateCopy() }}</small>
+        </section>
+        <section class="route-loading" *ngIf="events.length > 0 && filteredEvents.length === 0">
+          <b>{{ t(copy.noSearchResultsTitle) }}</b>
+          <small>{{ t(copy.noSearchResultsCopy) }}</small>
+          <button type="button" class="mt-secondary sheet-clear-btn" (click)="clearEventsFilters()">{{ t(copy.clearFiltersAction) }}</button>
+        </section>
+      </ng-template>
+    </section>
+  </div>
+
+  <!-- Explore Malaysia Discovery Sheet -->
+  <div class="sheet-backdrop" *ngIf="activeSheet === 'explore'" (click)="handleSheetBackdropClick()">
+    <section
+      #exploreSheet
+      class="verification-sheet explore-sheet"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="selectedDestination ? selectedDestination.name : t(copy.exploreTitle)"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown)="handleSheetKeydown($event, exploreSheet)"
+    >
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" type="button" [attr.aria-label]="t(copy.closeExploreSheet)" (click)="closeActiveSheet()"><ion-icon aria-hidden="true" name="close"></ion-icon></button>
+
+      <!-- Destination Detail View -->
+      <ng-container *ngIf="selectedDestination; else destinationsListView">
+        <div class="sheet-detail-nav">
+          <button type="button" class="sheet-back-pill" (click)="backToDestinationsList()">
+            <ion-icon aria-hidden="true" name="arrow-back"></ion-icon>
+            <span>{{ t(copy.backToDestinations) }}</span>
+          </button>
+          <span class="state-tag">{{ selectedDestination.state }}</span>
+        </div>
+
+        <div class="dest-detail-hero">
+          <img [src]="selectedDestination.image" [alt]="selectedDestination.name" (error)="onDestinationImageError($event)">
+        </div>
+
+        <h2 class="sheet-detail-title mt-multiline">{{ selectedDestination.name }}</h2>
+        <p class="sheet-detail-desc">{{ t(selectedDestination.description) }}</p>
+
+        <div class="sheet-detail-meta-grid">
+          <div>
+            <small><ion-icon aria-hidden="true" name="train-outline"></ion-icon> {{ t(copy.nearestHubLabel) }}</small>
+            <strong>{{ selectedDestination.nearestHub }}</strong>
+          </div>
+          <div>
+            <small><ion-icon aria-hidden="true" name="bus-outline"></ion-icon> {{ t(copy.transitLineLabel) }}</small>
+            <strong>{{ selectedDestination.transitLine }}</strong>
+          </div>
+          <div>
+            <small><ion-icon aria-hidden="true" name="time-outline"></ion-icon> {{ t(copy.openHoursLabel) }}</small>
+            <strong>{{ selectedDestination.openHours }}</strong>
+          </div>
+          <div>
+            <small><ion-icon aria-hidden="true" name="accessibility-outline"></ion-icon> {{ t(copy.accessibilityLabel) }}</small>
+            <strong>{{ selectedDestination.wheelchairFriendly ? t(copy.stepFreeVerified) : t(copy.standardTerrain) }}</strong>
+          </div>
+        </div>
+
+        <div class="sheet-detail-actions">
+          <button class="mt-primary" type="button" (click)="planRouteToDestination(selectedDestination.name)">
+            <ion-icon aria-hidden="true" name="navigate-outline"></ion-icon>
+            {{ t(copy.planTransitRoute) }}
+          </button>
+          <div class="sheet-detail-secondary-row">
+            <button class="mt-secondary" type="button" (click)="toggleSaveDestination(selectedDestination.id)">
+              <ion-icon aria-hidden="true" [name]="isDestinationSaved(selectedDestination.id) ? 'heart' : 'heart-outline'"></ion-icon>
+              {{ isDestinationSaved(selectedDestination.id) ? t(copy.savedPlace) : t(copy.savePlace) }}
+            </button>
+            <button class="mt-secondary" type="button" (click)="openDestinationInGoogleMaps(selectedDestination)">
+              <ion-icon aria-hidden="true" name="map-outline"></ion-icon>
+              {{ t(copy.openVenueMaps) }}
+            </button>
+            <button class="mt-secondary" type="button" (click)="shareDestination(selectedDestination)">
+              <ion-icon aria-hidden="true" name="share-social-outline"></ion-icon>
+              {{ t(copy.shareAction) }}
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Explore Malaysia Destinations List -->
+      <ng-template #destinationsListView>
+        <p class="sheet-kicker">{{ t(copy.exploreKicker) }}</p>
+        <h2>{{ t(copy.exploreTitle) }}</h2>
+
+        <div class="sheet-search-pill">
+          <ion-icon aria-hidden="true" name="search-outline"></ion-icon>
+          <input type="search" [(ngModel)]="exploreSearchQuery" [placeholder]="t(copy.exploreSearchPlaceholder)">
+        </div>
+
+        <div class="explore-filters" role="tablist">
+          <button type="button" [class.active]="exploreCategory === 'all'" (click)="exploreCategory = 'all'">{{ t(copy.exploreFilterAll) }}</button>
+          <button type="button" [class.active]="exploreCategory === 'heritage'" (click)="exploreCategory = 'heritage'">{{ t(copy.exploreFilterHeritage) }}</button>
+          <button type="button" [class.active]="exploreCategory === 'nature'" (click)="exploreCategory = 'nature'">{{ t(copy.exploreFilterNature) }}</button>
+          <button type="button" [class.active]="exploreCategory === 'food'" (click)="exploreCategory = 'food'">{{ t(copy.exploreFilterFood) }}</button>
+          <button type="button" [class.active]="exploreCategory === 'culture'" (click)="exploreCategory = 'culture'">{{ t(copy.exploreFilterCulture) }}</button>
+        </div>
+
+        <div class="explore-list" *ngIf="filteredDestinations.length > 0">
+          <article class="explore-card explore-card-clickable" *ngFor="let dest of filteredDestinations" (click)="openDestinationDetail(dest)">
+            <img [src]="dest.image" [alt]="dest.name" (error)="onDestinationImageError($event)">
+            <div class="explore-card-body">
+              <div class="explore-card-top">
+                <strong>{{ dest.name }}</strong>
+                <span class="state-tag">{{ dest.state }}</span>
+              </div>
+              <p>{{ t(dest.description) }}</p>
+              <div class="explore-meta">
+                <span><ion-icon name="train-outline" aria-hidden="true"></ion-icon> {{ dest.nearestHub }}</span>
+                <span *ngIf="dest.wheelchairFriendly" class="access-tag"><ion-icon name="accessibility-outline" aria-hidden="true"></ion-icon> {{ t(copy.wheelchairFriendly) }}</span>
+              </div>
+              <div class="explore-card-actions">
+                <button class="explore-route-btn" type="button" (click)="$event.stopPropagation(); planRouteToDestination(dest.name)">
+                  <ion-icon name="navigate-outline" aria-hidden="true"></ion-icon>
+                  {{ t(copy.planTransitRoute) }}
+                </button>
+                <button
+                  class="explore-save-btn"
+                  type="button"
+                  [class.saved]="isDestinationSaved(dest.id)"
+                  (click)="$event.stopPropagation(); toggleSaveDestination(dest.id)"
+                >
+                  <ion-icon [name]="isDestinationSaved(dest.id) ? 'heart' : 'heart-outline'" aria-hidden="true"></ion-icon>
+                  {{ isDestinationSaved(dest.id) ? t(copy.savedPlace) : t(copy.savePlace) }}
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+        <section class="route-loading" *ngIf="filteredDestinations.length === 0">
+          <b>{{ t(copy.noSearchResultsTitle) }}</b>
+          <small>{{ t(copy.noSearchResultsCopy) }}</small>
+          <button type="button" class="mt-secondary sheet-clear-btn" (click)="clearExploreFilters()">{{ t(copy.clearFiltersAction) }}</button>
+        </section>
+      </ng-template>
+    </section>
+  </div>
+
+  <!-- Active Journey Live Tracker Sheet -->
+  <div class="sheet-backdrop" *ngIf="activeSheet === 'journey' && activeJourney" (click)="handleSheetBackdropClick()">
+    <section
+      #journeySheet
+      class="verification-sheet journey-live-sheet"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="t(copy.currentJourney)"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown)="handleSheetKeydown($event, journeySheet)"
+    >
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" type="button" [attr.aria-label]="t(copy.closeSheet)" (click)="closeActiveSheet()">
+        <ion-icon aria-hidden="true" name="close"></ion-icon>
+      </button>
+      <p class="sheet-kicker">{{ t(copy.activeJourneyKicker) }}</p>
+      <h2>{{ activeJourney.from }} → {{ activeJourney.to }}</h2>
+      <p>{{ activeJourneyModeLabel() }} · {{ activeJourney.detail }}</p>
+
+      <div class="journey-leg-breadcrumbs" *ngIf="activeJourney.legs && activeJourney.legs.length > 0">
+        <ng-container *ngFor="let leg of activeJourney.legs; let lastLeg = last">
+          <span class="j-leg-walk" *ngIf="leg.type === 'walk'">
+            <ion-icon name="walk-outline" aria-hidden="true"></ion-icon>
+          </span>
+          <span class="j-leg-transit" *ngIf="leg.type === 'transit'">
+            <ion-icon [name]="leg.icon" aria-hidden="true"></ion-icon>
+            <em [style.background]="leg.badgeColor">{{ leg.badgeLabel }}</em>
+          </span>
+          <ion-icon *ngIf="!lastLeg" class="j-leg-sep" name="chevron-forward" aria-hidden="true"></ion-icon>
+        </ng-container>
+      </div>
+
+      <div class="journey-live-map-box">
+        <app-live-transit-map
+          [fromName]="activeJourney.from"
+          [toName]="activeJourney.to"
+          [waypoints]="activeJourney.waypoints || []"
+          [legs]="activeJourney.legs || []"
+          [routeColor]="activeJourney.color || '#0b57d0'"
+          [language]="language"
+        ></app-live-transit-map>
+      </div>
+
+      <div class="journey-sheet-stats">
+        <span><small>{{ t(copy.departs) }}</small><strong>{{ activeJourney.depart }}</strong></span>
+        <span><small>{{ t(copy.arrives) }}</small><strong>{{ activeJourney.arrive }}</strong></span>
+        <span><small>{{ language === 'BM' ? 'Tempoh' : 'Duration' }}</small><strong>{{ activeJourney.duration }}</strong></span>
+        <span><small>{{ language === 'BM' ? 'Tambang' : 'Fare' }}</small><strong>{{ activeJourney.fare }}</strong></span>
+      </div>
+
+      <div class="journey-sheet-steps" *ngIf="activeJourney.steps && activeJourney.steps.length > 0">
+        <b>{{ t(copy.activeJourneyStepsTitle) }}</b>
+        <ol>
+          <li *ngFor="let step of activeJourney.steps">{{ step }}</li>
+        </ol>
+      </div>
+
+      <div class="journey-sheet-actions">
+        <button class="mt-primary journey-complete-green" type="button" (click)="closeActiveSheet(); completeJourney()">
+          ✓ {{ t(copy.completeJourney) }} (+{{ activeJourney.points }} {{ t(copy.ecoPoints) }})
+        </button>
+        <button class="mt-secondary" type="button" (click)="openActiveJourneyInNavigation()">
+          <ion-icon name="train-outline" aria-hidden="true"></ion-icon> {{ t(copy.openInNavigation) }}
+        </button>
+        <button class="mt-secondary" type="button" (click)="openActiveJourneyInGoogleMaps()">
+          <ion-icon name="map-outline" aria-hidden="true"></ion-icon> {{ t(copy.openInGoogleMaps) }}
+        </button>
+      </div>
     </section>
   </div>
 </ion-content>

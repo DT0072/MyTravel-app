@@ -1,6 +1,6 @@
-<ion-content [fullscreen]="true">
+<ion-content #communityContent [fullscreen]="true">
   <!-- Shares community travel advice, verification tasks, and notices. -->
-  <div class="mt-screen community-screen" [class.home-view]="view === 'community'">
+  <div class="mt-screen community-screen mt-tabbar-scroll-screen" [class.home-view]="view === 'community'">
     <app-topbar
       [language]="language"
       [notificationCount]="savedNoticeCount"
@@ -14,38 +14,137 @@
 
       <ng-container *ngIf="communityTab === 'tips'; else verificationFeed">
         <div id="community-panel-tips" role="tabpanel" aria-labelledby="community-tab-tips">
+        <div class="community-toolbar">
+          <div class="community-search-bar">
+            <ion-icon aria-hidden="true" name="search-outline"></ion-icon>
+            <input
+              type="search"
+              [(ngModel)]="searchQuery"
+              [placeholder]="t(copy.searchPlaceholder)"
+              [attr.aria-label]="t(copy.searchAria)"
+            >
+            <button
+              *ngIf="searchQuery.trim().length > 0"
+              class="search-clear-btn"
+              type="button"
+              [attr.aria-label]="t(copy.clearSearch)"
+              (click)="clearSearch()"
+            >
+              <ion-icon aria-hidden="true" name="close-circle"></ion-icon>
+            </button>
+          </div>
+          <div class="layout-toggle" role="group" [attr.aria-label]="t(copy.communityTabsAria)">
+            <button type="button" [class.active]="feedLayout === 'grid'" (click)="setFeedLayout('grid')">
+              <ion-icon aria-hidden="true" name="grid-outline"></ion-icon>
+              <span>{{ t(copy.gridView) }}</span>
+            </button>
+            <button type="button" [class.active]="feedLayout === 'feed'" (click)="setFeedLayout('feed')">
+              <ion-icon aria-hidden="true" name="albums-outline"></ion-icon>
+              <span>{{ t(copy.feedView) }}</span>
+            </button>
+          </div>
+          <button type="button" class="my-profile-pill" (click)="openMyCreatorProfile()">
+            <span class="mini-avatar">{{ myCreatorInitials }}</span>
+            <span>{{ t(copy.myProfileBtn) }}</span>
+          </button>
+        </div>
+
+        <div class="community-category-chips" role="group" [attr.aria-label]="t(copy.filterCategoryAria)">
+          <button type="button" [class.active]="filterCategory === 'All'" (click)="selectCategoryChip('All')">{{ t(copy.allCategories) }}</button>
+          <button type="button" *ngFor="let category of categoryOptions" [class.active]="filterCategory === category" (click)="selectCategoryChip(category)">{{ categoryLabel(category) }}</button>
+        </div>
+
         <div class="filter-row">
-          <select [(ngModel)]="filterState" [attr.aria-label]="t(copy.filterStateAria)">
+          <select class="mt-glass-select" name="filterState" [(ngModel)]="filterState" [attr.aria-label]="t(copy.filterStateAria)">
             <option value="All states">{{ t(copy.allStates) }}</option>
             <option *ngFor="let state of stateOptions" [ngValue]="state">{{ state }}</option>
           </select>
-          <select [(ngModel)]="filterCategory" [attr.aria-label]="t(copy.filterCategoryAria)">
+          <select class="mt-glass-select" name="filterCategory" [(ngModel)]="filterCategory" [attr.aria-label]="t(copy.filterCategoryAria)">
             <option value="All">{{ t(copy.allCategories) }}</option>
             <option *ngFor="let category of categoryOptions" [ngValue]="category">{{ categoryLabel(category) }}</option>
           </select>
-          <select [(ngModel)]="postSort" [attr.aria-label]="t(copy.sortPostsAria)">
+          <select class="mt-glass-select" name="postSort" [(ngModel)]="postSort" [attr.aria-label]="t(copy.sortPostsAria)">
             <option value="Latest">{{ t(copy.latest) }}</option>
             <option value="Most helpful">{{ t(copy.mostHelpful) }}</option>
           </select>
         </div>
-        <section class="mt-card post-card mt-reveal" *ngFor="let post of filteredPosts">
-          <div class="post-top"><b>● {{ post.state }}</b><span [class.pending]="post.status === 'In review'">{{ postStatusLabel(post.status) }}</span></div>
-          <div class="post-body"><ng-container *ngIf="postHasImage(post); else noPostPhoto"><img [src]="post.image!" [alt]="t(post.place)"></ng-container><ng-template #noPostPhoto><div class="post-image-placeholder"><ion-icon aria-hidden="true" name="image-outline"></ion-icon><b>{{ t(copy.noPostPhotoTitle) }}</b><small>{{ t(copy.noPostPhotoCopy) }}</small></div></ng-template><div><div class="author"><span>{{ postAuthorInitials(post) }}</span><b>{{ postAuthorLabel(post) }}</b><small>{{ t(post.date) }}</small></div><h2>{{ t(post.place) }}</h2><p>{{ t(post.copy) }}</p><strong>{{ postPointsLabel(post) }}</strong></div></div>
-          <div class="post-actions"><button type="button" [class.active]="post.reaction === 'helpful'" [attr.aria-label]="helpfulPostAriaLabel(post)" [attr.aria-pressed]="post.reaction === 'helpful'" (click)="reactToPost(post, 'helpful')"><ion-icon aria-hidden="true" name="heart-outline"></ion-icon> {{ t(copy.helpful) }}</button><button type="button" [class.active]="post.reaction === 'not-helpful'" [attr.aria-label]="notHelpfulPostAriaLabel(post)" [attr.aria-pressed]="post.reaction === 'not-helpful'" (click)="reactToPost(post, 'not-helpful')"><ion-icon aria-hidden="true" name="thumbs-down-outline"></ion-icon> {{ t(copy.notHelpful) }}</button><button type="button" [attr.aria-label]="reportPostAriaLabel(post)" (click)="showToast(t(copy.reportOpened))"><ion-icon aria-hidden="true" name="flag-outline"></ion-icon> {{ t(copy.report) }}</button></div>
-        </section>
+
+        <div class="community-feed-grid" [class.feed-mode]="feedLayout === 'feed'">
+          <article class="mt-card post-card mt-reveal" *ngFor="let post of filteredPosts">
+            <div class="post-top">
+              <b>● {{ post.state }}</b>
+              <span [class.pending]="post.status === 'In review'">{{ postStatusLabel(post.status) }}</span>
+            </div>
+            <div class="post-body" (click)="openPostDetail(post)">
+              <ng-container *ngIf="postHasImage(post); else noPostPhoto">
+                <img [src]="post.image!" [alt]="t(post.place)" (error)="onPostImageError($event)">
+                <span class="multi-photo-badge" *ngIf="postGalleryImages(post).length > 1">
+                  <ion-icon aria-hidden="true" name="images-outline"></ion-icon> {{ postGalleryImages(post).length }}
+                </span>
+              </ng-container>
+              <ng-template #noPostPhoto>
+                <div class="post-image-placeholder">
+                  <ion-icon aria-hidden="true" name="image-outline"></ion-icon>
+                  <b>{{ t(copy.noPostPhotoTitle) }}</b>
+                  <small>{{ t(copy.noPostPhotoCopy) }}</small>
+                </div>
+              </ng-template>
+              <div class="post-content-wrap">
+                <div class="author author-clickable" (click)="openCreatorProfile(postAuthorLabel(post), $event)">
+                  <span>{{ postAuthorInitials(post) }}</span>
+                  <b>{{ postAuthorLabel(post) }}</b>
+                  <small>{{ t(post.date) }}</small>
+                </div>
+                <h2>{{ t(post.place) }}</h2>
+                <p>{{ t(post.copy) }}</p>
+                <div class="post-social-strip">
+                  <strong>{{ postPointsLabel(post) }}</strong>
+                  <div class="post-social-pills">
+                    <button type="button" class="social-mini-btn" (click)="openPostDetail(post); $event.stopPropagation()">
+                      <ion-icon aria-hidden="true" name="chatbubble-outline"></ion-icon> {{ postCommentCount(post) }}
+                    </button>
+                    <button type="button" class="social-mini-btn" [class.active]="isPostSaved(post)" (click)="toggleSavePost(post, $event)">
+                      <ion-icon aria-hidden="true" [name]="isPostSaved(post) ? 'bookmark' : 'bookmark-outline'"></ion-icon> {{ isPostSaved(post) ? t(copy.savedPost) : t(copy.savePost) }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="post-actions">
+              <button type="button" [class.active]="post.reaction === 'helpful'" [attr.aria-label]="helpfulPostAriaLabel(post)" [attr.aria-pressed]="post.reaction === 'helpful'" (click)="reactToPost(post, 'helpful')">
+                <ion-icon aria-hidden="true" [name]="post.reaction === 'helpful' ? 'heart' : 'heart-outline'"></ion-icon> {{ t(copy.helpful) }} · {{ postHelpfulDisplayCount(post) }}
+              </button>
+              <button type="button" [class.active]="post.reaction === 'not-helpful'" [attr.aria-label]="notHelpfulPostAriaLabel(post)" [attr.aria-pressed]="post.reaction === 'not-helpful'" (click)="reactToPost(post, 'not-helpful')">
+                <ion-icon aria-hidden="true" name="thumbs-down-outline"></ion-icon> {{ t(copy.notHelpful) }}
+              </button>
+              <button type="button" [attr.aria-label]="reportPostAriaLabel(post)" (click)="openReportSheet(post)">
+                <ion-icon aria-hidden="true" name="flag-outline"></ion-icon> {{ t(copy.report) }}
+              </button>
+            </div>
+          </article>
+        </div>
+
         <section class="mt-card empty-data-card" *ngIf="filteredPosts.length === 0">
-          <h2>{{ t(copy.noPostsTitle) }}</h2>
-          <p>{{ t(copy.noPostsCopy) }}</p>
+          <h2>{{ searchQuery.trim() ? t(copy.noSearchMatchTitle) : t(copy.noPostsTitle) }}</h2>
+          <p>{{ searchQuery.trim() ? t(copy.noSearchMatchCopy) : t(copy.noPostsCopy) }}</p>
+          <button
+            *ngIf="searchQuery.trim() || filterState !== 'All states' || filterCategory !== 'All'"
+            type="button"
+            class="mt-secondary sheet-clear-btn"
+            (click)="resetAllFilters()"
+          >
+            {{ t(copy.clearSearch) }}
+          </button>
         </section>
         <button class="mt-primary add-tip" type="button" [attr.aria-label]="addTipAriaLabel()" (click)="openAddTip()">{{ t(copy.addTip) }}</button>
-        <button class="mt-card mission-card" type="button" [attr.aria-label]="communityMissionAriaLabel()" (click)="openCommunityMission()"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ verificationMissionTitleLabel }}</b><small>{{ verificationMissionCopyLabel }}</small><i><u [style.width]="verificationMissionWidth"></u></i></span><em>{{ verificationMissionActionLabel }}</em></button>
+        <button class="mt-card mission-card" type="button" [attr.aria-label]="communityMissionAriaLabel()" (click)="openCommunityMission()"><img class="mt-mascot-cheer" src="assets/mytravel/manja-cheer.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ verificationMissionTitleLabel }}</b><small>{{ verificationMissionCopyLabel }}</small><i><u [style.width]="verificationMissionWidth"></u></i></span><em>{{ verificationMissionActionLabel }}</em></button>
         </div>
       </ng-container>
 
       <ng-template #verificationFeed>
         <div id="community-panel-verification" role="tabpanel" aria-labelledby="community-tab-verification">
         <section class="mt-card verification-preview" *ngIf="verificationTask; else noVerificationFeed">
-          <img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)">
+          <img class="mt-mascot-wave" src="assets/mytravel/wira-wave.png" [alt]="t(copy.wiraMascotAlt)">
           <div><p>{{ t(copy.verificationNearby) }}</p><h2>{{ t(verificationTask.place) }}</h2><small>{{ t(copy.verificationPreviewCopy) }}</small></div>
           <button class="mt-primary" type="button" (click)="startVerification()">{{ t(copy.start) }}</button>
         </section>
@@ -60,9 +159,173 @@
     </ng-container>
 
     <ng-container *ngIf="view === 'add'">
-      <div class="sub-heading"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToCommunity)" (click)="returnToCommunity()"><ion-icon aria-hidden="true" name="arrow-back"></ion-icon></button><h1>{{ t(copy.addTravelTip) }}</h1></div>
-      <div class="steps"><b>1<small>{{ t(copy.stepDetails) }}</small></b><span>2<small>{{ t(copy.stepMedia) }}</small></span><span>3<small>{{ t(copy.stepReview) }}</small></span></div>
-      <form class="mt-card tip-form" #tipForm="ngForm" (ngSubmit)="submitTip()"><label>{{ t(copy.location) }}<input required name="location" [(ngModel)]="tipDraft.location" [placeholder]="t(copy.locationPlaceholder)"></label><label>{{ t(copy.stateOrTerritory) }}<select name="state" [(ngModel)]="tipDraft.state"><option *ngFor="let state of stateOptions" [ngValue]="state">{{ state }}</option></select></label><label>{{ t(copy.categoryLabel) }}<select name="category" [(ngModel)]="tipDraft.category"><option *ngFor="let category of categoryOptions" [ngValue]="category">{{ categoryLabel(category) }}</option></select></label><label>{{ t(copy.yourTip) }}<textarea required minlength="20" name="tip" [(ngModel)]="tipDraft.tip" [placeholder]="t(copy.yourTipPlaceholder)"></textarea></label><div class="photo-row"><div class="photo-placeholder"><ion-icon aria-hidden="true" name="image-outline"></ion-icon><b>{{ t(copy.photoGuideTitle) }}</b><small>{{ t(copy.photoGuideCopy) }}</small></div><ng-container *ngIf="selectedPhotoPreview; else emptyPhotoPreview"><img [src]="selectedPhotoPreview" [alt]="selectedPhotoName || t(copy.selectedPhotoAlt)"></ng-container><ng-template #emptyPhotoPreview><div class="photo-placeholder photo-placeholder-secondary"><ion-icon aria-hidden="true" name="images-outline"></ion-icon><b>{{ t(copy.photoPreviewEmptyTitle) }}</b><small>{{ t(copy.photoPreviewEmptyCopy) }}</small></div></ng-template><button type="button" [attr.aria-label]="t(copy.uploadPhotoAria)" (click)="photoInput.click()">+ {{ selectedPhotoName ? t(copy.changePhoto) : t(copy.addPhoto) }}</button><input #photoInput class="visually-hidden" type="file" accept="image/*" [attr.aria-label]="t(copy.uploadPhotoAria)" (change)="handlePhotoSelection($event)"></div><label class="toggle-row"><span><b>{{ t(copy.accessible) }}</b><small>{{ t(copy.accessibleCopy) }}</small></span><input type="checkbox" name="accessible" [(ngModel)]="tipDraft.accessible"><i aria-hidden="true"></i></label><label class="toggle-row"><span><b>{{ t(copy.hearingAccessible) }}</b><small>{{ t(copy.hearingAccessibleCopy) }}</small></span><input type="checkbox" name="hearingAccessible" [(ngModel)]="tipDraft.hearingAccessible"><i aria-hidden="true"></i></label><label class="confirm-row"><input type="checkbox" name="confirmed" [(ngModel)]="tipDraft.confirmed" required> {{ t(copy.confirmAccuracy) }}</label><div class="form-actions"><button class="mt-secondary" type="button" [attr.aria-label]="saveDraftAriaLabel()" (click)="saveDraft()">{{ t(copy.saveDraft) }}</button><button class="mt-primary" type="submit" [disabled]="!canSubmitTip()" [attr.aria-disabled]="!canSubmitTip()" [attr.aria-label]="submitTipAriaLabel(canSubmitTip())">{{ t(copy.submitForReview) }}</button></div></form>
+      <div class="sub-heading"><button class="mt-back" type="button" [attr.aria-label]="t(copy.backToCommunity)" (click)="returnToCommunity()"><ion-icon aria-hidden="true" name="arrow-back"></ion-icon></button><h1>{{ editingTipId ? t(copy.editTravelTipTitle) : t(copy.addTravelTip) }}</h1></div>
+      <div class="steps"><span [class.step-active]="activeTipStep >= 1"><b>1</b><small>{{ t(copy.stepDetails) }}</small></span><span [class.step-active]="activeTipStep >= 2"><b>2</b><small>{{ t(copy.stepMedia) }}</small></span><span [class.step-active]="activeTipStep >= 3"><b>3</b><small>{{ t(copy.stepReview) }}</small></span></div>
+      <form class="mt-card tip-form" #tipForm="ngForm" (ngSubmit)="submitTip()"><label>{{ t(copy.location) }}<input required name="location" [(ngModel)]="tipDraft.location" [placeholder]="t(copy.locationPlaceholder)"></label><label>{{ t(copy.stateOrTerritory) }}<select name="state" [(ngModel)]="tipDraft.state"><option *ngFor="let state of stateOptions" [ngValue]="state">{{ state }}</option></select></label><label>{{ t(copy.categoryLabel) }}<select name="category" [(ngModel)]="tipDraft.category"><option *ngFor="let category of categoryOptions" [ngValue]="category">{{ categoryLabel(category) }}</option></select></label><label>{{ t(copy.yourTip) }} <em class="tip-char-count" [class.ready]="tipDraft.tip.trim().length >= 20">({{ tipDraft.tip.trim().length }}/20 {{ t(copy.tipCharHint) }})</em><textarea required minlength="20" name="tip" [(ngModel)]="tipDraft.tip" [placeholder]="t(copy.yourTipPlaceholder)"></textarea></label><div class="photo-row"><div class="photo-placeholder"><ion-icon aria-hidden="true" name="image-outline"></ion-icon><b>{{ t(copy.photoGuideTitle) }}</b><small>{{ t(copy.photoGuideCopy) }}</small></div><ng-container *ngIf="selectedPhotoPreview; else emptyPhotoPreview"><img [src]="selectedPhotoPreview" [alt]="selectedPhotoName || t(copy.selectedPhotoAlt)"></ng-container><ng-template #emptyPhotoPreview><div class="photo-placeholder photo-placeholder-secondary"><ion-icon aria-hidden="true" name="images-outline"></ion-icon><b>{{ t(copy.photoPreviewEmptyTitle) }}</b><small>{{ t(copy.photoPreviewEmptyCopy) }}</small></div></ng-template><button type="button" [attr.aria-label]="t(copy.uploadPhotoAria)" (click)="photoInput.click()">+ {{ selectedPhotoName ? t(copy.changePhoto) : t(copy.addPhoto) }}</button><input #photoInput class="visually-hidden" type="file" accept="image/*" [attr.aria-label]="t(copy.uploadPhotoAria)" (change)="handlePhotoSelection($event)"></div><label class="toggle-row"><span><b>{{ t(copy.accessible) }}</b><small>{{ t(copy.accessibleCopy) }}</small></span><input type="checkbox" name="accessible" [(ngModel)]="tipDraft.accessible"><i aria-hidden="true"></i></label><label class="toggle-row"><span><b>{{ t(copy.hearingAccessible) }}</b><small>{{ t(copy.hearingAccessibleCopy) }}</small></span><input type="checkbox" name="hearingAccessible" [(ngModel)]="tipDraft.hearingAccessible"><i aria-hidden="true"></i></label><label class="confirm-row"><input type="checkbox" name="confirmed" [(ngModel)]="tipDraft.confirmed" required> {{ t(copy.confirmAccuracy) }}</label><div class="form-actions"><button class="mt-secondary" type="button" [attr.aria-label]="saveDraftAriaLabel()" (click)="saveDraft()">{{ t(copy.saveDraft) }}</button><button class="mt-primary" type="submit" [disabled]="!canSubmitTip()" [attr.aria-disabled]="!canSubmitTip()" [attr.aria-label]="submitTipAriaLabel(canSubmitTip())">{{ editingTipId ? t(copy.saveChangesBtn) : t(copy.submitForReview) }}</button></div></form>
+    </ng-container>
+
+    <ng-container *ngIf="view === 'creator'">
+      <ng-container *ngIf="creatorProfileMeta() as creator">
+        <div class="sub-heading">
+          <button class="mt-back" type="button" [attr.aria-label]="t(copy.backToCommunity)" (click)="returnToCommunity()"><ion-icon aria-hidden="true" name="arrow-back"></ion-icon></button>
+          <h1>{{ creator.name }}</h1>
+        </div>
+
+        <section class="mt-card creator-hero-card">
+          <div class="creator-hero-top">
+            <span class="creator-big-avatar">{{ creator.initials }}</span>
+            <div class="creator-hero-info">
+              <div class="creator-name-row">
+                <h2>{{ creator.name }}</h2>
+                <span class="creator-verified-badge"><ion-icon aria-hidden="true" name="checkmark-circle"></ion-icon> {{ t(copy.verifiedExplorer) }}</span>
+              </div>
+              <small class="creator-location">● {{ creator.state }}</small>
+              <p class="creator-bio">{{ creator.bio }}</p>
+            </div>
+          </div>
+
+          <div class="creator-stats-row">
+            <button type="button" (click)="creatorTab = 'posts'">
+              <strong>{{ creator.posts.length }}</strong>
+              <small>{{ t(copy.creatorPostsTab) }}</small>
+            </button>
+            <button type="button" (click)="creatorTab = 'followers'">
+              <strong>{{ creator.followers.length }}</strong>
+              <small>{{ t(copy.creatorFollowersTab) }}</small>
+            </button>
+            <button type="button" (click)="creatorTab = 'following'">
+              <strong>{{ creator.following.length }}</strong>
+              <small>{{ t(copy.creatorFollowingTab) }}</small>
+            </button>
+            <div>
+              <strong>{{ creator.totalHelpful }}</strong>
+              <small>{{ t(copy.likesLabel) }}</small>
+            </div>
+          </div>
+
+          <div class="creator-action-bar" *ngIf="!isEditingProfile">
+            <ng-container *ngIf="isViewingOwnProfile(); else otherCreatorActions">
+              <button type="button" class="mt-secondary" (click)="startEditProfile()">
+                <ion-icon aria-hidden="true" name="create-outline"></ion-icon> {{ t(copy.editProfileBtn) }}
+              </button>
+              <button type="button" class="mt-primary" (click)="openAddTip()">
+                <ion-icon aria-hidden="true" name="add-circle-outline"></ion-icon> {{ t(copy.newPostBtn) }}
+              </button>
+            </ng-container>
+            <ng-template #otherCreatorActions>
+              <button type="button" class="mt-primary" *ngIf="!isAuthorFollowed(creator.name)" (click)="toggleFollowAuthor(creator.name, $event)">
+                + {{ t(copy.followAuthor) }}
+              </button>
+              <button type="button" class="mt-secondary" *ngIf="isAuthorFollowed(creator.name)" (click)="toggleFollowAuthor(creator.name, $event)">
+                ✓ {{ t(copy.followingAuthor) }}
+              </button>
+            </ng-template>
+          </div>
+
+          <div class="creator-edit-form" *ngIf="isEditingProfile">
+            <label>
+              <span>{{ t(copy.displayNameLabel) }}</span>
+              <input type="text" [(ngModel)]="profileDraft.displayName" maxlength="40">
+            </label>
+            <label>
+              <span>{{ t(copy.homeStateLabel) }}</span>
+              <select class="mt-glass-select" [(ngModel)]="profileDraft.homeState">
+                <option *ngFor="let state of stateOptions" [ngValue]="state">{{ state }}</option>
+              </select>
+            </label>
+            <label>
+              <span>{{ t(copy.bioLabel) }}</span>
+              <textarea [(ngModel)]="profileDraft.bio" maxlength="160" rows="3"></textarea>
+            </label>
+            <div class="form-actions">
+              <button type="button" class="mt-secondary" (click)="isEditingProfile = false">{{ t(copy.cancelBtn) }}</button>
+              <button type="button" class="mt-primary" (click)="saveCreatorProfile()">{{ t(copy.saveProfileBtn) }}</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="creator-tabs" role="tablist">
+          <button type="button" [class.active]="creatorTab === 'posts'" (click)="creatorTab = 'posts'">{{ t(copy.creatorPostsTab) }} ({{ creator.posts.length }})</button>
+          <button type="button" *ngIf="isViewingOwnProfile()" [class.active]="creatorTab === 'saved'" (click)="creatorTab = 'saved'">{{ t(copy.creatorSavedTab) }} ({{ creatorSavedPosts().length }})</button>
+          <button type="button" [class.active]="creatorTab === 'followers'" (click)="creatorTab = 'followers'">{{ t(copy.creatorFollowersTab) }} ({{ creator.followers.length }})</button>
+          <button type="button" [class.active]="creatorTab === 'following'" (click)="creatorTab = 'following'">{{ t(copy.creatorFollowingTab) }} ({{ creator.following.length }})</button>
+        </div>
+
+        <ng-container *ngIf="creatorTab === 'posts'">
+          <div class="community-feed-grid" *ngIf="creator.posts.length > 0; else emptyCreatorPosts">
+            <article class="mt-card post-card" *ngFor="let post of creator.posts">
+              <div class="post-top"><b>● {{ post.state }}</b><span [class.pending]="post.status === 'In review'">{{ postStatusLabel(post.status) }}</span></div>
+              <div class="post-body" (click)="openPostDetail(post)">
+                <ng-container *ngIf="postHasImage(post); else creatorNoPhoto">
+                  <img [src]="post.image!" [alt]="t(post.place)">
+                </ng-container>
+                <ng-template #creatorNoPhoto>
+                  <div class="post-image-placeholder"><ion-icon aria-hidden="true" name="image-outline"></ion-icon><b>{{ t(post.place) }}</b></div>
+                </ng-template>
+                <div class="post-content-wrap">
+                  <h2>{{ t(post.place) }}</h2>
+                  <p>{{ t(post.copy) }}</p>
+                </div>
+              </div>
+              <div class="post-actions" *ngIf="canManagePost(post)">
+                <button type="button" (click)="startEditPost(post, $event)"><ion-icon aria-hidden="true" name="create-outline"></ion-icon> {{ t(copy.editPostBtn) }}</button>
+                <button type="button" (click)="deleteUserPost(post, $event)"><ion-icon aria-hidden="true" name="trash-outline"></ion-icon> {{ t(copy.deletePostBtn) }}</button>
+              </div>
+            </article>
+          </div>
+          <ng-template #emptyCreatorPosts>
+            <section class="mt-card empty-data-card"><p>{{ t(copy.noCreatorPostsCopy) }}</p></section>
+          </ng-template>
+        </ng-container>
+
+        <ng-container *ngIf="creatorTab === 'saved'">
+          <div class="community-feed-grid" *ngIf="creatorSavedPosts().length > 0; else emptySavedPosts">
+            <article class="mt-card post-card" *ngFor="let post of creatorSavedPosts()" (click)="openPostDetail(post)">
+              <div class="post-top"><b>● {{ post.state }}</b><span>{{ categoryLabel(post.category) }}</span></div>
+              <div class="post-body">
+                <img *ngIf="postHasImage(post)" [src]="post.image!" [alt]="t(post.place)">
+                <div class="post-content-wrap">
+                  <h2>{{ t(post.place) }}</h2>
+                  <p>{{ t(post.copy) }}</p>
+                </div>
+              </div>
+            </article>
+          </div>
+          <ng-template #emptySavedPosts>
+            <section class="mt-card empty-data-card"><p>{{ t(copy.noSavedPostsCopy) }}</p></section>
+          </ng-template>
+        </ng-container>
+
+        <ng-container *ngIf="creatorTab === 'followers'">
+          <div class="creator-people-list" *ngIf="creator.followers.length > 0; else emptyFollowers">
+            <div class="mt-card creator-person-row" *ngFor="let person of creator.followers" (click)="openCreatorProfile(person, $event)">
+              <span class="xhs-avatar">{{ person.slice(0, 2).toUpperCase() }}</span>
+              <div><b>{{ person }}</b><small>{{ t(copy.verifiedExplorer) }}</small></div>
+              <button type="button" class="xhs-follow-btn" [class.following]="isAuthorFollowed(person)" (click)="toggleFollowAuthor(person, $event)">
+                {{ isAuthorFollowed(person) ? t(copy.followingAuthor) : t(copy.followAuthor) }}
+              </button>
+            </div>
+          </div>
+          <ng-template #emptyFollowers>
+            <section class="mt-card empty-data-card"><p>{{ t(copy.noFollowersCopy) }}</p></section>
+          </ng-template>
+        </ng-container>
+
+        <ng-container *ngIf="creatorTab === 'following'">
+          <div class="creator-people-list" *ngIf="creator.following.length > 0; else emptyFollowing">
+            <div class="mt-card creator-person-row" *ngFor="let person of creator.following" (click)="openCreatorProfile(person, $event)">
+              <span class="xhs-avatar">{{ person.slice(0, 2).toUpperCase() }}</span>
+              <div><b>{{ person }}</b><small>{{ t(copy.verifiedExplorer) }}</small></div>
+              <button type="button" class="xhs-follow-btn" [class.following]="isAuthorFollowed(person)" (click)="toggleFollowAuthor(person, $event)">
+                {{ isAuthorFollowed(person) ? t(copy.followingAuthor) : t(copy.followAuthor) }}
+              </button>
+            </div>
+          </div>
+          <ng-template #emptyFollowing>
+            <section class="mt-card empty-data-card"><p>{{ t(copy.noFollowingCopy) }}</p></section>
+          </ng-template>
+        </ng-container>
+      </ng-container>
     </ng-container>
 
     <ng-container *ngIf="view === 'verification'">
@@ -70,7 +333,7 @@
       <ng-container *ngIf="verificationTask; else noVerificationDetail">
         <section class="mt-card verify-place"><img [src]="verificationTask.image" [alt]="t(verificationTask.place)"><div><b>{{ t(verificationTask.place) }}</b><strong>{{ t(verificationTask.badge) }}</strong><small>{{ t(verificationTask.address) }}</small></div></section>
         <section class="mt-card verify-question"><span><ion-icon aria-hidden="true" name="time-outline"></ion-icon></span><h2 class="mt-multiline">{{ t(verificationTask.question) }}</h2><small>{{ t(verificationTask.lastUpdated) }}</small><div role="group" [attr.aria-label]="t(copy.verificationAnswerGroupAria)"><button type="button" [class.active]="verificationAnswer === 'yes'" [attr.aria-label]="verificationAnswerAriaLabel('yes')" [attr.aria-pressed]="verificationAnswer === 'yes'" (click)="verificationAnswer='yes'">✓ {{ t(copy.yes) }}</button><button type="button" [class.active]="verificationAnswer === 'no'" [attr.aria-label]="verificationAnswerAriaLabel('no')" [attr.aria-pressed]="verificationAnswer === 'no'" (click)="verificationAnswer='no'">× {{ t(copy.no) }}</button></div></section>
-        <section class="mt-card verify-reward"><img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)"><span><b>{{ t(copy.wiraReviewing) }}</b><small>{{ t(copy.pointsAwardedAfterVerification) }}</small></span><strong>+{{ verificationTask.points }}<br>{{ t(copy.points) }}</strong></section>
+        <section class="mt-card verify-reward"><img class="mt-mascot-wave" src="assets/mytravel/wira-wave.png" [alt]="t(copy.wiraMascotAlt)"><span><b>{{ t(copy.wiraReviewing) }}</b><small>{{ t(copy.pointsAwardedAfterVerification) }}</small></span><strong>+{{ verificationTask.points }}<br>{{ t(copy.points) }}</strong></section>
         <button class="mt-primary" type="button" [disabled]="!verificationAnswer" [attr.aria-disabled]="!verificationAnswer" [attr.aria-label]="submitVerificationAriaLabel()" (click)="submitVerification()">{{ t(copy.submitVerification) }}</button>
       </ng-container>
       <ng-template #noVerificationDetail>
@@ -93,4 +356,185 @@
   </div>
 
   <div class="mt-toast" *ngIf="toast" role="status" aria-live="polite">{{ toast }}</div>
+
+  <div class="sheet-backdrop detail-backdrop" *ngIf="selectedPost" (click)="closePostDetail()">
+    <section class="report-sheet post-detail-sheet xhs-modal" role="dialog" aria-modal="true" [attr.aria-label]="t(selectedPost.place)" (click)="$event.stopPropagation()">
+      <button class="sheet-close xhs-close" type="button" [attr.aria-label]="t(copy.backToCommunity)" (click)="closePostDetail()"><ion-icon aria-hidden="true" name="close"></ion-icon></button>
+
+      <!-- Left Pane: Swipeable Multi-Image Carousel (小红书 / Instagram Gallery) -->
+      <div class="xhs-media-pane" *ngIf="postGalleryImages(selectedPost).length > 0">
+        <div class="detail-gallery-wrap">
+          <div class="detail-gallery-track" (scroll)="onDetailGalleryScroll($event)">
+            <div class="detail-gallery-slide" *ngFor="let img of postGalleryImages(selectedPost); let idx = index">
+              <img [src]="img" [alt]="t(selectedPost.place) + ' ' + (idx + 1)">
+            </div>
+          </div>
+          <span class="gallery-counter" *ngIf="postGalleryImages(selectedPost).length > 1">
+            {{ detailPhotoIndex + 1 }} / {{ postGalleryImages(selectedPost).length }}
+          </span>
+          <button
+            *ngIf="postGalleryImages(selectedPost).length > 1"
+            type="button"
+            class="gallery-nav prev"
+            aria-label="Previous photo"
+            (click)="prevDetailPhoto()"
+          >
+            <ion-icon aria-hidden="true" name="chevron-back"></ion-icon>
+          </button>
+          <button
+            *ngIf="postGalleryImages(selectedPost).length > 1"
+            type="button"
+            class="gallery-nav next"
+            aria-label="Next photo"
+            (click)="nextDetailPhoto()"
+          >
+            <ion-icon aria-hidden="true" name="chevron-forward"></ion-icon>
+          </button>
+          <div class="gallery-dots" *ngIf="postGalleryImages(selectedPost).length > 1">
+            <button
+              type="button"
+              *ngFor="let img of postGalleryImages(selectedPost); let idx = index"
+              [class.active]="idx === detailPhotoIndex"
+              [attr.aria-label]="'Photo ' + (idx + 1)"
+              (click)="selectDetailPhoto(idx)"
+            ></button>
+          </div>
+        </div>
+        <div class="gallery-thumbs" *ngIf="postGalleryImages(selectedPost).length > 1">
+          <button
+            type="button"
+            *ngFor="let img of postGalleryImages(selectedPost); let idx = index"
+            [class.active]="idx === detailPhotoIndex"
+            (click)="selectDetailPhoto(idx)"
+          >
+            <img [src]="img" [alt]="t(selectedPost.place) + ' thumbnail ' + (idx + 1)">
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Pane: Sticky Author + Rich Travel Guide + POI Card + Comments + Sticky Bar -->
+      <div class="xhs-content-pane">
+        <header class="xhs-author-header">
+          <div class="xhs-author-id author-clickable" (click)="openCreatorProfile(postAuthorLabel(selectedPost), $event)">
+            <span class="xhs-avatar">{{ postAuthorInitials(selectedPost) }}</span>
+            <div>
+              <b>{{ postAuthorLabel(selectedPost) }}</b>
+              <small>● {{ selectedPost.state }} · {{ t(selectedPost.date) }}</small>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="xhs-follow-btn"
+            [class.following]="isAuthorFollowed(selectedPost.author)"
+            (click)="toggleFollowAuthor(selectedPost.author, $event)"
+          >
+            {{ isAuthorFollowed(selectedPost.author) ? t(copy.followingAuthor) : t(copy.followAuthor) }}
+          </button>
+        </header>
+
+        <div class="xhs-scroll-body">
+          <div class="detail-badges">
+            <span class="detail-cat-pill">{{ categoryLabel(selectedPost.category) }}</span>
+            <span class="detail-status-pill" [class.pending]="selectedPost.status === 'In review'">{{ postStatusLabel(selectedPost.status) }}</span>
+            <span class="detail-points-pill">{{ postPointsLabel(selectedPost) }}</span>
+          </div>
+
+          <h2>{{ t(selectedPost.place) }}</h2>
+          <p class="detail-copy">{{ selectedPost.longCopy ? t(selectedPost.longCopy) : t(selectedPost.copy) }}</p>
+
+          <div class="xhs-tags" *ngIf="selectedPost.tags && selectedPost.tags.length > 0">
+            <button type="button" *ngFor="let tag of selectedPost.tags" (click)="searchByTag(tag)">{{ tag }}</button>
+          </div>
+
+          <!-- Xiaohongshu-style Practical Travel POI Card -->
+          <div class="xhs-poi-card">
+            <div class="xhs-poi-rows">
+              <div *ngIf="selectedPost.transitTip">
+                <ion-icon aria-hidden="true" name="train-outline"></ion-icon>
+                <span><small>{{ t(copy.transitAccess) }}</small><b>{{ t(selectedPost.transitTip) }}</b></span>
+              </div>
+              <div class="xhs-poi-pair" *ngIf="selectedPost.openHours || selectedPost.budget">
+                <div *ngIf="selectedPost.openHours">
+                  <ion-icon aria-hidden="true" name="time-outline"></ion-icon>
+                  <span><small>{{ t(copy.openingHours) }}</small><b>{{ selectedPost.openHours }}</b></span>
+                </div>
+                <div *ngIf="selectedPost.budget">
+                  <ion-icon aria-hidden="true" name="wallet-outline"></ion-icon>
+                  <span><small>{{ t(copy.estimatedBudget) }}</small><b>{{ selectedPost.budget }}</b></span>
+                </div>
+              </div>
+            </div>
+            <div class="xhs-poi-acc" *ngIf="selectedPost.accessibilityTags && selectedPost.accessibilityTags.length > 0">
+              <span *ngFor="let acc of selectedPost.accessibilityTags">✓ {{ acc }}</span>
+            </div>
+            <button type="button" class="mt-secondary xhs-nav-btn" (click)="navigateToPost(selectedPost)">
+              <ion-icon aria-hidden="true" name="navigate-outline"></ion-icon> {{ t(copy.navigateHere) }} →
+            </button>
+          </div>
+
+          <!-- Comments Thread -->
+          <div class="detail-comments">
+            <h3>{{ t(copy.commentsLabel) }} ({{ selectedPostComments().length }})</h3>
+            <div class="comment-item" *ngFor="let c of selectedPostComments()">
+              <span class="comment-avatar">{{ c.initials }}</span>
+              <div class="comment-body">
+                <b>{{ c.author }} <small>{{ c.time }}</small></b>
+                <p>{{ c.text }}</p>
+              </div>
+              <button type="button" class="comment-like-btn" [class.active]="c.liked" (click)="toggleCommentLike(c)">
+                <ion-icon aria-hidden="true" [name]="c.liked ? 'heart' : 'heart-outline'"></ion-icon>
+                <span>{{ c.likes }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky Bottom Engagement Bar (Comment + Like + Save + Share) -->
+        <footer class="xhs-sticky-footer">
+          <div class="comment-composer">
+            <input
+              type="text"
+              [(ngModel)]="commentDraft"
+              [placeholder]="t(copy.addCommentPlaceholder)"
+              (keydown)="onCommentKeydown($event)"
+              maxlength="240"
+            >
+            <button class="mt-primary comment-send-btn" type="button" [disabled]="!commentDraft.trim()" (click)="submitComment()">{{ t(copy.postComment) }}</button>
+          </div>
+          <div class="xhs-engage-bar">
+            <button type="button" [class.active]="selectedPost.reaction === 'helpful'" (click)="reactToPost(selectedPost, 'helpful')">
+              <ion-icon aria-hidden="true" [name]="selectedPost.reaction === 'helpful' ? 'heart' : 'heart-outline'"></ion-icon>
+              <span>{{ postHelpfulDisplayCount(selectedPost) }}</span>
+            </button>
+            <button type="button" [class.active]="isPostSaved(selectedPost)" (click)="toggleSavePost(selectedPost)">
+              <ion-icon aria-hidden="true" [name]="isPostSaved(selectedPost) ? 'bookmark' : 'bookmark-outline'"></ion-icon>
+              <span>{{ isPostSaved(selectedPost) ? t(copy.savedPost) : t(copy.savePost) }}</span>
+            </button>
+            <button type="button" (click)="sharePost(selectedPost)">
+              <ion-icon aria-hidden="true" name="share-social-outline"></ion-icon>
+              <span>{{ t(copy.share) }}</span>
+            </button>
+          </div>
+        </footer>
+      </div>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop" *ngIf="reportingPost" (click)="closeReportSheet()">
+    <section class="report-sheet" role="dialog" aria-modal="true" [attr.aria-label]="t(copy.reportSheetTitle)" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" type="button" [attr.aria-label]="t(copy.backToCommunity)" (click)="closeReportSheet()"><ion-icon aria-hidden="true" name="close"></ion-icon></button>
+      <p class="sheet-kicker">{{ t(copy.reportSheetKicker) }}</p>
+      <h2>{{ t(copy.reportSheetTitle) }}</h2>
+      <p class="report-target">{{ t(reportingPost.place) }}</p>
+      <div class="report-reasons">
+        <button type="button" [class.active]="reportReason === 'outdated'" (click)="reportReason = 'outdated'">{{ t(copy.reportReasonOutdated) }}</button>
+        <button type="button" [class.active]="reportReason === 'inaccurate'" (click)="reportReason = 'inaccurate'">{{ t(copy.reportReasonInaccurate) }}</button>
+        <button type="button" [class.active]="reportReason === 'inappropriate'" (click)="reportReason = 'inappropriate'">{{ t(copy.reportReasonInappropriate) }}</button>
+        <button type="button" [class.active]="reportReason === 'duplicate'" (click)="reportReason = 'duplicate'">{{ t(copy.reportReasonDuplicate) }}</button>
+      </div>
+      <input class="report-note-input" type="text" [(ngModel)]="reportNote" [placeholder]="t(copy.reportNotePlaceholder)" maxlength="180">
+      <button class="mt-primary" type="button" (click)="submitReport()">{{ t(copy.submitReport) }}</button>
+    </section>
+  </div>
 </ion-content>

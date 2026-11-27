@@ -9,7 +9,14 @@
 
     <ng-container *ngIf="view === 'profile'">
       <div class="mt-page-heading"><h1>{{ t(copy.pageTitle) }}</h1><p>{{ t(copy.pageSubtitle) }}</p></div>
-      <section class="mt-card profile-card" [class.unauthenticated]="!isAuthenticated" (click)="!isAuthenticated ? goToLogin() : null">
+      <section
+        class="mt-card profile-card"
+        [class.unauthenticated]="!isAuthenticated"
+        [attr.role]="!isAuthenticated ? 'button' : null"
+        [attr.tabindex]="!isAuthenticated ? 0 : null"
+        (click)="!isAuthenticated ? goToLogin() : null"
+        (keydown)="onProfileCardKeydown($event)"
+      >
         <span>{{ isAuthenticated && currentUser ? currentUser.initials : '?' }}</span>
         <div class="profile-card-content">
           <div class="profile-title-row">
@@ -18,17 +25,20 @@
           </div>
           <p>{{ getProfileSubtitle() }}</p>
           <div class="profile-badge-row">
-            <span *ngIf="isAuthenticated" class="user-badge" [class.badge-malaysian]="currentUser?.travelerType === 'malaysian'" [class.badge-foreign]="currentUser?.travelerType === 'foreign'">
+            <span *ngIf="isAuthenticated && currentUser?.isVerified" class="user-badge" [class.badge-malaysian]="currentUser?.travelerType === 'malaysian'" [class.badge-foreign]="currentUser?.travelerType === 'foreign'">
               <ion-icon aria-hidden="true" [name]="currentUser?.travelerType === 'foreign' ? 'globe-outline' : 'shield-checkmark'"></ion-icon>
               {{ getUserTypeBadgeLabel() }}
             </span>
+            <button *ngIf="isAuthenticated && !currentUser?.isVerified" type="button" class="user-badge badge-unverified" (click)="openIdentityVerification()">
+              <ion-icon aria-hidden="true" name="alert-circle-outline"></ion-icon>
+              {{ language === 'BM' ? 'Belum disahkan · Sahkan identiti' : 'Unverified · Verify identity' }}
+            </button>
             <b *ngIf="!isAuthenticated">{{ language === 'BM' ? 'Ketik untuk log masuk' : 'Tap to sign in' }}</b>
-            <!-- <span class="visually-hidden">{{ t(copy.profileProviderTitle) }} {{ t(copy.profileProviderStatus) }}</span> -->
           </div>
         </div>
       </section>
       <section class="stat-grid"><button class="mt-card" type="button" [attr.aria-label]="profilePointsCardAriaLabel()" (click)="open('points')"><span><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span><div><strong>{{ ecoPoints | number }}</strong><small>{{ t(copy.ecoPoints) }}</small></div></button><button class="mt-card" type="button" [attr.aria-label]="profilePassportCardAriaLabel()" (click)="open('passport')"><span><ion-icon aria-hidden="true" name="book-outline"></ion-icon></span><div><b>{{ t(copy.digitalPassport) }}</b><strong>{{ passportStatusLabel }}</strong><i><u [style.width]="passportProgressWidth"></u></i></div></button></section>
-      <button class="mt-card challenge-banner" type="button" [attr.aria-label]="profileChallengeBannerAriaLabel()" (click)="open('challenges')"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ challengeBannerTitleLabel }}</b><small class="mt-multiline">{{ challengeBannerCopyLabel }}</small></span></button>
+      <button class="mt-card challenge-banner" type="button" [attr.aria-label]="profileChallengeBannerAriaLabel()" (click)="open('challenges')"><img class="mt-mascot-cheer" src="assets/mytravel/manja-cheer.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ challengeBannerTitleLabel }}</b><small class="mt-multiline">{{ challengeBannerCopyLabel }}</small></span></button>
       <section class="mt-card settings-list"><h2>{{ t(copy.accountSettings) }}</h2><button *ngFor="let item of menuItems" type="button" [class.signout]="item.action === 'signout'" [attr.aria-label]="profileMenuItemAriaLabel(item)" (click)="handleMenu(item)"><ion-icon aria-hidden="true" [name]="item.icon"></ion-icon><span><b>{{ t(item.title) }}</b><small>{{ menuDescription(item) }}</small></span><ion-icon aria-hidden="true" name="chevron-forward" *ngIf="item.action !== 'signout'"></ion-icon></button></section>
     </ng-container>
 
@@ -46,33 +56,31 @@
             <ion-icon aria-hidden="true" name="gift-outline"></ion-icon>
           </div>
           <div class="auth-cta-text">
-            <h3>{{ language === 'BM' ? 'Sila Log Masuk untuk Meneruskan / Dapatkan Lebih Ganjaran' : 'Please Sign-in to Continue / Get more Rewards' }}</h3>
-            <p>{{ language === 'BM' ? 'Log masuk untuk mula meraih Mata Eko daripada perjalanan pengangkutan awam lestari, pengesahan laluan dan membuka ganjaran VM2026.' : 'Sign in to start earning Eco-Points from sustainable transit rides, route verifications, and unlock exciting rewards.' }}</p>
+            <h3>{{ language === 'BM' ? 'Log masuk untuk meraih ganjaran' : 'Sign in to earn rewards' }}</h3>
+            <p>{{ language === 'BM' ? 'Log masuk untuk mula meraih Mata Eko daripada perjalanan pengangkutan awam lestari, pengesahan laluan dan membuka ganjaran VM2026.' : 'Sign in to start earning Eco-Points from sustainable transit rides, route verifications, and VM2026 rewards.' }}</p>
           </div>
         </div>
         <button class="mt-primary signin-action-btn" type="button" (click)="goToLogin()">
           <ion-icon aria-hidden="true" name="log-in-outline"></ion-icon>
-          <span>{{ language === 'BM' ? 'Log Masuk / Daftar' : 'Sign In / Register' }}</span>
+          <span>{{ language === 'BM' ? 'Log masuk' : 'Sign in' }}</span>
         </button>
       </section>
 
-      <section class="mt-card season-card"><div><h2>{{ seasonCardTitleLabel }}</h2><p>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</p><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><button type="button" [attr.aria-label]="seasonCardButtonAriaLabel()" (click)="open('challenges')">{{ seasonCardActionLabel }}</button></div><img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"></section>
+      <section class="mt-card season-card"><div><h2>{{ seasonCardTitleLabel }}</h2><p>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</p><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><button type="button" [attr.aria-label]="seasonCardButtonAriaLabel()" (click)="open('challenges')">{{ seasonCardActionLabel }}</button></div><img class="mt-mascot-wave" src="assets/mytravel/wira-wave.png" [alt]="t(copy.wiraMascotAlt)"><img class="mt-mascot-cheer mt-mascot-delay" src="assets/mytravel/manja-cheer.png" [alt]="t(copy.manjaMascotAlt)"></section>
       <div class="segment-row" role="group" [attr.aria-label]="t(copy.transactionFiltersAria)"><button type="button" [class.active]="transactionFilter === 'All'" [attr.aria-label]="transactionFilterAriaLabel('All')" [attr.aria-pressed]="transactionFilter === 'All'" (click)="selectTransactionFilter('All')">{{ t(copy.filterAll) }}</button><button type="button" [class.active]="transactionFilter === 'Earned'" [attr.aria-label]="transactionFilterAriaLabel('Earned')" [attr.aria-pressed]="transactionFilter === 'Earned'" (click)="selectTransactionFilter('Earned')">{{ t(copy.filterEarned) }}</button><button type="button" [class.active]="transactionFilter === 'Pending'" [attr.aria-label]="transactionFilterAriaLabel('Pending')" [attr.aria-pressed]="transactionFilter === 'Pending'" (click)="selectTransactionFilter('Pending')">{{ t(copy.filterPending) }}</button></div>
       <section class="mt-card transaction-card">
         <h2>{{ t(copy.transactionHistory) }}</h2>
-        <div *ngIf="isAuthenticated || filteredTransactions.length > 0">
+        <ng-container *ngIf="isAuthenticated || filteredTransactions.length > 0">
           <div *ngFor="let transaction of filteredTransactions"><span [style.background]="transaction.accent"><ion-icon aria-hidden="true" name="leaf-outline"></ion-icon></span><div><b>{{ t(transaction.title) }}</b><small>{{ t(transaction.subtitle) }}</small></div><strong>{{ transaction.points }}</strong></div>
           <p class="empty-state" *ngIf="filteredTransactions.length === 0">{{ t(copy.noTransactions).replace('{filter}', transactionFilterLabel(transactionFilter).toLowerCase()) }}</p>
-        </div>
-        <div *ngIf="!isAuthenticated && filteredTransactions.length === 0" class="unauth-trans-state">
-          <p class="empty-state">{{ language === 'BM' ? 'Sila log masuk untuk melihat rekod transaksi Mata Eko anda.' : 'Please sign in to view your Eco-Points transaction history.' }}</p>
-        </div>
+        </ng-container>
+        <p *ngIf="!isAuthenticated && filteredTransactions.length === 0" class="empty-state">{{ language === 'BM' ? 'Sila log masuk untuk melihat rekod transaksi Mata Eko anda.' : 'Please sign in to view your Eco-Points transaction history.' }}</p>
       </section>
       <section class="mt-card earn-card"><h2>{{ t(copy.howToEarn) }}</h2><div><span><b>{{ t(copy.earnTransit) }}</b><small>{{ t(copy.earnTransitCopy) }}</small></span><span><b>{{ t(copy.earnVisits) }}</b><small>{{ t(copy.earnVisitsCopy) }}</small></span><span><b>{{ t(copy.earnCommunity) }}</b><small>{{ t(copy.earnCommunityCopy) }}</small></span><span><b>{{ t(copy.earnVerification) }}</b><small>{{ t(copy.earnVerificationCopy) }}</small></span></div></section>
     </ng-container>
 
     <ng-container *ngIf="view === 'passport'">
-      <section class="mt-card passport-progress"><span><ion-icon aria-hidden="true" name="book-outline"></ion-icon></span><div><strong>{{ passportStatusLabel }}</strong><small>{{ t(copy.digitalPassport) }}</small><div class="mt-progress"><span [style.width]="passportProgressWidth"></span></div></div><button type="button" [attr.aria-label]="passportRewardsButtonAriaLabel()" (click)="open('reward')">{{ t(copy.viewRewards) }}</button></section>
+      <section class="mt-card passport-progress"><span><ion-icon aria-hidden="true" name="book-outline"></ion-icon></span><div><strong>{{ passportStatusLabel }}</strong><small>{{ t(copy.digitalPassport) }}</small><div class="mt-progress"><span [style.width]="passportProgressWidth"></span></div></div><button type="button" [attr.aria-label]="passportRewardsButtonAriaLabel()" (click)="open('reward')">{{ t(copy.viewRewards) }} ›</button></section>
 
       <!-- Prominent Sign-in Prompt when not logged in -->
       <section class="mt-card auth-cta-card passport-auth-cta" *ngIf="!isAuthenticated">
@@ -81,13 +89,13 @@
             <ion-icon aria-hidden="true" name="lock-closed"></ion-icon>
           </div>
           <div class="auth-cta-text">
-            <h3>{{ language === 'BM' ? 'Sila Log Masuk untuk Meneruskan' : 'Please Sign-in to Continue' }}</h3>
-            <p>{{ language === 'BM' ? 'Pasport Digital anda dikunci. Sila log masuk atau daftar akaun untuk mula mengumpul cop negeri di seluruh Malaysia.' : 'Your Digital Passport is locked. Please sign in or register to begin collecting state stamps across Malaysia.' }}</p>
+            <h3>{{ language === 'BM' ? 'Log masuk untuk membuka pasport anda' : 'Sign in to unlock your passport' }}</h3>
+            <p>{{ language === 'BM' ? 'Pasport Digital anda dikunci. Log masuk untuk mula mengumpul cop negeri di seluruh Malaysia.' : 'Your Digital Passport is locked. Sign in to start collecting state stamps across Malaysia.' }}</p>
           </div>
         </div>
         <button class="mt-primary signin-action-btn" type="button" (click)="goToLogin()">
           <ion-icon aria-hidden="true" name="log-in-outline"></ion-icon>
-          <span>{{ language === 'BM' ? 'Log Masuk / Daftar' : 'Sign In / Register' }}</span>
+          <span>{{ language === 'BM' ? 'Log masuk' : 'Sign in' }}</span>
         </button>
       </section>
 
@@ -105,21 +113,21 @@
           <div class="stamp-action-row" *ngIf="!selectedStamp.active">
             <button *ngIf="isAuthenticated" class="unlock-stamp-btn" type="button" (click)="unlockSelectedStamp()">
               <ion-icon aria-hidden="true" name="sparkles-outline"></ion-icon>
-              {{ language === 'BM' ? 'Buka Cop Ini (+50 Mata)' : 'Unlock Stamp (+50 Pts)' }}
+              {{ language === 'BM' ? 'Buka cop · +50 mata' : 'Unlock stamp · +50 points' }}
             </button>
             <button *ngIf="!isAuthenticated" class="unlock-stamp-btn signin-required-btn" type="button" (click)="goToLogin()">
               <ion-icon aria-hidden="true" name="lock-closed-outline"></ion-icon>
-              {{ language === 'BM' ? 'Sila Log Masuk untuk Buka Cop' : 'Please Sign-in to Unlock' }}
+              {{ language === 'BM' ? 'Log masuk untuk buka cop' : 'Sign in to unlock' }}
             </button>
           </div>
           <div class="stamp-collected-badge" *ngIf="selectedStamp.active">
             <ion-icon aria-hidden="true" name="checkmark-circle"></ion-icon>
-            <span>{{ language === 'BM' ? 'Cop Dikumpul' : 'Stamp Collected' }}</span>
+            <span>{{ language === 'BM' ? 'Cop dikumpul' : 'Stamp collected' }}</span>
           </div>
         </div>
         <img [src]="selectedStamp.heroImage" [alt]="selectedStamp.name + ' feature'">
       </section>
-      <section class="mt-card guide-card"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ t(copy.manjaGuide) }}</b><small>{{ t(copy.manjaGuideCopy) }}</small></span></section>
+      <section class="mt-card guide-card"><img class="mt-mascot-guide" src="assets/mytravel/manja-guide.png" [alt]="t(copy.manjaMascotAlt)"><span><b>{{ t(copy.manjaGuide) }}</b><small>{{ t(copy.manjaGuideCopy) }}</small></span></section>
     </ng-container>
 
     <ng-container *ngIf="view === 'accessibility'">
@@ -131,7 +139,7 @@
     </ng-container>
 
     <ng-container *ngIf="view === 'challenges'">
-      <section class="mt-card challenge-hero"><div><img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"></div><span><h2 class="mt-multiline">{{ challengeHeroTitleLabel }}</h2><small>{{ challengeHeroStatusLabel }}</small><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><b>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</b></span></section><h2 class="section-label">{{ challengeSectionLabel }}</h2>
+      <section class="mt-card challenge-hero"><div><img class="mt-mascot-walk" src="assets/mytravel/wira-walk.png" [alt]="t(copy.wiraMascotAlt)"><img class="mt-mascot-cheer mt-mascot-delay" src="assets/mytravel/manja-cheer.png" [alt]="t(copy.manjaMascotAlt)"></div><span><h2 class="mt-multiline">{{ challengeHeroTitleLabel }}</h2><small>{{ challengeHeroStatusLabel }}</small><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><b>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</b></span></section><h2 class="section-label">{{ challengeSectionLabel }}</h2>
       <ng-container *ngIf="rewardsProviderConnected">
         <section class="mt-card active-mission" *ngFor="let mission of challengeMissions"><img [src]="mission.image" [alt]="challengeMissionAlt(mission)"><div><b>{{ t(mission.title) }}</b><small>{{ t(mission.description) }}</small><div class="mt-progress"><span [style.width]="mission.progressWidth"></span></div><em>{{ mission.progress }}</em></div><strong>{{ t(mission.reward) }}</strong></section>
         <section class="mt-card next-reward" *ngIf="challengeMissions.length > 0"><span><small>{{ t(copy.nextReward) }}</small><h2>{{ t(copy.nextRewardTitle) }}</h2><p>{{ t(copy.nextRewardCopy) }}</p></span><button type="button" [attr.aria-label]="nextRewardButtonAriaLabel()" (click)="open('reward')">{{ t(copy.viewRewards) }}</button></section>
@@ -141,8 +149,30 @@
 
     <ng-container *ngIf="view === 'reward'">
       <ng-container *ngIf="unlockSteps.length > 0; else rewardEmptyState">
-        <section class="mt-card reward-hero"><div><img src="assets/mytravel/wira-ui.png" [alt]="t(copy.wiraMascotAlt)"><img src="assets/mytravel/manja-ui.png" [alt]="t(copy.manjaMascotAlt)"></div><span><small>{{ t(copy.collectibleBadge) }}</small><h2>Wira & Manja</h2><p>{{ t(copy.rewardHeroCopy) }}</p><em>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</em><label>{{ t(copy.yourProgress) }}</label><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><b>{{ ecoPoints | number }}</b></span></section><h2 class="section-label">{{ t(copy.howToUnlock) }}</h2>
-        <section class="unlock-list"><div class="mt-card" *ngFor="let item of unlockSteps"><span>{{ item.number }}</span><div><b>{{ t(item.title) }}</b><small>{{ t(item.description) }}</small></div></div></section><section class="mt-card digital-first"><h2>{{ t(copy.digitalRewardsFirst) }}</h2><p>{{ t(copy.digitalRewardsFirstCopy) }}</p></section>
+        <section class="mt-card reward-hero"><div><img class="mt-mascot-wave" src="assets/mytravel/wira-wave.png" [alt]="t(copy.wiraMascotAlt)"><img class="mt-mascot-cheer mt-mascot-delay" src="assets/mytravel/manja-cheer.png" [alt]="t(copy.manjaMascotAlt)"></div><span><small>{{ t(copy.collectibleBadge) }}</small><h2>Wira & Manja</h2><p>{{ t(copy.rewardHeroCopy) }}</p><em>{{ ecoPoints | number }} {{ t(copy.pointsLabel) }}</em><label>{{ t(copy.yourProgress) }}</label><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><b>{{ ecoPoints | number }}</b></span></section><h2 class="section-label">{{ t(copy.howToUnlock) }}</h2>
+        <section class="unlock-list"><div class="mt-card" *ngFor="let item of unlockSteps"><span>{{ item.number }}</span><div><b>{{ t(item.title) }}</b><small>{{ t(item.description) }}</small></div></div></section>
+        <h2 class="section-label">{{ t(copy.rewardsCatalogTitle) }}</h2>
+        <section class="rewards-catalog">
+          <article class="mt-card reward-catalog-card" *ngFor="let reward of rewardsCatalog">
+            <img [src]="reward.image" [alt]="t(reward.title)">
+            <div class="reward-catalog-info">
+              <b>{{ t(reward.title) }}</b>
+              <small>{{ t(reward.subtitle) }}</small>
+              <em class="reward-cost">{{ reward.cost | number }} {{ t(copy.pointsLabel) }}</em>
+              <code class="reward-voucher-code" *ngIf="isRewardRedeemed(reward.id)">{{ reward.code }}</code>
+            </div>
+            <button
+              type="button"
+              class="reward-redeem-btn"
+              [class.redeemed]="isRewardRedeemed(reward.id)"
+              [disabled]="isRewardRedeemed(reward.id) || ecoPoints < reward.cost"
+              (click)="redeemReward(reward)"
+            >
+              {{ isRewardRedeemed(reward.id) ? t(copy.redeemedLabel) : (ecoPoints >= reward.cost ? t(copy.redeemNow) : t(copy.needMorePoints).replace('{pts}', (reward.cost - ecoPoints).toString())) }}
+            </button>
+          </article>
+        </section>
+        <section class="mt-card digital-first"><h2>{{ t(copy.digitalRewardsFirst) }}</h2><p>{{ t(copy.digitalRewardsFirstCopy) }}</p></section>
       </ng-container>
       <ng-template #rewardEmptyState>
         <section class="mt-card empty-data-card"><h2>{{ t(copy.noRewardData) }}</h2><p>{{ rewardEmptyStateCopyLabel }}</p><div class="mt-progress"><span [style.width]="seasonProgressWidth"></span></div><small>{{ rewardProgressSummaryLabel }}</small></section>

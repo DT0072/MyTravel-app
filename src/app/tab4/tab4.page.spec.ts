@@ -138,15 +138,14 @@ describe('Tab4Page', () => {
     expect(component.rewardProgressSummaryLabel).toBe('0/1,000 points');
   });
 
-  it('keeps the profile identity card provider-ready instead of showing a seeded traveler', () => {
+  it('keeps the profile identity card sign-in ready instead of showing a fake seeded traveler', () => {
     component.view = 'profile';
     fixture.detectChanges();
 
     const profileCard = fixture.nativeElement.querySelector('.profile-card') as HTMLElement;
 
-    expect(profileCard.textContent).toContain('Profile provider pending');
-    expect(profileCard.textContent).toContain('Awaiting profile identity');
-    expect(profileCard.textContent).not.toContain('Traveler');
+    expect(profileCard.textContent).toContain('Sign In to MyTravel');
+    expect(profileCard.textContent).toContain('Tap to sign in');
     expect(profileCard.textContent).not.toContain('MyDigital ID');
   });
 
@@ -455,16 +454,19 @@ describe('Tab4Page', () => {
       'Open VM2026 challenges & rewards. Complete verified travel, community and passport missions.',
     );
     expect(settingsButtons[0].getAttribute('aria-label')).toBe(
+      'Open Community Profile & Posts. Manage your travel notes, bio, followers & saved posts',
+    );
+    expect(settingsButtons[1].getAttribute('aria-label')).toBe(
       'Open My contributions. Tips, verifications & shared information',
     );
     expect(settingsButtons[settingsButtons.length - 1].getAttribute('aria-label')).toBe(
-      'Sign out. Sign out of your MyTravel account',
+      'Open Sign in. Sync your Digital Passport & Eco-Points across devices',
     );
 
     component.language = 'BM';
 
     expect(component.profilePointsCardAriaLabel()).toBe('Buka Mata Eko. 0 mata');
-    expect(component.profileMenuItemAriaLabel(component.menuItems[0])).toBe(
+    expect(component.profileMenuItemAriaLabel(component.menuItems[1])).toBe(
       'Buka Sumbangan saya. Tip, pengesahan & maklumat yang dikongsi',
     );
   });
@@ -968,14 +970,21 @@ describe('Tab4Page', () => {
   });
 
   it('clears local app state and returns to Home when signing out', () => {
-    const signOutItem = component.menuItems.find((item) => item.id === 'signout');
+    const signOutItem = {
+      id: 'signout' as const,
+      icon: 'log-out-outline',
+      title: { EN: 'Sign out', BM: 'Log keluar' },
+      description: { EN: 'Sign out of your MyTravel account', BM: 'Log keluar daripada akaun MyTravel anda' },
+      action: 'signout' as const,
+      target: '/tabs/tab1',
+    };
     const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
     appStateService.getSnapshot.and.returnValue(createState());
     component.ecoPoints = 80;
     component.savedNoticeCount = 1;
     component.view = 'reward';
 
-    component.handleMenu(signOutItem!);
+    component.handleMenu(signOutItem);
 
     expect(appStateService.resetState).toHaveBeenCalled();
     expect(component.ecoPoints).toBe(0);

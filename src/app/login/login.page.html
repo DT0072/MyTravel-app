@@ -13,14 +13,13 @@
 
     <div class="login-hero mt-reveal">
       <div class="brand-badge">
-        <img class="brand-logo" src="assets/mytravel/tourism-malaysia-logo.png" alt="Tourism Malaysia">
-        <img class="mascot-wira" src="assets/mytravel/wira-ui.png" alt="Wira mascot">
+        <img class="mascot-wira mt-mascot-wave" src="assets/mytravel/wira-wave.png" alt="Wira mascot">
       </div>
-      <h1>{{ t(copy.welcome) }}</h1>
-      <p>{{ t(copy.subtitle) }}</p>
+      <h1>{{ mode === 'verify-identity' ? t(copy.verifyStepTitle) : t(copy.welcome) }}</h1>
+      <p>{{ mode === 'verify-identity' ? t(copy.verifyStepSubtitle) : t(copy.subtitle) }}</p>
     </div>
 
-    <div class="auth-segment" role="tablist">
+    <div class="auth-segment" role="tablist" *ngIf="mode !== 'verify-identity'">
       <button
         type="button"
         role="tab"
@@ -41,205 +40,324 @@
       </button>
     </div>
 
+    <!-- Reusable Identity Verification Template for both Register & Google Verify-Identity -->
+    <ng-template #identityVerificationFields>
+      <div class="traveler-type-section">
+        <span class="field-title">{{ t(copy.travelerTypePrompt) }}</span>
+        <div class="traveler-type-toggle" role="radiogroup" [attr.aria-label]="t(copy.travelerTypePrompt)">
+          <button
+            type="button"
+            role="radio"
+            class="traveler-pill"
+            [class.active]="travelerType === 'malaysian'"
+            [attr.aria-checked]="travelerType === 'malaysian'"
+            (click)="selectTravelerType('malaysian')"
+          >
+            <span class="pill-flag">🇲🇾</span>
+            <span>{{ t(copy.malaysianCitizen) }}</span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            class="traveler-pill"
+            [class.active]="travelerType === 'foreign'"
+            [attr.aria-checked]="travelerType === 'foreign'"
+            (click)="selectTravelerType('foreign')"
+          >
+            <span class="pill-flag">🌐</span>
+            <span>{{ t(copy.foreignTraveller) }}</span>
+          </button>
+        </div>
+      </div>
+
+      <label class="auth-field" *ngIf="mode === 'register' || mode === 'verify-identity'">
+        <span>{{ t(copy.fullName) }}</span>
+        <div class="input-wrap">
+          <ion-icon aria-hidden="true" name="person-outline"></ion-icon>
+          <input
+            type="text"
+            name="fullName"
+            [(ngModel)]="name"
+            (ngModelChange)="onNameChange()"
+            [placeholder]="t(copy.fullNamePlaceholder)"
+            autocomplete="name"
+            required
+          >
+        </div>
+      </label>
+
+      <!-- Malaysian Citizen JPN MyKad Verification -->
+      <ng-container *ngIf="travelerType === 'malaysian'">
+        <label class="auth-field">
+          <span>{{ t(copy.mykadLabel) }}</span>
+          <div class="input-wrap">
+            <ion-icon aria-hidden="true" name="card-outline"></ion-icon>
+            <input
+              type="text"
+              name="mykad"
+              [ngModel]="idNumber"
+              (ngModelChange)="onIdentityNumberInput($event)"
+              [placeholder]="t(copy.mykadPlaceholder)"
+              maxlength="14"
+              inputmode="numeric"
+              autocomplete="off"
+              required
+            >
+          </div>
+          <small class="field-hint">{{ t(copy.mykadHelper) }}</small>
+        </label>
+
+        <!-- Live JPN Validation Feedback -->
+        <div class="jpn-breakdown-card invalid" *ngIf="myKadCheck && !myKadCheck.valid && myKadCheck.error">
+          <ion-icon name="warning-outline" aria-hidden="true"></ion-icon>
+          <span>{{ t(myKadCheck.error) }}</span>
+        </div>
+
+        <div class="jpn-breakdown-card valid" *ngIf="myKadCheck && myKadCheck.valid">
+          <div class="jpn-head">
+            <ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>
+            <strong>{{ t(copy.jpnParsedHeader) }}</strong>
+            <code>{{ myKadCheck.masked }}</code>
+          </div>
+          <div class="jpn-meta-grid">
+            <div><small>{{ t(copy.dobLabel) }}</small><b>{{ myKadCheck.dobDisplay }} ({{ myKadCheck.age }})</b></div>
+            <div><small>{{ t(copy.birthStateLabel) }}</small><b>{{ myKadCheck.birthState }} ({{ myKadCheck.pbCode }})</b></div>
+            <div><small>{{ t(copy.genderLabel) }}</small><b>{{ myKadCheck.gender ? t(myKadCheck.gender) : '-' }}</b></div>
+          </div>
+        </div>
+
+        <label class="auth-field">
+          <span>{{ t(copy.homeStateLabel) }}</span>
+          <div class="input-wrap select-wrap">
+            <ion-icon aria-hidden="true" name="location-outline"></ion-icon>
+            <select name="homeState" [(ngModel)]="homeState" required>
+              <option *ngFor="let state of malaysianStates" [value]="state">{{ state }}</option>
+            </select>
+          </div>
+        </label>
+      </ng-container>
+
+      <!-- Foreign Traveller ICAO Passport Verification -->
+      <ng-container *ngIf="travelerType === 'foreign'">
+        <label class="auth-field">
+          <span>{{ t(copy.passportLabel) }}</span>
+          <div class="input-wrap">
+            <ion-icon aria-hidden="true" name="airplane-outline"></ion-icon>
+            <input
+              type="text"
+              name="passport"
+              [ngModel]="idNumber"
+              (ngModelChange)="onIdentityNumberInput($event)"
+              [placeholder]="t(copy.passportPlaceholder)"
+              maxlength="14"
+              autocomplete="off"
+              required
+            >
+          </div>
+          <small class="field-hint">{{ t(copy.passportHelper) }}</small>
+        </label>
+
+        <div class="jpn-breakdown-card invalid" *ngIf="passportCheck && !passportCheck.valid && passportCheck.error">
+          <ion-icon name="warning-outline" aria-hidden="true"></ion-icon>
+          <span>{{ t(passportCheck.error) }}</span>
+        </div>
+
+        <div class="jpn-breakdown-card valid" *ngIf="passportCheck && passportCheck.valid">
+          <div class="jpn-head">
+            <ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>
+            <strong>ICAO Format Valid</strong>
+            <code>{{ passportCheck.masked }}</code>
+          </div>
+        </div>
+
+        <label class="auth-field">
+          <span>{{ t(copy.nationalityLabel) }}</span>
+          <div class="input-wrap select-wrap">
+            <ion-icon aria-hidden="true" name="globe-outline"></ion-icon>
+            <select name="nationality" [(ngModel)]="nationality" required>
+              <option *ngFor="let country of nationalities" [value]="country">{{ country }}</option>
+            </select>
+          </div>
+        </label>
+      </ng-container>
+
+      <!-- Step 2: Mandatory Official Verification Proof -->
+      <div class="verification-proof-box">
+        <span class="field-title">{{ t(copy.proofSectionTitle) }}</span>
+        <p class="proof-copy">{{ t(copy.proofSectionCopy) }}</p>
+
+        <div class="proof-actions">
+          <button
+            type="button"
+            class="mydigital-btn"
+            [disabled]="verifyingGateway"
+            (click)="runGatewayVerification()"
+          >
+            <ion-icon name="finger-print-outline" aria-hidden="true"></ion-icon>
+            <span>{{ travelerType === 'malaysian' ? t(copy.myDigitalIdBtn) : t(copy.passportGatewayBtn) }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="doc-upload-btn"
+            (click)="idDocInput.click()"
+          >
+            <ion-icon name="camera-outline" aria-hidden="true"></ion-icon>
+            <span>{{ documentPreview ? t(copy.changeDocBtn) : t(copy.uploadDocBtn) }}</span>
+          </button>
+          <input
+            #idDocInput
+            type="file"
+            accept="image/*"
+            class="visually-hidden"
+            (change)="handleDocumentUpload($event)"
+          >
+        </div>
+
+        <!-- Live 3-Stage Verification Progress / Result -->
+        <div class="gateway-steps" *ngIf="gatewayStep > 0">
+          <div class="gw-step" [class.done]="gatewayStep >= 2" [class.active]="gatewayStep === 1">
+            <ion-icon [name]="gatewayStep >= 2 ? 'checkmark-circle' : 'sync-outline'" aria-hidden="true"></ion-icon>
+            <span>{{ t(copy.stepGateway1) }}</span>
+          </div>
+          <div class="gw-step" *ngIf="gatewayStep >= 2" [class.done]="gatewayStep >= 3" [class.active]="gatewayStep === 2">
+            <ion-icon [name]="gatewayStep >= 3 ? 'checkmark-circle' : 'sync-outline'" aria-hidden="true"></ion-icon>
+            <span>{{ t(copy.stepGateway2) }}</span>
+          </div>
+          <div class="gw-step verified-final" *ngIf="gatewayStep === 3">
+            <ion-icon name="shield-checkmark" aria-hidden="true"></ion-icon>
+            <span>
+              <strong>{{ t(copy.stepGateway3) }}</strong>
+              <code>{{ verificationMethod }} · {{ verificationRef }}</code>
+            </span>
+          </div>
+        </div>
+
+        <div class="doc-preview-strip" *ngIf="documentPreview">
+          <img [src]="documentPreview" alt="Uploaded ID document preview">
+          <div>
+            <strong>{{ documentFileName }}</strong>
+            <small>{{ language === 'BM' ? 'Dokumen disahkan & dipadankan ✓' : 'Document scanned & matched ✓' }}</small>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
     <section class="mt-card auth-card mt-reveal">
-      <form (ngSubmit)="submit()" novalidate>
-        <ng-container *ngIf="mode === 'register'">
-          <div class="traveler-type-section">
-            <span class="field-title">{{ t(copy.travelerTypePrompt) }}</span>
-            <div class="traveler-type-toggle" role="radiogroup" [attr.aria-label]="t(copy.travelerTypePrompt)">
-              <button
-                type="button"
-                role="radio"
-                class="traveler-pill"
-                [class.active]="travelerType === 'malaysian'"
-                [attr.aria-checked]="travelerType === 'malaysian'"
-                (click)="travelerType = 'malaysian'"
-              >
-                <span class="pill-flag">🇲🇾</span>
-                <span>{{ t(copy.malaysianCitizen) }}</span>
-              </button>
-              <button
-                type="button"
-                role="radio"
-                class="traveler-pill"
-                [class.active]="travelerType === 'foreign'"
-                [attr.aria-checked]="travelerType === 'foreign'"
-                (click)="travelerType = 'foreign'"
-              >
-                <span class="pill-flag">🌐</span>
-                <span>{{ t(copy.foreignTraveller) }}</span>
-              </button>
-            </div>
-          </div>
-
-          <label class="auth-field">
-            <span>{{ t(copy.fullName) }}</span>
-            <div class="input-wrap">
-              <ion-icon aria-hidden="true" name="person-outline"></ion-icon>
-              <input
-                type="text"
-                name="fullName"
-                [(ngModel)]="name"
-                [placeholder]="t(copy.fullNamePlaceholder)"
-                autocomplete="name"
-                required
-              >
-            </div>
-          </label>
-
-          <!-- Malaysian Citizen Verification -->
-          <ng-container *ngIf="travelerType === 'malaysian'">
-            <label class="auth-field">
-              <span>{{ t(copy.mykadLabel) }}</span>
-              <div class="input-wrap">
-                <ion-icon aria-hidden="true" name="card-outline"></ion-icon>
-                <input
-                  type="text"
-                  name="mykad"
-                  [(ngModel)]="idNumber"
-                  [placeholder]="t(copy.mykadPlaceholder)"
-                  maxlength="14"
-                  autocomplete="off"
-                  required
-                >
-              </div>
-              <small class="field-hint">{{ t(copy.mykadHelper) }}</small>
-            </label>
-
-            <label class="auth-field">
-              <span>{{ t(copy.homeStateLabel) }}</span>
-              <div class="input-wrap select-wrap">
-                <ion-icon aria-hidden="true" name="location-outline"></ion-icon>
-                <select name="homeState" [(ngModel)]="homeState" required>
-                  <option *ngFor="let state of malaysianStates" [value]="state">{{ state }}</option>
-                </select>
-              </div>
-            </label>
-
-            <div class="verified-indicator malaysian-verified">
-              <ion-icon aria-hidden="true" name="shield-checkmark"></ion-icon>
-              <span>{{ t(copy.verifiedBadgeMalaysian) }}</span>
-            </div>
-          </ng-container>
-
-          <!-- Foreign Traveller Verification -->
-          <ng-container *ngIf="travelerType === 'foreign'">
-            <label class="auth-field">
-              <span>{{ t(copy.passportLabel) }}</span>
-              <div class="input-wrap">
-                <ion-icon aria-hidden="true" name="airplane-outline"></ion-icon>
-                <input
-                  type="text"
-                  name="passport"
-                  [(ngModel)]="idNumber"
-                  [placeholder]="t(copy.passportPlaceholder)"
-                  maxlength="20"
-                  autocomplete="off"
-                  required
-                >
-              </div>
-              <small class="field-hint">{{ t(copy.passportHelper) }}</small>
-            </label>
-
-            <label class="auth-field">
-              <span>{{ t(copy.nationalityLabel) }}</span>
-              <div class="input-wrap select-wrap">
-                <ion-icon aria-hidden="true" name="globe-outline"></ion-icon>
-                <select name="nationality" [(ngModel)]="nationality" required>
-                  <option *ngFor="let country of nationalities" [value]="country">{{ country }}</option>
-                </select>
-              </div>
-            </label>
-
-            <div class="verified-indicator foreign-verified">
-              <ion-icon aria-hidden="true" name="globe-outline"></ion-icon>
-              <span>{{ t(copy.verifiedBadgeForeign) }}</span>
-            </div>
-          </ng-container>
-        </ng-container>
-
-        <label class="auth-field">
-          <span>{{ t(copy.email) }}</span>
-          <div class="input-wrap">
-            <ion-icon aria-hidden="true" name="mail-outline"></ion-icon>
-            <input
-              type="email"
-              name="email"
-              [(ngModel)]="email"
-              [placeholder]="t(copy.emailPlaceholder)"
-              autocomplete="email"
-              required
-            >
-          </div>
-        </label>
-
-        <label class="auth-field">
-          <span>{{ t(copy.password) }}</span>
-          <div class="input-wrap">
-            <ion-icon aria-hidden="true" name="lock-closed-outline"></ion-icon>
-            <input
-              [type]="showPassword ? 'text' : 'password'"
-              name="password"
-              [(ngModel)]="password"
-              [placeholder]="t(copy.passwordPlaceholder)"
-              autocomplete="current-password"
-              required
-            >
-            <button
-              type="button"
-              class="eye-btn"
-              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-              (click)="showPassword = !showPassword"
-            >
-              <ion-icon aria-hidden="true" [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-            </button>
-          </div>
-        </label>
+      <!-- Post-Google Identity Verification Form -->
+      <form *ngIf="mode === 'verify-identity'; else standardAuthForm" (ngSubmit)="submitIdentityVerification()" novalidate>
+        <ng-container *ngTemplateOutlet="identityVerificationFields"></ng-container>
 
         <div *ngIf="errorMessage" class="auth-error" role="alert">
           <ion-icon aria-hidden="true" name="alert-circle-outline"></ion-icon>
           <span>{{ errorMessage }}</span>
         </div>
 
-        <button
-          class="mt-primary auth-submit"
-          type="submit"
-          [disabled]="loading"
-        >
-          <span *ngIf="!loading">{{ mode === 'signin' ? t(copy.signInAction) : t(copy.registerAction) }}</span>
-          <span *ngIf="loading" class="spinner-dot">...</span>
+        <button class="mt-primary auth-submit" type="submit" [disabled]="loading || !isIdentityProofCompleted">
+          <span>{{ t(copy.verifyContinueAction) }}</span>
+        </button>
+
+        <button class="mt-secondary guest-btn" type="button" (click)="skipIdentityVerification()">
+          <span>{{ t(copy.verifySkipAction) }}</span>
         </button>
       </form>
 
-      <div class="auth-divider">
-        <i></i><span>{{ t(copy.or) }}</span><i></i>
-      </div>
+      <!-- Standard Sign In / Create Account Form -->
+      <ng-template #standardAuthForm>
+        <form (ngSubmit)="submit()" novalidate>
+          <ng-container *ngIf="mode === 'register'">
+            <ng-container *ngTemplateOutlet="identityVerificationFields"></ng-container>
+          </ng-container>
 
-      <button
-        class="mt-secondary google-btn"
-        type="button"
-        [disabled]="loading"
-        (click)="signInWithGoogle()"
-      >
-        <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-        </svg>
-        <span>{{ t(copy.googleAction) }}</span>
-      </button>
+          <label class="auth-field">
+            <span>{{ t(copy.email) }}</span>
+            <div class="input-wrap">
+              <ion-icon aria-hidden="true" name="mail-outline"></ion-icon>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="email"
+                [placeholder]="t(copy.emailPlaceholder)"
+                autocomplete="email"
+                required
+              >
+            </div>
+          </label>
 
-      <button
-        class="mt-secondary guest-btn"
-        type="button"
-        (click)="continueAsGuest()"
-      >
-        <ion-icon aria-hidden="true" name="compass-outline"></ion-icon>
-        <span>{{ t(copy.guestAction) }}</span>
-      </button>
+          <label class="auth-field">
+            <span>{{ t(copy.password) }}</span>
+            <div class="input-wrap">
+              <ion-icon aria-hidden="true" name="lock-closed-outline"></ion-icon>
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                name="password"
+                [(ngModel)]="password"
+                [placeholder]="t(copy.passwordPlaceholder)"
+                autocomplete="current-password"
+                required
+              >
+              <button
+                type="button"
+                class="eye-btn"
+                [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                (click)="showPassword = !showPassword"
+              >
+                <ion-icon aria-hidden="true" [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+              </button>
+            </div>
+          </label>
 
-      <p class="guest-notice">{{ t(copy.guestNotice) }}</p>
+          <div class="forgot-row" *ngIf="mode === 'signin'">
+            <button type="button" class="forgot-link" (click)="sendPasswordReset()">
+              {{ t(copy.forgotPassword) }}
+            </button>
+          </div>
+
+          <div *ngIf="errorMessage" class="auth-error" role="alert">
+            <ion-icon aria-hidden="true" name="alert-circle-outline"></ion-icon>
+            <span>{{ errorMessage }}</span>
+          </div>
+
+          <button
+            class="mt-primary auth-submit"
+            type="submit"
+            [disabled]="loading || (mode === 'register' && !isIdentityProofCompleted)"
+          >
+            <span *ngIf="!loading">{{ mode === 'signin' ? t(copy.signInAction) : t(copy.registerAction) }}</span>
+            <span *ngIf="loading" class="spinner-dot">...</span>
+          </button>
+        </form>
+
+        <div class="auth-divider">
+          <i></i><span>{{ t(copy.or) }}</span><i></i>
+        </div>
+
+        <button
+          class="mt-secondary google-btn"
+          type="button"
+          [disabled]="loading"
+          (click)="signInWithGoogle()"
+        >
+          <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+          </svg>
+          <span>{{ t(copy.googleAction) }}</span>
+        </button>
+
+        <button
+          class="mt-secondary guest-btn"
+          type="button"
+          (click)="continueAsGuest()"
+        >
+          <ion-icon aria-hidden="true" name="compass-outline"></ion-icon>
+          <span>{{ t(copy.guestAction) }}</span>
+        </button>
+
+        <p class="guest-notice">{{ t(copy.guestNotice) }}</p>
+      </ng-template>
     </section>
   </div>
 

@@ -4,6 +4,7 @@ import {
   User,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -28,6 +29,12 @@ export interface UserProfile {
   provider?: string;
   travelerType?: TravelerType;
   idNumber?: string;
+  maskedIdNumber?: string;
+  dobDisplay?: string;
+  birthState?: string;
+  verificationMethod?: 'MyDigital ID' | 'Document Scan';
+  verificationRef?: string;
+  verifiedAt?: string;
   nationality?: string;
   homeState?: string;
   isVerified?: boolean;
@@ -109,6 +116,11 @@ export class AuthService {
     verificationData?: {
       travelerType: TravelerType;
       idNumber: string;
+      maskedIdNumber?: string;
+      dobDisplay?: string;
+      birthState?: string;
+      verificationMethod?: 'MyDigital ID' | 'Document Scan';
+      verificationRef?: string;
       nationality?: string;
       homeState?: string;
     }
@@ -123,6 +135,7 @@ export class AuthService {
     const localPoints = this.appState.getSnapshot().ecoPoints;
     const initialPoints = localPoints > 0 ? localPoints + 50 : 120;
     this.appState.syncEcoPoints(initialPoints);
+    const nowIso = new Date().toISOString();
     const newProfile: UserProfile = {
       uid: cred.user.uid,
       email: cred.user.email,
@@ -130,10 +143,16 @@ export class AuthService {
       initials,
       ecoPoints: initialPoints,
       isGuest: false,
-      createdAt: new Date().toISOString(),
+      createdAt: nowIso,
       provider: 'password',
       travelerType,
       idNumber: verificationData?.idNumber?.trim() || '',
+      maskedIdNumber: verificationData?.maskedIdNumber,
+      dobDisplay: verificationData?.dobDisplay,
+      birthState: verificationData?.birthState,
+      verificationMethod: verificationData?.verificationMethod || 'MyDigital ID',
+      verificationRef: verificationData?.verificationRef,
+      verifiedAt: nowIso,
       nationality: travelerType === 'malaysian' ? 'Malaysia' : (verificationData?.nationality?.trim() || 'International'),
       homeState: travelerType === 'malaysian' ? (verificationData?.homeState?.trim() || 'Kuala Lumpur') : undefined,
       isVerified: true,
@@ -155,6 +174,10 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
+  async resetPassword(email: string): Promise<void> {
+    await sendPasswordResetEmail(this.fb.auth, email.trim());
+  }
+
   loginAsGuest(name = 'Guest Traveler'): UserProfile {
     const initials = this.computeInitials(name);
     const guestProfile: UserProfile = {
@@ -174,6 +197,53 @@ export class AuthService {
     }
     this.currentUserSubject.next(guestProfile);
     return guestProfile;
+  }
+
+  async completeIdentityVerification(verificationData: {
+    travelerType: TravelerType;
+    idNumber: string;
+    maskedIdNumber?: string;
+    dobDisplay?: string;
+    birthState?: string;
+    verificationMethod?: 'MyDigital ID' | 'Document Scan';
+    verificationRef?: string;
+    homeState?: string;
+    nationality?: string;
+  }): Promise<UserProfile | null> {
+    const user = this.currentUser;
+    if (!user || user.isGuest) {
+      return null;
+    }
+
+    const updated: UserProfile = {
+      ...user,
+      travelerType: verificationData.travelerType,
+      idNumber: verificationData.idNumber.trim(),
+      maskedIdNumber: verificationData.maskedIdNumber,
+      dobDisplay: verificationData.dobDisplay,
+      birthState: verificationData.birthState,
+      verificationMethod: verificationData.verificationMethod || 'MyDigital ID',
+      verificationRef: verificationData.verificationRef,
+      verifiedAt: new Date().toISOString(),
+      nationality:
+        verificationData.travelerType === 'malaysian'
+          ? 'Malaysia'
+          : (verificationData.nationality?.trim() || 'International'),
+      homeState:
+        verificationData.travelerType === 'malaysian'
+          ? (verificationData.homeState?.trim() || 'Kuala Lumpur')
+          : undefined,
+      isVerified: true,
+    };
+
+    try {
+      await setDoc(doc(this.fb.db, 'users', user.uid), updated, { merge: true });
+    } catch (err) {
+      console.warn('Could not persist identity verification to Firestore:', err);
+    }
+
+    this.currentUserSubject.next(updated);
+    return updated;
   }
 
   async updateEcoPoints(points: number): Promise<void> {
@@ -205,6 +275,10 @@ export class AuthService {
       const snap = await getDoc(userDocRef);
       if (snap.exists()) {
         const data = snap.data() as Partial<UserProfile>;
+        const hasIdNumber = Boolean(data.idNumber && data.idNumber.trim().length >= 6);
+        const verified = resolvedProvider === 'google.com'
+          ? Boolean(data.isVerified && hasIdNumber)
+          : (typeof data.isVerified === 'boolean' ? data.isVerified : true);
         return {
           uid: user.uid,
           email: user.email,
@@ -215,18 +289,25 @@ export class AuthService {
           createdAt: data.createdAt || new Date().toISOString(),
           photoURL: user.photoURL || data.photoURL || null,
           provider: data.provider || resolvedProvider,
-          travelerType: data.travelerType || 'malaysian',
+          travelerType: verified ? (data.travelerType || 'malaysian') : data.travelerType,
           idNumber: data.idNumber || '',
+          maskedIdNumber: data.maskedIdNumber,
+          dobDisplay: data.dobDisplay,
+          birthState: data.birthState,
+          verificationMethod: data.verificationMethod,
+          verificationRef: data.verificationRef,
+          verifiedAt: data.verifiedAt,
           nationality: data.nationality || (data.travelerType === 'foreign' ? 'International' : 'Malaysia'),
           homeState: data.homeState,
-          isVerified: typeof data.isVerified === 'boolean' ? data.isVerified : true,
+          isVerified: verified,
         };
       }
     } catch (err) {
       console.warn('Could not read user profile from Firestore:', err);
     }
 
-    // Default if document does not exist yet
+    // Default if document does not exist yet: Google users must complete Malaysian vs International verification
+    const isGoogle = resolvedProvider === 'google.com';
     const name = user.displayName || (user.email ? user.email.split('@')[0] : 'Traveler');
     const profile: UserProfile = {
       uid: user.uid,
@@ -238,10 +319,10 @@ export class AuthService {
       createdAt: new Date().toISOString(),
       photoURL: user.photoURL || null,
       provider: resolvedProvider,
-      travelerType: 'malaysian',
+      travelerType: isGoogle ? undefined : 'malaysian',
       idNumber: '',
-      nationality: 'Malaysia',
-      isVerified: true,
+      nationality: isGoogle ? undefined : 'Malaysia',
+      isVerified: !isGoogle,
     };
 
     try {

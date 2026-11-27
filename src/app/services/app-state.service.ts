@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-import { RouteOption } from './navigation.service';
+import { RouteLegDetail, RouteOption } from './navigation.service';
 
 export interface AppJourney {
   id: string;
@@ -20,6 +20,11 @@ export interface AppJourney {
   startedAt: string;
   completedAt: string | null;
   points: number;
+  co2Saved?: string;
+  steps?: string[];
+  waypoints?: [number, number][];
+  color?: string;
+  legs?: RouteLegDetail[];
 }
 
 export interface CommunityTipDraft {
@@ -60,7 +65,23 @@ export interface PointTransaction {
   createdAt: string;
 }
 
+export interface VerificationSubmission {
+  id: string;
+  taskId: string;
+  title: string;
+  answer: 'yes' | 'no';
+  note?: string;
+  submittedAt: string;
+  status: 'Approved' | 'In review';
+}
+
 export type CommunityPostReaction = 'helpful' | 'not-helpful';
+
+export interface SocialProfileState {
+  bio: string;
+  homeState: string;
+  displayNameOverride?: string;
+}
 
 interface PersistedAppState {
   version: 2;
@@ -73,7 +94,14 @@ interface PersistedAppState {
   communityTips: SavedCommunityTip[];
   tipDraft: CommunityTipDraft | null;
   savedNoticeIds: string[];
+  savedDestinationIds?: string[];
+  savedEventIds?: string[];
+  savedPostIds?: string[];
+  followedAuthors?: string[];
+  socialProfile?: SocialProfileState;
+  redeemedRewardIds?: string[];
   completedVerificationIds: string[];
+  verificationSubmissions?: VerificationSubmission[];
   transactions: PointTransaction[];
 }
 
@@ -103,7 +131,17 @@ function createInitialState(): PersistedAppState {
     communityTips: [],
     tipDraft: null,
     savedNoticeIds: [],
+    savedDestinationIds: [],
+    savedEventIds: [],
+    savedPostIds: [],
+    followedAuthors: [],
+    socialProfile: {
+      bio: 'Exploring Malaysia sustainably by rail, bus & heritage trails.',
+      homeState: 'Kuala Lumpur',
+    },
+    redeemedRewardIds: [],
     completedVerificationIds: [],
+    verificationSubmissions: [],
     transactions: [],
   };
 }
@@ -154,10 +192,24 @@ export class AppStateService {
       startedAt: new Date().toISOString(),
       completedAt: null,
       points: 20,
+      co2Saved: route.co2Saved,
+      steps: route.steps,
+      waypoints: route.waypoints,
+      color: route.color,
+      legs: route.legs,
     };
 
     this.updateState((state) => ({ ...state, activeJourney: journey }));
     return journey;
+  }
+
+  cancelActiveJourney(): AppJourney | null {
+    const activeJourney = this.stateSubject.value.activeJourney;
+    if (!activeJourney) {
+      return null;
+    }
+    this.updateState((state) => ({ ...state, activeJourney: null }));
+    return activeJourney;
   }
 
   completeActiveJourney(): AppJourney | null {
@@ -192,7 +244,11 @@ export class AppStateService {
     return completedJourney;
   }
 
-  submitVerification(id: string, title: string): boolean {
+  submitVerification(
+    id: string,
+    title: string,
+    options?: { answer?: 'yes' | 'no'; note?: string },
+  ): boolean {
     const state = this.stateSubject.value;
 
     if (state.completedVerificationIds.includes(id)) {
@@ -216,11 +272,21 @@ export class AppStateService {
       status: 'Earned',
       createdAt,
     };
+    const submission: VerificationSubmission = {
+      id: this.createId('verification'),
+      taskId: id,
+      title,
+      answer: options?.answer ?? 'yes',
+      note: options?.note?.trim() || undefined,
+      submittedAt: createdAt,
+      status: 'Approved',
+    };
 
     this.updateState((current) => ({
       ...current,
       ecoPoints: current.ecoPoints + 40,
       completedVerificationIds: [...current.completedVerificationIds, id],
+      verificationSubmissions: [submission, ...(current.verificationSubmissions ?? [])],
       contributions: [contribution, ...current.contributions],
       transactions: [transaction, ...current.transactions],
     }));
@@ -232,14 +298,17 @@ export class AppStateService {
     this.updateState((state) => ({ ...state, tipDraft: sanitizedDraft }));
   }
 
-  submitTip(draft: CommunityTipDraft): SavedCommunityTip {
+  submitTip(
+    draft: CommunityTipDraft,
+    authorInfo?: { author?: string; initials?: string },
+  ): SavedCommunityTip {
     const sanitizedDraft = this.sanitizeCommunityTipMedia(draft);
     const createdAt = new Date().toISOString();
     const tip: SavedCommunityTip = {
       ...sanitizedDraft,
       id: this.createId('tip'),
-      author: '',
-      initials: '',
+      author: authorInfo?.author?.trim() || '',
+      initials: authorInfo?.initials?.trim() || '',
       createdAt,
       status: 'In review',
     };
@@ -270,6 +339,76 @@ export class AppStateService {
     return tip;
   }
 
+  updateCommunityTip(tipId: string, draft: CommunityTipDraft): SavedCommunityTip | null {
+    const sanitizedDraft = this.sanitizeCommunityTipMedia(draft);
+    let updatedTip: SavedCommunityTip | null = null;
+    this.updateState((state) => ({
+      ...state,
+      communityTips: state.communityTips.map((tip) => {
+        if (tip.id !== tipId) return tip;
+        updatedTip = {
+          ...tip,
+          ...sanitizedDraft,
+        };
+        return updatedTip;
+      }),
+      tipDraft: null,
+    }));
+    return updatedTip;
+  }
+
+  deleteCommunityTip(tipId: string): boolean {
+    const existed = this.stateSubject.value.communityTips.some((tip) => tip.id === tipId);
+    if (!existed) return false;
+    this.updateState((state) => ({
+      ...state,
+      communityTips: state.communityTips.filter((tip) => tip.id !== tipId),
+    }));
+    return true;
+  }
+
+  updateSocialProfile(updates: Partial<SocialProfileState>): SocialProfileState {
+    const current = this.stateSubject.value.socialProfile ?? {
+      bio: 'Exploring Malaysia sustainably by rail, bus & heritage trails.',
+      homeState: 'Kuala Lumpur',
+    };
+    const next: SocialProfileState = {
+      bio: typeof updates.bio === 'string' ? updates.bio.trim() : current.bio,
+      homeState: typeof updates.homeState === 'string' ? updates.homeState.trim() : current.homeState,
+      displayNameOverride: typeof updates.displayNameOverride === 'string'
+        ? updates.displayNameOverride.trim() || undefined
+        : current.displayNameOverride,
+    };
+    this.updateState((state) => ({ ...state, socialProfile: next }));
+    return next;
+  }
+
+  toggleFollowedAuthor(author: string): boolean {
+    const clean = author.trim();
+    if (!clean) return false;
+    const current = this.stateSubject.value.followedAuthors ?? [];
+    const isFollowing = current.includes(clean);
+    this.updateState((state) => ({
+      ...state,
+      followedAuthors: isFollowing
+        ? current.filter((a) => a !== clean)
+        : [clean, ...current],
+    }));
+    return !isFollowing;
+  }
+
+  toggleSavedPost(postId: string): boolean {
+    const current = this.stateSubject.value.savedPostIds ?? [];
+    const isSaved = current.includes(postId);
+    this.updateState((state) => ({
+      ...state,
+      savedPostIds: isSaved
+        ? current.filter((id) => id !== postId)
+        : [postId, ...current],
+    }));
+    return !isSaved;
+  }
+
   toggleSavedNotice(id: string): boolean {
     const isSaved = this.stateSubject.value.savedNoticeIds.includes(id);
 
@@ -281,6 +420,98 @@ export class AppStateService {
     }));
 
     return !isSaved;
+  }
+
+  toggleSavedDestination(id: string): boolean {
+    const current = this.stateSubject.value.savedDestinationIds ?? [];
+    const isSaved = current.includes(id);
+
+    this.updateState((state) => ({
+      ...state,
+      savedDestinationIds: isSaved
+        ? (state.savedDestinationIds ?? []).filter((item) => item !== id)
+        : [...(state.savedDestinationIds ?? []), id],
+    }));
+
+    return !isSaved;
+  }
+
+  toggleSavedEvent(id: string): boolean {
+    const current = this.stateSubject.value.savedEventIds ?? [];
+    const isSaved = current.includes(id);
+
+    this.updateState((state) => ({
+      ...state,
+      savedEventIds: isSaved
+        ? (state.savedEventIds ?? []).filter((item) => item !== id)
+        : [...(state.savedEventIds ?? []), id],
+    }));
+
+    return !isSaved;
+  }
+
+  redeemReward(rewardId: string, title: string, cost: number): boolean {
+    const state = this.stateSubject.value;
+    const redeemed = state.redeemedRewardIds ?? [];
+    if (redeemed.includes(rewardId) || state.ecoPoints < cost) {
+      return false;
+    }
+
+    const createdAt = new Date().toISOString();
+    const transaction: PointTransaction = {
+      id: this.createId('transaction'),
+      title: 'Reward redeemed',
+      subtitle: title,
+      points: -Math.abs(cost),
+      status: 'Earned',
+      createdAt,
+    };
+
+    this.updateState((current) => ({
+      ...current,
+      ecoPoints: Math.max(0, current.ecoPoints - Math.abs(cost)),
+      redeemedRewardIds: [...(current.redeemedRewardIds ?? []), rewardId],
+      transactions: [transaction, ...current.transactions],
+    }));
+    return true;
+  }
+
+  updateCommunityTipStatus(tipId: string, status: 'Approved' | 'In review'): void {
+    this.updateState((state) => {
+      const targetTip = state.communityTips.find((tip) => tip.id === tipId);
+      if (!targetTip || targetTip.status === status) {
+        return state;
+      }
+
+      const awardPoints = status === 'Approved' && targetTip.status !== 'Approved' ? 20 : 0;
+      const createdAt = new Date().toISOString();
+
+      return {
+        ...state,
+        ecoPoints: state.ecoPoints + awardPoints,
+        communityTips: state.communityTips.map((tip) =>
+          tip.id === tipId ? { ...tip, status } : tip,
+        ),
+        contributions: state.contributions.map((contribution) =>
+          contribution.title === targetTip.location && contribution.type === 'Travel tip'
+            ? { ...contribution, status }
+            : contribution,
+        ),
+        transactions: awardPoints > 0
+          ? [
+              {
+                id: this.createId('transaction'),
+                title: 'Travel tip approved',
+                subtitle: targetTip.location,
+                points: awardPoints,
+                status: 'Earned',
+                createdAt,
+              },
+              ...state.transactions,
+            ]
+          : state.transactions,
+      };
+    });
   }
 
   recordRecentLocations(values: string[]): void {
@@ -418,7 +649,11 @@ export class AppStateService {
         : [],
       tipDraft: state.tipDraft ? this.sanitizeCommunityTipMedia(state.tipDraft) : null,
       savedNoticeIds: Array.isArray(state.savedNoticeIds) ? state.savedNoticeIds : [],
+      savedDestinationIds: Array.isArray(state.savedDestinationIds) ? state.savedDestinationIds : [],
+      savedEventIds: Array.isArray(state.savedEventIds) ? state.savedEventIds : [],
+      redeemedRewardIds: Array.isArray(state.redeemedRewardIds) ? state.redeemedRewardIds : [],
       completedVerificationIds: Array.isArray(state.completedVerificationIds) ? state.completedVerificationIds : [],
+      verificationSubmissions: Array.isArray(state.verificationSubmissions) ? state.verificationSubmissions : [],
       transactions: Array.isArray(state.transactions) ? state.transactions : defaults.transactions,
     };
   }

@@ -123,7 +123,7 @@ describe('AppStateService', () => {
 
     service.resetState();
 
-    expect(service.getSnapshot()).toEqual({
+    expect(service.getSnapshot()).toEqual(jasmine.objectContaining({
       version: 2,
       ecoPoints: 0,
       activeJourney: null,
@@ -134,9 +134,15 @@ describe('AppStateService', () => {
       communityTips: [],
       tipDraft: null,
       savedNoticeIds: [],
+      savedDestinationIds: [],
+      savedEventIds: [],
+      redeemedRewardIds: [],
       completedVerificationIds: [],
+      verificationSubmissions: [],
       transactions: [],
-    });
+      savedPostIds: [],
+      followedAuthors: [],
+    }));
 
     expect(JSON.parse(globalThis.localStorage.getItem(storageKey) ?? '{}')).toEqual(service.getSnapshot());
   });

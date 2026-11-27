@@ -6,6 +6,7 @@ import {
   TextSize,
 } from '../services/accessibility-preferences.service';
 import { AppContribution, AppStateService } from '../services/app-state.service';
+import { TourismDataService } from '../services/tourism-data.service';
 
 type LocalizedText = Record<AppLanguage, string>;
 type ProfileSectionKey = 'my-contributions' | 'journey-history' | 'saved-destinations' | 'settings' | 'privacy' | 'help';
@@ -23,6 +24,7 @@ interface ProfileSectionItem {
   subtitle: string;
   meta?: string;
   action?: ProfileSectionAction;
+  queryParams?: Record<string, string>;
 }
 
 interface StaticProfileSectionContent {
@@ -115,14 +117,14 @@ const PROFILE_SECTION_COPY: Record<ProfileSectionKey, StaticProfileSectionConten
   privacy: {
     title: { EN: 'Privacy & data', BM: 'Privasi & data' },
     description: {
-      EN: 'Review how your MyTravel demo data, saved items, and preferences stay available on this device.',
-      BM: 'Semak cara data demo MyTravel, item tersimpan, dan pilihan anda kekal tersedia pada peranti ini.',
+      EN: 'Review how MyTravel protects your account, saved travel plans, and accessibility preferences under PDPA Malaysia.',
+      BM: 'Semak cara MyTravel melindungi akaun, rancangan perjalanan tersimpan, dan pilihan kebolehcapaian anda di bawah PDPA Malaysia.',
     },
     summaryLabel: { EN: 'Protected profile areas', BM: 'Bahagian profil yang dilindungi' },
     summaryValue: '3',
     summaryCopy: {
-      EN: 'Saved notices, community activity, and accessibility preferences are managed locally in this app demo.',
-      BM: 'Notis tersimpan, aktiviti komuniti, dan pilihan kebolehcapaian diurus secara setempat dalam demo aplikasi ini.',
+      EN: 'Your identity verification, saved places, community activity, and accessibility preferences are protected and synced securely.',
+      BM: 'Pengesahan identiti, tempat tersimpan, aktiviti komuniti, dan pilihan kebolehcapaian anda dilindungi dan disegerakkan dengan selamat.',
     },
     primaryAction: { EN: 'Open settings', BM: 'Buka tetapan' },
     items: [],
@@ -130,14 +132,14 @@ const PROFILE_SECTION_COPY: Record<ProfileSectionKey, StaticProfileSectionConten
   help: {
     title: { EN: 'Help', BM: 'Bantuan' },
     description: {
-      EN: 'Find quick guidance for journey planning, travel notices, and accessibility support across MyTravel.',
-      BM: 'Cari panduan ringkas untuk perancangan perjalanan, notis perjalanan, dan sokongan kebolehcapaian di seluruh MyTravel.',
+      EN: 'Official Tourism Malaysia tourist support, transit assistance, and accessibility guides across MyTravel.',
+      BM: 'Sokongan pelancong rasmi Tourism Malaysia, bantuan transit, dan panduan kebolehcapaian di seluruh MyTravel.',
     },
-    summaryLabel: { EN: 'Support shortcuts', BM: 'Pintasan sokongan' },
-    summaryValue: '3',
+    summaryLabel: { EN: 'Support channels', BM: 'Saluran sokongan' },
+    summaryValue: '4',
     summaryCopy: {
-      EN: 'Navigation, Community, and accessibility support are ready whenever you need a refresher.',
-      BM: 'Navigasi, Komuniti, dan sokongan kebolehcapaian sedia apabila anda memerlukan panduan semula.',
+      EN: 'Tourism Malaysia Infoline (1-300-88-5050), Navigation, Community, and accessibility support are ready whenever you need help.',
+      BM: 'Talian Pelancong Tourism Malaysia (1-300-88-5050), Navigasi, Komuniti, dan sokongan kebolehcapaian sedia membantu anda.',
     },
     primaryAction: { EN: 'Open community guides', BM: 'Buka panduan komuniti' },
     items: [],
@@ -341,7 +343,7 @@ export class ProfileSectionPage implements OnInit {
   handlePrimaryAction(): void {
     switch (this.section) {
       case 'my-contributions':
-        void this.router.navigate(['/tabs/tab3']);
+        void this.router.navigate(['/tabs/tab3'], { queryParams: { view: 'add' } });
         return;
       case 'journey-history':
         void this.router.navigate(['/tabs/tab2']);
@@ -367,7 +369,10 @@ export class ProfileSectionPage implements OnInit {
         void this.router.navigate(['/tabs/tab4'], { queryParams: { view: 'accessibility' } });
         return;
       case 'navigation':
-        void this.router.navigate(['/tabs/tab2']);
+        void this.router.navigate(
+          ['/tabs/tab2'],
+          item.queryParams ? { queryParams: item.queryParams } : undefined,
+        );
         return;
       case 'community':
         void this.router.navigate(['/tabs/tab3']);
@@ -384,7 +389,10 @@ export class ProfileSectionPage implements OnInit {
     }
 
     if (this.section === 'journey-history') {
-      void this.router.navigate(['/tabs/tab2']);
+      void this.router.navigate(
+        ['/tabs/tab2'],
+        item.queryParams ? { queryParams: item.queryParams } : undefined,
+      );
       return;
     }
 
@@ -442,6 +450,8 @@ export class ProfileSectionPage implements OnInit {
         title: `${journey.from} → ${journey.to}`,
         subtitle: `${journey.mode} · ${journey.duration}`,
         meta: `${this.formatDate(journey.completedAt ?? journey.startedAt)} · ${journey.fare} · +${journey.points} ${this.t(SECTION_UI_COPY.points)}`,
+        action: 'navigation' as ProfileSectionAction,
+        queryParams: { from: journey.from, to: journey.to },
       })),
     };
   }
@@ -484,13 +494,13 @@ export class ProfileSectionPage implements OnInit {
           title: this.t(SECTION_UI_COPY.languageAndRegion),
           subtitle: `${languageLabel} · Malaysia`,
           meta: this.t(SECTION_UI_COPY.switchLanguage),
-          action: 'profile',
+          action: 'accessibility',
         },
         {
           title: this.t(SECTION_UI_COPY.notificationPreferences),
           subtitle: this.t(SECTION_UI_COPY.notificationSubtitle),
           meta: this.savedNoticeReadinessMeta(savedNoticeCount),
-          action: 'profile',
+          action: 'notices',
         },
         {
           title: this.t(SECTION_UI_COPY.accessibilitySupport),
@@ -504,18 +514,58 @@ export class ProfileSectionPage implements OnInit {
     };
   }
 
+  private readonly tourismDataService = inject(TourismDataService);
+
   private buildSavedDestinationsContent(): ProfileSectionContent {
     const staticContent = renderStaticSection(PROFILE_SECTION_COPY['saved-destinations'], this.language);
-    const savedNoticeIds = this.appStateService.getSnapshot().savedNoticeIds;
+    const state = this.appStateService.getSnapshot();
+    const savedNoticeIds = state.savedNoticeIds;
+    const savedDestinationIds = state.savedDestinationIds ?? [];
+    const savedEventIds = state.savedEventIds ?? [];
+
+    const destinationItems: ProfileSectionItem[] = savedDestinationIds
+      .map((id) => this.tourismDataService.getAllDestinations().find((d) => d.id === id))
+      .filter((d): d is NonNullable<typeof d> => Boolean(d))
+      .map((dest) => ({
+        title: dest.name,
+        subtitle: `${dest.state} · ${dest.nearestHub}`,
+        meta: this.language === 'BM' ? 'Destinasi tersimpan · Rancang laluan' : 'Saved destination · Plan route',
+        action: 'navigation' as ProfileSectionAction,
+        queryParams: { to: dest.name },
+      }));
+
+    const eventItems: ProfileSectionItem[] = savedEventIds
+      .map((id) => this.tourismDataService.getEvents().find((e) => e.id === id))
+      .filter((e): e is NonNullable<typeof e> => Boolean(e))
+      .map((evt) => ({
+        title: evt.title[this.language],
+        subtitle: `${evt.venue}, ${evt.state} · ${evt.date}`,
+        meta: this.language === 'BM' ? 'Acara tersimpan · Rancang laluan' : 'Saved event · Plan route',
+        action: 'navigation' as ProfileSectionAction,
+        queryParams: { to: evt.destinationQuery || evt.venue },
+      }));
+
+    const noticeItems: ProfileSectionItem[] = savedNoticeIds.map((id) => this.buildSavedDestinationItem(id));
+    const allItems = [...destinationItems, ...eventItems, ...noticeItems];
+    const hasOnlyNotices = destinationItems.length === 0 && eventItems.length === 0;
+
+    const destLabel = destinationItems.length === 1 ? 'destination' : 'destinations';
+    const eventLabel = eventItems.length === 1 ? 'event' : 'events';
+    const noticeLabel = noticeItems.length === 1 ? 'notice' : 'notices';
+    const itemLabel = allItems.length === 1 ? 'saved item' : 'saved items';
 
     return {
       ...staticContent,
-      summaryValue: String(savedNoticeIds.length),
-      summaryCopy: savedNoticeIds.length
-        ? `${savedNoticeIds.length} ${this.countLabel(savedNoticeIds.length, SECTION_UI_COPY.savedNoticeSingular, SECTION_UI_COPY.savedNoticePlural)} · ${this.t(SECTION_UI_COPY.savedNoticesReady)}`
+      summaryValue: String(allItems.length),
+      summaryCopy: allItems.length
+        ? hasOnlyNotices
+          ? `${allItems.length} ${this.countLabel(allItems.length, SECTION_UI_COPY.savedNoticeSingular, SECTION_UI_COPY.savedNoticePlural)} · ${this.t(SECTION_UI_COPY.savedNoticesReady)}`
+          : this.language === 'BM'
+            ? `${allItems.length} item tersimpan (${destinationItems.length} destinasi, ${eventItems.length} acara, ${noticeItems.length} notis).`
+            : `${allItems.length} ${itemLabel} (${destinationItems.length} ${destLabel}, ${eventItems.length} ${eventLabel}, ${noticeItems.length} ${noticeLabel}).`
         : this.t(SECTION_UI_COPY.savedNoticesEmpty),
       primaryAction: this.t(SECTION_UI_COPY.openNoticeBoard),
-      items: savedNoticeIds.map((id) => this.buildSavedDestinationItem(id)),
+      items: allItems,
     };
   }
 
@@ -586,6 +636,14 @@ export class ProfileSectionPage implements OnInit {
             size: this.textSizeLabel(preferences.textSize),
           }),
           action: 'accessibility',
+        },
+        {
+          title: this.language === 'BM' ? 'Talian Pelancong Tourism Malaysia' : 'Tourism Malaysia Tourist Infoline',
+          subtitle: this.language === 'BM'
+            ? 'Hubungi 1-300-88-5050 atau layari tourism.gov.my untuk bantuan rasmi Tahun Melawat Malaysia 2026.'
+            : 'Call 1-300-88-5050 or visit tourism.gov.my for official Visit Malaysia 2026 tourist assistance.',
+          meta: this.language === 'BM' ? 'Kecemasan: 999 · Rapid KL: 03-7885 2585' : 'Emergency: 999 · Rapid KL: 03-7885 2585',
+          action: 'notices',
         },
       ],
     };

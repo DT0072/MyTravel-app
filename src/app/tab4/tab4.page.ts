@@ -24,6 +24,7 @@ type ProfileView = 'profile' | 'points' | 'passport' | 'accessibility' | 'challe
 type TransactionFilter = 'All' | 'Earned' | 'Pending';
 type PassportFilter = 'All' | 'States' | 'Federal Territories';
 type ProfileMenuItemId =
+  | 'community-profile'
   | 'contributions'
   | 'journey-history'
   | 'saved-destinations'
@@ -31,6 +32,7 @@ type ProfileMenuItemId =
   | 'accessibility'
   | 'privacy'
   | 'help'
+  | 'admin'
   | 'signout'
   | 'signin';
 
@@ -76,17 +78,26 @@ const PROFILE_COPY = {
   menuPrivacyCopy: { EN: 'Permissions, privacy & data protection', BM: 'Kebenaran, privasi & perlindungan data' },
   menuHelp: { EN: 'Help', BM: 'Bantuan' },
   menuHelpCopy: { EN: 'FAQs, contact us & guides', BM: 'Soalan lazim, hubungi kami & panduan' },
+  menuAdmin: { EN: 'Admin dashboard', BM: 'Papan pemuka pentadbir' },
+  menuAdminCopy: { EN: 'Location verification & community moderation', BM: 'Pengesahan lokasi & moderasi komuniti' },
+  menuSignIn: { EN: 'Sign in', BM: 'Log masuk' },
+  menuSignInCopy: { EN: 'Sync your Digital Passport & Eco-Points across devices', BM: 'Segerakkan Pasport Digital & Mata Eko merentas peranti' },
   menuSignOut: { EN: 'Sign out', BM: 'Log keluar' },
   menuSignOutCopy: { EN: 'Sign out of your MyTravel account', BM: 'Log keluar daripada akaun MyTravel anda' },
+  rewardsCatalogTitle: { EN: 'VM2026 rewards catalogue', BM: 'Katalog ganjaran VM2026' },
+  redeemNow: { EN: 'Redeem', BM: 'Tebus' },
+  redeemedLabel: { EN: 'Redeemed ✓', BM: 'Ditebus ✓' },
+  needMorePoints: { EN: 'Need {pts} more pts', BM: 'Perlu {pts} mata lagi' },
+  rewardRedeemedToast: { EN: 'Reward redeemed! Code: {code}', BM: 'Ganjaran ditebus! Kod: {code}' },
   ecoPointsTitle: { EN: 'Eco-Points', BM: 'Mata Eko' },
-  accessibilityLanguageTitle: { EN: 'Accessibility & Language', BM: 'Kebolehcapaian & Bahasa' },
+  accessibilityLanguageTitle: { EN: 'Accessibility & language', BM: 'Kebolehcapaian & bahasa' },
   challengesTitle: { EN: 'MyTravel Challenges', BM: 'Cabaran MyTravel' },
   rewardTitle: { EN: 'VM2026 Reward', BM: 'Ganjaran VM2026' },
   rewardStatusTitle: { EN: 'Rewards status', BM: 'Status ganjaran' },
   backToProfile: { EN: 'Back to profile', BM: 'Kembali ke profil' },
   currentBalance: { EN: 'Current balance', BM: 'Baki semasa' },
   pointsLabel: { EN: 'points', BM: 'mata' },
-  balanceCardCopy: { EN: '♧ Thank you!\nYour points support sustainable tourism in Malaysia.', BM: '♧ Terima kasih!\nMata anda menyokong pelancongan lestari di Malaysia.' },
+  balanceCardCopy: { EN: 'Thank you!\nYour points support sustainable tourism in Malaysia.', BM: 'Terima kasih!\nMata anda menyokong pelancongan lestari di Malaysia.' },
   seasonTitle: { EN: 'VM2026 Challenge Season', BM: 'Musim Cabaran VM2026' },
   seasonTitlePending: { EN: 'Rewards provider pending', BM: 'Penyedia ganjaran belum disambungkan' },
   viewAllMissions: { EN: 'View all missions', BM: 'Lihat semua misi' },
@@ -107,6 +118,8 @@ const PROFILE_COPY = {
   earnCommunityCopy: { EN: 'Share useful tips and information.', BM: 'Kongsi tip dan maklumat yang berguna.' },
   earnVerification: { EN: 'Information verification', BM: 'Pengesahan maklumat' },
   earnVerificationCopy: { EN: 'Confirm locations and services.', BM: 'Sahkan lokasi dan perkhidmatan.' },
+  menuCommunityProfile: { EN: 'Community Profile & Posts', BM: 'Profil & Kiriman Komuniti' },
+  menuCommunityProfileCopy: { EN: 'Manage your travel notes, bio, followers & saved posts', BM: 'Urus nota perjalanan, bio, pengikut & kiriman disimpan' },
   viewRewards: { EN: 'View rewards', BM: 'Lihat ganjaran' },
   passportAll: { EN: 'All', BM: 'Semua' },
   passportStates: { EN: 'States', BM: 'Negeri' },
@@ -147,7 +160,7 @@ const PROFILE_COPY = {
     EN: 'You already have {points} of {target} local Eco-Points recorded. Reward details will appear here when your Firestore rewards provider is connected.',
     BM: 'Anda sudah mempunyai {points} daripada {target} Mata Eko setempat direkodkan. Butiran ganjaran akan dipaparkan di sini apabila penyedia ganjaran Firestore anda disambungkan.',
   },
-  manjaGuide: { EN: 'Manja Guide', BM: 'Panduan Manja' },
+  manjaGuide: { EN: 'Manja guide', BM: 'Panduan Manja' },
   manjaGuideCopy: { EN: 'Verified stamps unlock regional badges and rewards.', BM: 'Cop yang disahkan membuka lencana dan ganjaran serantau.' },
   appLanguage: { EN: 'App language', BM: 'Bahasa aplikasi' },
   appLanguageOptionsAria: { EN: 'App language options', BM: 'Pilihan bahasa aplikasi' },
@@ -291,6 +304,50 @@ interface UnlockStep {
   description: LocalizedText;
 }
 
+interface RedeemableReward {
+  id: string;
+  cost: number;
+  code: string;
+  image: string;
+  title: LocalizedText;
+  subtitle: LocalizedText;
+}
+
+const VM2026_REWARDS_CATALOG: RedeemableReward[] = [
+  {
+    id: 'reward-wira-manja-badge',
+    cost: 80,
+    code: 'VM26-WIRA-01',
+    image: 'assets/mytravel/wira-wave.png',
+    title: { EN: 'Wira & Manja Digital Badge', BM: 'Lencana Digital Wira & Manja' },
+    subtitle: { EN: 'Official VM2026 profile seal & digital passport frame.', BM: 'Mohor profil VM2026 rasmi & bingkai pasport digital.' },
+  },
+  {
+    id: 'reward-rapidkl-eco-pass',
+    cost: 200,
+    code: 'MYT-ECO-KL26',
+    image: 'assets/mytravel/transit-map.png',
+    title: { EN: 'Rapid KL Eco-Commuter Voucher', BM: 'Baucar Komuter Eko Rapid KL' },
+    subtitle: { EN: 'RM5 transit credit rebate for verified rail & bus journeys.', BM: 'Rebat kredit transit RM5 untuk perjalanan rel & bas disahkan.' },
+  },
+  {
+    id: 'reward-heritage-museum-pass',
+    cost: 350,
+    code: 'MYT-HERIT-26',
+    image: 'assets/mytravel/melaka.png',
+    title: { EN: 'Heritage Museum Priority Entry', BM: 'Kemasukan Keutamaan Muzium Warisan' },
+    subtitle: { EN: 'Complimentary entry pass for Melaka & Penang heritage galleries.', BM: 'Pas masuk percuma untuk galeri warisan Melaka & Pulau Pinang.' },
+  },
+  {
+    id: 'reward-vm2026-ambassador',
+    cost: 1000,
+    code: 'VM26-AMB-PRO',
+    image: 'assets/mytravel/manja-cheer.png',
+    title: { EN: 'VM2026 Sustainable Ambassador', BM: 'Duta Lestari VM2026' },
+    subtitle: { EN: 'Exclusive national tourism ambassador badge & partner perks.', BM: 'Lencana duta pelancongan negara eksklusif & ganjaran rakan kongsi.' },
+  },
+];
+
 interface ProviderCollection<T> {
   connected: boolean;
   items: T[];
@@ -338,7 +395,8 @@ export class Tab4Page implements OnDestroy {
   }
 
   get menuItems(): ProfileMenuItem[] {
-    return [
+    const items: ProfileMenuItem[] = [
+      { id: 'community-profile', title: this.copy.menuCommunityProfile, description: this.copy.menuCommunityProfileCopy, icon: 'person-circle-outline', action: 'route', target: '/tabs/tab3?view=creator' },
       { id: 'contributions', title: this.copy.menuContributions, description: this.copy.menuContributionsCopy, icon: 'chatbubbles-outline', action: 'route', target: '/tabs/profile/my-contributions' },
       { id: 'journey-history', title: this.copy.menuJourneyHistory, description: this.copy.menuJourneyHistoryCopy, icon: 'time-outline', action: 'route', target: '/tabs/profile/journey-history' },
       { id: 'saved-destinations', title: this.copy.menuSavedDestinations, description: this.copy.menuSavedDestinationsCopy, icon: 'bookmark-outline', action: 'route', target: '/tabs/profile/saved-destinations' },
@@ -346,9 +404,18 @@ export class Tab4Page implements OnDestroy {
       { id: 'accessibility', title: this.copy.menuAccessibility, description: this.copy.menuAccessibilityCopy, icon: 'accessibility-outline', action: 'view', target: 'accessibility' },
       { id: 'privacy', title: this.copy.menuPrivacy, description: this.copy.menuPrivacyCopy, icon: 'shield-outline', action: 'route', target: '/tabs/profile/privacy' },
       { id: 'help', title: this.copy.menuHelp, description: this.copy.menuHelpCopy, icon: 'help-circle-outline', action: 'route', target: '/tabs/profile/help' },
-      { id: 'signout', title: this.copy.menuSignOut, description: this.copy.menuSignOutCopy, icon: 'log-out-outline', action: 'signout', target: '' },
+      { id: 'admin', title: this.copy.menuAdmin, description: this.copy.menuAdminCopy, icon: 'shield-checkmark-outline', action: 'route', target: '/admin' },
     ];
+    if (this.isAuthenticated) {
+      items.push({ id: 'signout', title: this.copy.menuSignOut, description: this.copy.menuSignOutCopy, icon: 'log-out-outline', action: 'signout', target: '' });
+    } else {
+      items.push({ id: 'signin', title: this.copy.menuSignIn, description: this.copy.menuSignInCopy, icon: 'log-in-outline', action: 'route', target: '/login' });
+    }
+    return items;
   }
+  readonly rewardsCatalog = VM2026_REWARDS_CATALOG;
+  redeemedRewardIds: string[] = [];
+  savedTotalCount = 0;
   stamps: ProfileStamp[] = [];
   challengeMissions: ChallengeMission[] = [];
   unlockSteps: UnlockStep[] = [];
@@ -381,14 +448,18 @@ export class Tab4Page implements OnDestroy {
 
     if (this.currentUser.travelerType === 'malaysian') {
       const state = this.currentUser.homeState || 'Malaysia';
+      const method = this.currentUser.verificationMethod || 'MyKad';
+      const masked = this.currentUser.maskedIdNumber ? ` · ${this.currentUser.maskedIdNumber}` : '';
       return this.language === 'BM'
-        ? `${state} · Pengesahan MyKad`
-        : `${state} · MyKad Verified`;
+        ? `${state} · Disahkan ${method}${masked}`
+        : `${state} · ${method} Verified${masked}`;
     } else if (this.currentUser.travelerType === 'foreign') {
       const country = this.currentUser.nationality || 'International';
+      const method = this.currentUser.verificationMethod || 'Passport';
+      const masked = this.currentUser.maskedIdNumber ? ` · ${this.currentUser.maskedIdNumber}` : '';
       return this.language === 'BM'
-        ? `${country} · Pengesahan Pasport`
-        : `${country} · Passport Verified`;
+        ? `${country} · Disahkan ${method}${masked}`
+        : `${country} · ${method} Verified${masked}`;
     }
 
     return this.currentUser.email || (this.language === 'BM' ? 'Pengembara Disahkan' : 'Verified Traveler');
@@ -631,10 +702,13 @@ export class Tab4Page implements OnDestroy {
     );
 
     this.routeSubscription.add(this.route.queryParamMap.subscribe((params) => {
-      const requestedView = params.get('view');
+      const rawView = params.get('view');
+      const requestedView = rawView === 'eco' ? 'points' : rawView;
 
       if (requestedView && this.isProfileView(requestedView)) {
         this.view = requestedView;
+      } else if (!rawView) {
+        this.view = 'profile';
       }
     }));
   }
@@ -642,6 +716,20 @@ export class Tab4Page implements OnDestroy {
   ionViewWillEnter(): void {
     this.applyAccessibilityPreferences(this.accessibilityPreferencesService.getPreferences());
     this.refreshAppState();
+    const queryMap = this.route.snapshot?.queryParamMap;
+    if (queryMap) {
+      const rawView = queryMap.get('view');
+      const requestedView = rawView === 'eco' ? 'points' : rawView;
+      if (requestedView && this.isProfileView(requestedView)) {
+        this.view = requestedView;
+      } else {
+        this.view = 'profile';
+      }
+    }
+  }
+
+  ionViewWillLeave(): void {
+    this.view = 'profile';
   }
 
   ngOnDestroy(): void {
@@ -685,11 +773,29 @@ export class Tab4Page implements OnDestroy {
       return;
     }
 
+    if (item.target.includes('?')) {
+      void this.router.navigateByUrl(item.target);
+      return;
+    }
     void this.router.navigate([item.target]);
   }
 
   goToLogin(): void {
     void this.router.navigate(['/login']);
+  }
+
+  onProfileCardKeydown(event: KeyboardEvent): void {
+    if (this.isAuthenticated) {
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.goToLogin();
+    }
+  }
+
+  openIdentityVerification(): void {
+    void this.router.navigate(['/login'], { queryParams: { mode: 'verify-identity' } });
   }
 
   async unlockSelectedStamp(): Promise<void> {
@@ -717,6 +823,24 @@ export class Tab4Page implements OnDestroy {
     }
   }
 
+  isRewardRedeemed(rewardId: string): boolean {
+    return this.redeemedRewardIds.includes(rewardId);
+  }
+
+  redeemReward(reward: RedeemableReward): void {
+    if (this.isRewardRedeemed(reward.id) || this.ecoPoints < reward.cost) {
+      return;
+    }
+    const ok = this.appStateService.redeemReward?.(reward.id, reward.title[this.language], reward.cost) ?? false;
+    if (ok) {
+      if (this.isAuthenticated) {
+        void this.authService.updateEcoPoints(Math.max(0, this.ecoPoints - reward.cost));
+      }
+      this.refreshAppState();
+      this.showToast(this.t(this.copy.rewardRedeemedToast).replace('{code}', reward.code));
+    }
+  }
+
   selectTransactionFilter(filter: TransactionFilter): void {
     this.transactionFilter = filter;
   }
@@ -731,10 +855,20 @@ export class Tab4Page implements OnDestroy {
         return this.journeyHistoryCount
           ? `${this.journeyHistoryCount} ${this.countLabel(this.journeyHistoryCount, this.copy.completedJourneySingular, this.copy.completedJourneyPlural)} · ${this.journeyHistoryPoints} ${this.t(this.copy.ecoPointsEarnedSummary)}`
           : this.t(item.description);
-      case 'saved-destinations':
-        return this.savedNoticeCount
-          ? `${this.savedNoticeCount} ${this.countLabel(this.savedNoticeCount, this.copy.savedNoticeSingular, this.copy.savedNoticePlural)} · ${this.t(this.copy.savedNoticeReadyCopy)}`
-          : this.t(this.copy.savedNoticeEmptyCopy);
+      case 'saved-destinations': {
+        if (!this.savedTotalCount) {
+          return this.t(this.copy.savedNoticeEmptyCopy);
+        }
+        const onlyNotices = this.savedTotalCount === this.savedNoticeCount;
+        const unit = onlyNotices
+          ? this.countLabel(this.savedTotalCount, this.copy.savedNoticeSingular, this.copy.savedNoticePlural)
+          : this.language === 'BM'
+            ? 'item tersimpan'
+            : this.savedTotalCount === 1
+              ? 'saved item'
+              : 'saved items';
+        return `${this.savedTotalCount} ${unit} · ${this.t(this.copy.savedNoticeReadyCopy)}`;
+      }
       case 'settings':
         return `${this.languageLabel(this.selectedAppLanguage)} · ${this.activeHelperSummary(this.settings)}`;
       default:
@@ -916,6 +1050,11 @@ export class Tab4Page implements OnDestroy {
     this.journeyHistoryCount = state.journeyHistory.length;
     this.journeyHistoryPoints = state.journeyHistory.reduce((total, journey) => total + journey.points, 0);
     this.savedNoticeCount = state.savedNoticeIds.length;
+    this.savedTotalCount =
+      state.savedNoticeIds.length
+      + (state.savedDestinationIds?.length ?? 0)
+      + (state.savedEventIds?.length ?? 0);
+    this.redeemedRewardIds = state.redeemedRewardIds ?? [];
     const passportData = this.loadPassportData();
     this.passportProviderConnected = passportData.connected;
     this.stamps = passportData.items;
@@ -1012,7 +1151,7 @@ export class Tab4Page implements OnDestroy {
         description: this.copy.missionHeritageCopy,
         progress: this.progressLabel(challengeProgress.heritageProgress, challengeProgress.heritageTarget),
         reward: this.pointRewardLabel(120),
-        image: 'assets/mytravel/wira-ui.png',
+        image: 'assets/mytravel/wira-walk.png',
         progressWidth: this.progressWidth(challengeProgress.heritageProgress, challengeProgress.heritageTarget),
       },
       {
@@ -1020,7 +1159,7 @@ export class Tab4Page implements OnDestroy {
         description: this.copy.missionCommunityCopy,
         progress: this.progressLabel(challengeProgress.communityProgress, challengeProgress.communityTarget),
         reward: this.pointRewardLabel(80),
-        image: 'assets/mytravel/manja-ui.png',
+        image: 'assets/mytravel/manja-cheer.png',
         progressWidth: this.progressWidth(challengeProgress.communityProgress, challengeProgress.communityTarget),
       },
       {
@@ -1028,7 +1167,7 @@ export class Tab4Page implements OnDestroy {
         description: this.copy.missionExploreCopy,
         progress: this.progressLabel(challengeProgress.passportProgress, challengeProgress.passportTarget),
         reward: this.pointRewardLabel(60),
-        image: 'assets/mytravel/manja-ui.png',
+        image: 'assets/mytravel/manja-guide.png',
         progressWidth: this.progressWidth(challengeProgress.passportProgress, challengeProgress.passportTarget),
       },
     ];
@@ -1056,11 +1195,12 @@ export class Tab4Page implements OnDestroy {
   }
 
   private mapTransaction(transaction: PointTransaction): ProfileTransaction {
+    const sign = transaction.points < 0 ? '' : (transaction.status === 'Earned' ? '+' : '');
     return {
       title: this.localizeTransactionTitle(transaction.title),
       subtitle: this.localizeTransactionSubtitle(transaction.subtitle),
-      points: `${transaction.status === 'Earned' ? '+' : ''}${transaction.points} ♧`,
-      accent: transaction.status === 'Pending' ? '#ff9800' : '#0754cc',
+      points: `${sign}${transaction.points} pts`,
+      accent: transaction.points < 0 ? '#0d7a69' : (transaction.status === 'Pending' ? '#ff9800' : '#0754cc'),
       status: transaction.status,
     };
   }
